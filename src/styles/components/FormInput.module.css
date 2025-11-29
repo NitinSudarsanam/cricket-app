@@ -1,0 +1,75 @@
+/* FormInput Component Styles */
+
+.container {
+  width: 100%;
+}
+
+.label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgb(55, 65, 81); /* gray-700 */
+  margin-bottom: 0.25rem;
+}
+
+.required {
+  color: rgb(239, 68, 68); /* red-500 */
+  margin-left: 0.25rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid;
+  border-radius: 0.5rem;
+  transition: all 0.15s ease-in-out;
+}
+
+.input:focus {
+  outline: none;
+  ring: 2px;
+}
+
+.input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.inputDefault {
+  border-color: rgb(209, 213, 219); /* gray-300 */
+}
+
+.inputDefault:focus {
+  border-color: rgb(59, 130, 246); /* blue-500 */
+  --tw-ring-color: rgb(191, 219, 254); /* blue-200 */
+}
+
+.inputError {
+  border-color: rgb(252, 165, 165); /* red-300 */
+}
+
+.inputError:focus {
+  border-color: rgb(239, 68, 68); /* red-500 */
+  --tw-ring-color: rgb(254, 202, 202); /* red-200 */
+}
+
+.errorMessage {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: rgb(220, 38, 38); /* red-600 */
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.errorIcon {
+  width: 1rem;
+  height: 1rem;
+  fill: currentColor;
+}
+
+.helperText {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: rgb(107, 114, 128); /* gray-500 */
+}

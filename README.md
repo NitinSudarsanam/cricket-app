@@ -1,36 +1,104 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Fantasy Cricket Draft System
 
-## Getting Started
+A full-featured fantasy cricket draft application with real-time updates, customizable rules, and an intuitive admin interface.
 
-First, run the development server:
+## 🚀 Quick Start
 
 ```bash
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your Supabase credentials
+
+# Run database migrations
+npx prisma db push
+
+# Seed the database
+npx prisma db seed
+
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Visit **http://localhost:3000/admin** to get started!
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📋 Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Snake & Linear Draft Orders** - Flexible draft configurations
+- **Real-time Turn Detection** - Know exactly whose turn it is
+- **Automatic Validation** - Enforces team caps, role requirements, and early-round rules
+- **Admin Dashboard** - Manage players, participants, and draft settings
+- **Responsive Design** - Works on desktop, tablet, and mobile
+- **Color-coded Teams** - Easy visual identification of IPL teams
 
-## Learn More
+## 📖 Documentation
 
-To learn more about Next.js, take a look at the following resources:
+- **[Complete Guide](./README_DRAFT_SYSTEM.md)** - Full system documentation
+- **[Database Setup](./SETUP_DATABASE.md)** - Database configuration guide
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🛠️ Tech Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Framework**: Next.js 15 with App Router
+- **Language**: TypeScript
+- **Database**: PostgreSQL (Supabase)
+- **ORM**: Prisma
+- **Styling**: Tailwind CSS
+- **Real-time**: Pusher (optional)
 
-## Deploy on Vercel
+## 📁 Project Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+cricket/
+├── src/
+│   ├── app/              # Next.js pages and API routes
+│   ├── components/       # React components
+│   ├── lib/              # Business logic and utilities
+│   └── types/            # TypeScript type definitions
+├── prisma/
+│   ├── schema.prisma     # Database schema
+│   └── seed.ts           # Database seeding
+└── public/               # Static assets
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🎯 Usage
+
+### 1. Add Participants
+Navigate to **Admin → Participants** and add at least 2 participants.
+
+### 2. Configure Draft Rules
+Go to **Admin → Configuration** to customize:
+- Roster size
+- Team caps
+- Role requirements
+- Early-round rules
+
+### 3. Start Draft
+Click **Monitor Draft → Start Draft**, select participants and draft order.
+
+### 4. Make Picks
+Use the participant switcher to test different users making picks.
+
+## 🔧 Configuration
+
+Edit `.env` file:
+
+```env
+DATABASE_URL="postgresql://..."
+DIRECT_URL="postgresql://..."
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+```
+
+## 📝 License
+
+MIT
+
+## 🤝 Contributing
+
+Contributions welcome! Please open an issue or submit a pull request.
+
+---
+
+**Status**: Production Ready  
+**Version**: 1.0.0

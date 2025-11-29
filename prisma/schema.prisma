@@ -1,0 +1,124 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Player {
+  id         String   @id @default(cuid())
+  name       String
+  team       String   // CSK, MI, GT, RR, RCB, KKR, LSG, SRH, PBKS, DC
+  role       String   // Bat, Bowl, AR, WK
+  isForeign  Boolean  @default(false)
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  picks      Pick[]
+
+  @@index([team])
+  @@index([role])
+}
+
+model DraftConfig {
+  id            String   @id @default(cuid())
+  rosterSize    Int      @default(8)
+  totalRounds   Int      @default(8)
+  minPerTeam    Int      @default(0)
+  maxPerTeam    Int      @default(1)
+  
+  // Mandatory role requirements
+  mandatoryBat  Int      @default(3)
+  mandatoryBowl Int      @default(3)
+  mandatoryAR   Int      @default(0)
+  mandatoryWK   Int      @default(0)
+  
+  // Early round rules
+  earlyRounds   Int      @default(4)
+  earlyMinBat   Int      @default(2)
+  earlyMinBowl  Int      @default(2)
+  
+  isLocked      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  draftStates   DraftState[]
+}
+
+model Participant {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  picks     Pick[]
+  draftOrders DraftOrder[]
+}
+
+model DraftState {
+  id                String   @id @default(cuid())
+  currentRound      Int      @default(1)
+  currentPickIndex  Int      @default(0)
+  status            String   @default("not_started") // not_started, in_progress, paused, completed
+  startedAt         DateTime?
+  completedAt       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Foreign keys
+  draftConfigId     String
+  draftConfig       DraftConfig @relation(fields: [draftConfigId], references: [id], onDelete: Cascade)
+
+  // Relations
+  picks             Pick[]
+  draftOrders       DraftOrder[]
+
+  @@index([status])
+}
+
+model DraftOrder {
+  id              String   @id @default(cuid())
+  position        Int      // 0-indexed position in draft order
+  createdAt       DateTime @default(now())
+
+  // Foreign keys
+  draftStateId    String
+  participantId   String
+  
+  draftState      DraftState  @relation(fields: [draftStateId], references: [id], onDelete: Cascade)
+  participant     Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@unique([draftStateId, position])
+  @@unique([draftStateId, participantId])
+  @@index([draftStateId])
+}
+
+model Pick {
+  id            String   @id @default(cuid())
+  round         Int
+  pickNumber    Int      // Overall pick number in the draft
+  timestamp     DateTime @default(now())
+
+  // Foreign keys
+  draftStateId  String
+  participantId String
+  playerId      String
+
+  draftState    DraftState  @relation(fields: [draftStateId], references: [id], onDelete: Cascade)
+  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  player        Player      @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([draftStateId, playerId]) // Each player can only be picked once per draft
+  @@index([draftStateId])
+  @@index([participantId])
+  @@index([round])
+}

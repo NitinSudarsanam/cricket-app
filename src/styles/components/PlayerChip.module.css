@@ -1,0 +1,95 @@
+/* PlayerChip Component Styles */
+
+.chip {
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid;
+  transition: all 150ms ease-in-out;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.nonClickable {
+  cursor: default;
+}
+
+.drafted {
+  opacity: 0.5;
+}
+
+.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.playerInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.playerName {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: rgb(17, 24, 39); /* gray-900 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playerDetails {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.125rem;
+}
+
+.team {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgb(55, 65, 81); /* gray-700 */
+}
+
+.separator {
+  font-size: 0.75rem;
+  color: rgb(107, 114, 128); /* gray-500 */
+}
+
+.role {
+  font-size: 0.75rem;
+  color: rgb(75, 85, 99); /* gray-600 */
+}
+
+.foreignBadge {
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  background-color: rgb(219, 234, 254); /* blue-100 */
+  border: 1px solid rgb(147, 197, 253); /* blue-300 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.foreignBadgeText {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: rgb(29, 78, 216); /* blue-700 */
+}
+
+.draftedStatus {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgb(107, 114, 128); /* gray-500 */
+}
