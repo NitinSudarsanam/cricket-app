@@ -15,7 +15,11 @@ const pool = connectionString
   ? new Pool({
       connectionString,
       connectionTimeoutMillis: 30000,
-      ssl: { rejectUnauthorized: false },
+      idleTimeoutMillis: 30000,
+      max: 1, // Limit connections for serverless
+      ssl: process.env.NODE_ENV === 'production' 
+        ? { rejectUnauthorized: false }
+        : false,
     })
   : undefined;
 const adapter = pool ? new PrismaPg(pool) : undefined;
