@@ -11,6 +11,7 @@ datasource db {
 
 model Player {
   id         String   @id @default(cuid())
+  externalId String?  @unique // Sportmonks player id for upsert when syncing squads
   name       String
   team       String   // CSK, MI, GT, RR, RCB, KKR, LSG, SRH, PBKS, DC
   role       String   // Bat, Bowl, AR, WK
@@ -20,10 +21,159 @@ model Player {
   updatedAt  DateTime @updatedAt
 
   // Relations
-  picks      Pick[]
+  picks        Pick[]
+  playerScores PlayerScore[]
 
   @@index([team])
   @@index([role])
+}
+
+// ============================================================================
+// Score tracking and ranking (Sportmonks)
+// ============================================================================
+
+model League {
+  id         String   @id @default(cuid())
+  externalId String   @unique
+  name       String
+  slug       String?
+  imageUrl   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  seasons    Season[]
+  teams      Team[]
+}
+
+model Season {
+  id          String    @id @default(cuid())
+  leagueId    String
+  league      League    @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  externalId  String    @unique
+  name        String
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  matches     Match[]
+  teamScores  TeamScore[]
+  @@index([leagueId])
+}
+
+model Team {
+  id                  String    @id @default(cuid())
+  externalId          String    @unique
+  leagueId            String?
+  league              League?   @relation(fields: [leagueId], references: [id])
+  name                String
+  shortCode           String?
+  imageUrl            String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  localMatches        Match[]   @relation("LocalTeam")
+  visitorMatches      Match[]   @relation("VisitorTeam")
+  winnerMatches       Match[]   @relation("WinnerTeam")
+  matchResultsLocal   MatchResult[] @relation("MatchResultLocal")
+  matchResultsVisitor MatchResult[] @relation("MatchResultVisitor")
+  matchResultsWinner  MatchResult[] @relation("MatchResultWinner")
+  teamScores          TeamScore[]
+  @@index([leagueId])
+}
+
+model Match {
+  id             String    @id @default(cuid())
+  externalId     String    @unique
+  seasonId       String
+  season         Season    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  leagueId       String?
+  localTeamId    String
+  localTeam      Team      @relation("LocalTeam", fields: [localTeamId], references: [id])
+  visitorTeamId  String
+  visitorTeam    Team      @relation("VisitorTeam", fields: [visitorTeamId], references: [id])
+  startAt        DateTime
+  status         String
+  winnerTeamId   String?
+  winnerTeam     Team?     @relation("WinnerTeam", fields: [winnerTeamId], references: [id])
+  resultSummary  String?
+  rawPayload     Json?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  matchResult    MatchResult?
+  @@index([seasonId])
+  @@index([status])
+  @@index([seasonId, status])
+}
+
+model MatchResult {
+  id            String    @id @default(cuid())
+  matchId       String    @unique
+  match         Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  localTeamId   String
+  localTeam     Team      @relation("MatchResultLocal", fields: [localTeamId], references: [id])
+  visitorTeamId String
+  visitorTeam   Team      @relation("MatchResultVisitor", fields: [visitorTeamId], references: [id])
+  winnerTeamId  String?
+  winnerTeam    Team?     @relation("MatchResultWinner", fields: [winnerTeamId], references: [id])
+  localScore    String?
+  visitorScore  String?
+  outcome       String
+  processedAt   DateTime?
+  createdAt     DateTime  @default(now())
+}
+
+model ScoringRule {
+  id            String    @id @default(cuid())
+  leagueId      String?
+  seasonId      String?
+  outcome       String
+  points        Int
+  name          String?
+  effectiveFrom DateTime?
+  effectiveTo   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model TeamScore {
+  id            String    @id @default(cuid())
+  teamId        String
+  team          Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  seasonId      String
+  season        Season    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  points        Int       @default(0)
+  matchesPlayed Int       @default(0)
+  wins          Int       @default(0)
+  ties          Int       @default(0)
+  noResults     Int       @default(0)
+  losses        Int       @default(0)
+  lastMatchAt   DateTime?
+  updatedAt     DateTime  @updatedAt
+  @@unique([teamId, seasonId])
+  @@index([seasonId])
+  @@index([seasonId, points])
+}
+
+model PlayerScore {
+  id        String   @id @default(cuid())
+  playerId  String
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  seasonId  String?
+  points    Int      @default(0)
+  source    String
+  breakdown Json?
+  updatedAt DateTime @updatedAt
+  @@index([seasonId])
+  @@index([playerId, seasonId])
+}
+
+model LeaderboardSnapshot {
+  id         String   @id @default(cuid())
+  type       String
+  leagueId   String?
+  seasonId   String
+  snapshotAt DateTime
+  payload    Json
+  createdAt  DateTime @default(now())
+  @@index([type, seasonId])
 }
 
 model DraftConfig {
@@ -68,6 +218,7 @@ model DraftState {
   id                String   @id @default(cuid())
   currentRound      Int      @default(1)
   currentPickIndex  Int      @default(0)
+  draftOrderType    String   @default("snake") // snake | linear
   status            String   @default("not_started") // not_started, in_progress, paused, completed
   startedAt         DateTime?
   completedAt       DateTime?

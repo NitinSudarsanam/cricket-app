@@ -1,9 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #F9FAFB;
-  --foreground: #111827;
-  
+  --background: #f8fafc;
+  --foreground: #1e293b;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+  --text-primary: #1e293b;
+  --text-muted: #64748b;
+  --accent: #047857;
+  --accent-hover: #065f46;
+  --radius: 6px;
+
   /* IPL Team Colors - Background */
   --team-csk-bg: #FEF3C7;
   --team-mi-bg: #DBEAFE;
@@ -44,16 +51,16 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  
-  /* Custom colors */
-  --color-card: #FFFFFF;
-  --color-border: #E5E7EB;
-  --color-text-primary: #111827;
-  --color-text-secondary: #6B7280;
-  
-  /* Responsive breakpoints (Tailwind defaults) */
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --font-sans: var(--font-sans-fallback);
+  --font-mono: var(--font-mono-fallback);
+  --color-card: var(--surface);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-muted);
+  --radius-default: var(--radius);
   --breakpoint-sm: 640px;
   --breakpoint-md: 768px;
   --breakpoint-lg: 1024px;
@@ -64,7 +71,18 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans-fallback), system-ui, -apple-system, sans-serif;
+}
+
+/* Global focus-visible – accent ring */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--accent);
 }
 
 /* Utility classes for team colors */
@@ -127,23 +145,22 @@ body {
 }
 
 .scrollbar-thin::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--background);
   border-radius: 3px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: var(--border);
   border-radius: 3px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: var(--text-muted);
 }
 
-/* Firefox scrollbar */
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: #d1d5db #f1f1f1;
+  scrollbar-color: var(--border) var(--background);
 }
 
 /* Touch-friendly interactions for tablets */
@@ -174,6 +191,14 @@ body {
 
 .animate-slide-up {
   animation: slide-up 0.3s ease-out;
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.9; }
+}
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
 }
 
 /* Active state scale for touch interactions */

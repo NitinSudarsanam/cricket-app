@@ -7,7 +7,7 @@
 
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useDraftRealtime } from './useDraftRealtime';
 import { DraftState, Player } from '@/types';
 
@@ -138,6 +138,52 @@ export function useDraftSync(options: UseDraftSyncOptions = {}) {
     enabled
   );
 
+  // Fetch latest draft state (defined before useEffects that call it)
+  const refreshDraftState = useCallback(async () => {
+    try {
+      const response = await fetch('/api/draft/state');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch draft state');
+      }
+
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        updateDraftState(result.data);
+        
+        if (initialPlayers.length > 0) {
+          updateAvailablePlayers(result.data, initialPlayers);
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing draft state:', error);
+      setError('Failed to refresh draft state');
+    }
+  }, [updateDraftState, updateAvailablePlayers, initialPlayers, setError]);
+
+  // Refetch draft state on mount so clients that missed Pusher events get latest state
+  useEffect(() => {
+    if (!enabled) return;
+    refreshDraftState();
+  }, [enabled, refreshDraftState]);
+
+  // Refetch when tab becomes visible and draft is in progress (recover from missed real-time events)
+  const draftStatusRef = useRef(state.draftState?.status);
+  draftStatusRef.current = state.draftState?.status;
+  useEffect(() => {
+    if (!enabled) return;
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return;
+      const inProgress = draftStatusRef.current === 'in_progress' || draftStatusRef.current === 'paused';
+      if (inProgress) {
+        refreshDraftState();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [enabled, refreshDraftState]);
+
   // Update presence when participant connects/disconnects
   useEffect(() => {
     if (!enabled || !participantId || !participantName) return;
@@ -172,30 +218,6 @@ export function useDraftSync(options: UseDraftSyncOptions = {}) {
       }
     };
   }, [enabled, participantId, participantName, isSubscribed]);
-
-  // Fetch latest draft state
-  const refreshDraftState = useCallback(async () => {
-    try {
-      const response = await fetch('/api/draft/state');
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch draft state');
-      }
-
-      const result = await response.json();
-      
-      if (result.success && result.data) {
-        updateDraftState(result.data);
-        
-        if (initialPlayers.length > 0) {
-          updateAvailablePlayers(result.data, initialPlayers);
-        }
-      }
-    } catch (error) {
-      console.error('Error refreshing draft state:', error);
-      setError('Failed to refresh draft state');
-    }
-  }, [updateDraftState, updateAvailablePlayers, initialPlayers, setError]);
 
   return {
     // State

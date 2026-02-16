@@ -1,105 +1,73 @@
 import Link from 'next/link';
+import { prisma } from '@/lib/db';
 
-export default function Home() {
+export default async function Home() {
+  let playerCount: number | null = null;
+  try {
+    playerCount = await prisma.player.count();
+  } catch {
+    // Database may not be connected yet
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-slate-50">
       <div className="container mx-auto px-4 py-16">
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-5xl font-bold text-gray-900 mb-4">
-              🏏 Fantasy Cricket Draft
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-10">
+            <h1 className="text-4xl font-bold text-slate-900 tracking-tight mb-2">
+              Fantasy Cricket Draft
             </h1>
-            <p className="text-xl text-gray-600">
-              Real-time IPL fantasy draft system with smart validation
+            <p className="text-slate-600">
+              IPL draft with live sync and rules.
             </p>
           </div>
 
-          {/* Feature Cards */}
-          <div className="grid md:grid-cols-2 gap-6 mb-12">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="text-3xl mb-3">⚡</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Real-Time Updates</h3>
-              <p className="text-gray-600">
-                Live draft updates across all participants with &lt;2 second latency
-              </p>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="text-3xl mb-3">🎯</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Smart Validation</h3>
-              <p className="text-gray-600">
-                Automatic enforcement of team constraints, role requirements, and early round rules
-              </p>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="text-3xl mb-3">🎛️</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Admin Dashboard</h3>
-              <p className="text-gray-600">
-                Complete control over players, configuration, and draft monitoring
-              </p>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="text-3xl mb-3">🏆</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Draft Interface</h3>
-              <p className="text-gray-600">
-                Clean, intuitive UI with roster tracking and pick history
-              </p>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-12">
             <Link
               href="/admin"
-              className="px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition-colors text-center shadow-lg"
+              className="px-6 py-3 bg-emerald-600 text-white font-medium rounded-md hover:bg-emerald-700 transition-colors text-center border border-emerald-700/20"
             >
-              🎛️ Admin Dashboard
+              Admin
             </Link>
-            
             <Link
               href="/draft"
-              className="px-8 py-4 bg-green-600 text-white text-lg font-semibold rounded-lg hover:bg-green-700 transition-colors text-center shadow-lg"
+              className="px-6 py-3 border border-slate-300 text-slate-700 font-medium rounded-md hover:bg-slate-50 transition-colors text-center"
             >
-              🏏 Join Draft
+              Join Draft
             </Link>
           </div>
 
-          {/* Quick Links */}
-          <div className="mt-12 bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Links</h3>
-            <div className="grid sm:grid-cols-2 gap-3">
-              <Link href="/admin/players" className="text-blue-600 hover:text-blue-700 hover:underline">
-                → Player Management
+          <div className="border-t border-slate-200 pt-6">
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-3">Quick links</p>
+            <div className="flex flex-wrap gap-x-6 gap-y-1">
+              <Link href="/admin/players" className="text-sm text-slate-600 hover:text-emerald-700 transition-colors">
+                Player Management
               </Link>
-              <Link href="/admin/config" className="text-blue-600 hover:text-blue-700 hover:underline">
-                → Draft Configuration
+              <Link href="/admin/config" className="text-sm text-slate-600 hover:text-emerald-700 transition-colors">
+                Draft Configuration
               </Link>
-              <Link href="/admin/participants" className="text-blue-600 hover:text-blue-700 hover:underline">
-                → Manage Participants
+              <Link href="/admin/participants" className="text-sm text-slate-600 hover:text-emerald-700 transition-colors">
+                Participants
               </Link>
-              <Link href="/admin/monitor" className="text-blue-600 hover:text-blue-700 hover:underline">
-                → Draft Monitor
+              <Link href="/admin/monitor" className="text-sm text-slate-600 hover:text-emerald-700 transition-colors">
+                Monitor Draft
               </Link>
-              <Link href="/api/health" className="text-blue-600 hover:text-blue-700 hover:underline">
-                → System Health
+              <Link href="/admin/results" className="text-sm text-slate-600 hover:text-emerald-700 transition-colors">
+                Results
               </Link>
-              <a 
-                href="https://github.com/yourusername/fantasy-cricket-draft" 
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-700 hover:underline"
-              >
-                → Documentation
-              </a>
+              <Link href="/docs" className="text-sm text-slate-600 hover:text-emerald-700 transition-colors">
+                Documentation
+              </Link>
+              <Link href="/api/health" className="text-sm text-slate-600 hover:text-emerald-700 transition-colors">
+                Health
+              </Link>
             </div>
           </div>
 
-          {/* Status */}
-          <div className="mt-8 text-center text-sm text-gray-500">
-            <p>✅ Database Connected • ✅ Real-Time Enabled • ✅ 16 Players Loaded</p>
+          <div className="mt-8 text-center text-sm text-slate-500">
+            {playerCount !== null
+              ? `${playerCount} players in pool`
+              : 'Unable to load player count. Check database connection.'}
           </div>
         </div>
       </div>

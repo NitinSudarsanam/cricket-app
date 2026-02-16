@@ -1,35 +1,29 @@
 /**
  * Server-side Pusher configuration
- * Used for broadcasting events from API routes
+ * Used for broadcasting events from API routes.
+ * Degrades gracefully when env vars are missing (e.g. local dev without real-time).
  */
 
 import Pusher from 'pusher';
 
-// Validate environment variables
-if (!process.env.PUSHER_APP_ID) {
-  throw new Error('PUSHER_APP_ID is not defined in environment variables');
-}
+const hasPusherEnv =
+  !!process.env.PUSHER_APP_ID &&
+  !!process.env.PUSHER_KEY &&
+  !!process.env.PUSHER_SECRET &&
+  !!process.env.PUSHER_CLUSTER;
 
-if (!process.env.PUSHER_KEY) {
-  throw new Error('PUSHER_KEY is not defined in environment variables');
-}
+// Initialize Pusher only when all env vars are set; otherwise null
+export const pusherServer: Pusher | null = hasPusherEnv
+  ? new Pusher({
+      appId: process.env.PUSHER_APP_ID!,
+      key: process.env.PUSHER_KEY!,
+      secret: process.env.PUSHER_SECRET!,
+      cluster: process.env.PUSHER_CLUSTER!,
+      useTLS: true,
+    })
+  : null;
 
-if (!process.env.PUSHER_SECRET) {
-  throw new Error('PUSHER_SECRET is not defined in environment variables');
-}
-
-if (!process.env.PUSHER_CLUSTER) {
-  throw new Error('PUSHER_CLUSTER is not defined in environment variables');
-}
-
-// Initialize Pusher server instance
-export const pusherServer = new Pusher({
-  appId: process.env.PUSHER_APP_ID,
-  key: process.env.PUSHER_KEY,
-  secret: process.env.PUSHER_SECRET,
-  cluster: process.env.PUSHER_CLUSTER,
-  useTLS: true,
-});
+export const isPusherConfigured = (): boolean => !!pusherServer;
 
 // Channel names
 export const DRAFT_CHANNEL = 'draft-channel';
@@ -45,16 +39,23 @@ export const EVENTS = {
 } as const;
 
 /**
- * Broadcast an event to all connected clients
+ * Broadcast an event to all connected clients.
+ * No-ops when Pusher is not configured (e.g. missing env vars).
  */
 export async function broadcastEvent(
   event: string,
-  data: any
+  data: unknown
 ): Promise<void> {
+  if (!pusherServer) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[Pusher] Not configured; skipping broadcast:', event);
+    }
+    return;
+  }
   try {
     await pusherServer.trigger(DRAFT_CHANNEL, event, data);
   } catch (error) {
     console.error(`Failed to broadcast event ${event}:`, error);
-    throw error;
+    // Don't rethrow - allow the request to succeed even if real-time fails
   }
 }

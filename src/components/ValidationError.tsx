@@ -13,7 +13,7 @@ export function ValidationError({ error, className = '' }: ValidationErrorProps)
   if (errors.length === 0) return null;
   
   return (
-    <div className={`bg-red-50 border border-red-200 rounded-lg p-3 ${className}`}>
+    <div className={`bg-red-50 border border-red-200 rounded-md p-3 ${className}`}>
       <div className="flex items-start gap-2">
         <svg 
           className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" 

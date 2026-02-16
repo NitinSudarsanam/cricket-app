@@ -2,6 +2,7 @@
 
 import { AdminLayout } from '@/components/admin';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { Modal } from '@/components/Modal';
 import { useState, useEffect } from 'react';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { useToast } from '@/hooks/useToast';
@@ -89,87 +90,102 @@ export default function ParticipantsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-semibold text-gray-900">Participants</h2>
-            <p className="text-sm text-gray-600 mt-1">
+            <h2 className="text-2xl font-semibold text-slate-900">Participants</h2>
+            <p className="text-sm text-slate-600 mt-1">
               Manage draft participants ({participants.length} total)
             </p>
           </div>
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-md hover:bg-emerald-700 transition-colors"
           >
             Add Participant
           </button>
         </div>
 
         {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <div className="p-4 bg-red-50 border border-red-200 rounded-md text-red-700">
             {error}
           </div>
         )}
 
+        {participants.length === 0 && !error && (
+          <div className="bg-white rounded-md border border-slate-200 p-12 text-center">
+            <div className="text-slate-400 mb-4">
+              <svg
+                className="w-16 h-16 mx-auto"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-slate-900 mb-1">No participants yet</h3>
+            <p className="text-sm text-slate-600 mb-6 max-w-sm mx-auto">
+              Add participants so they can join the draft and make picks.
+            </p>
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-700 transition-colors"
+            >
+              Add Participant
+            </button>
+          </div>
+        )}
+
         {/* Participants List */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        {participants.length > 0 && (
+        <div className="bg-white rounded-md border border-slate-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                     Name
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                     Email
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                     ID
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
-                {participants.length === 0 ? (
-                  <tr>
-                    <td colSpan={3} className="px-6 py-8 text-center text-gray-500">
-                      No participants found. Add participants to start a draft.
-                    </td>
-                  </tr>
-                ) : (
+              <tbody className="divide-y divide-slate-200">
+                {
                   participants.map((participant) => (
-                    <tr key={participant.id} className="hover:bg-gray-50">
+                    <tr key={participant.id} className="hover:bg-slate-50">
                       <td className="px-6 py-4">
-                        <div className="font-medium text-gray-900">{participant.name}</div>
+                        <div className="font-medium text-slate-900">{participant.name}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-sm text-gray-700">{participant.email || '-'}</span>
+                        <span className="text-sm text-slate-700">{participant.email || '-'}</span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-xs font-mono text-gray-500">{participant.id}</span>
+                        <span className="text-xs font-mono text-slate-500">{participant.id}</span>
                       </td>
                     </tr>
                   ))
-                )}
+                }
               </tbody>
             </table>
           </div>
         </div>
+        )}
 
         {/* Add Participant Modal */}
-        {isAddModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">Add Participant</h3>
-                <button
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <form onSubmit={handleAddParticipant} className="p-6 space-y-4">
+        <Modal
+          open={isAddModalOpen}
+          title="Add Participant"
+          onClose={() => {
+            setIsAddModalOpen(false);
+            setFormData({ name: '', email: '' });
+          }}
+        >
+              <form onSubmit={handleAddParticipant} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Name *
                   </label>
                   <input
@@ -177,20 +193,20 @@ export default function ParticipantsPage() {
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                     placeholder="Enter participant name"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Email (optional)
                   </label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                     placeholder="Enter email address"
                   />
                 </div>
@@ -199,21 +215,19 @@ export default function ParticipantsPage() {
                   <button
                     type="button"
                     onClick={() => setIsAddModalOpen(false)}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                    className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                    className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-md hover:bg-emerald-700"
                   >
                     Add Participant
                   </button>
                 </div>
               </form>
-            </div>
-          </div>
-        )}
+        </Modal>
       </div>
     </AdminLayout>
     </ErrorBoundary>

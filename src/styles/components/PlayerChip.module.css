@@ -1,6 +1,7 @@
 /* PlayerChip Component Styles */
 
 .chip {
+  position: relative;
   border-radius: 0.5rem;
   padding: 0.5rem 0.75rem;
   border: 1px solid;
@@ -41,9 +42,8 @@
   font-weight: 600;
   font-size: 0.875rem;
   color: rgb(17, 24, 39); /* gray-900 */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
 .playerDetails {
@@ -92,4 +92,30 @@
   font-size: 0.75rem;
   font-weight: 500;
   color: rgb(107, 114, 128); /* gray-500 */
+}
+
+.resizeHandle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  cursor: se-resize;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0 0 0.25rem 0;
+  background: rgba(0, 0, 0, 0.06);
+}
+.resizeHandle:hover {
+  background: rgba(0, 0, 0, 0.12);
+}
+.resizeHandle::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  opacity: 0.5;
 }

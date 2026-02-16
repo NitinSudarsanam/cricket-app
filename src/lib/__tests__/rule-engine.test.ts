@@ -5,7 +5,7 @@
  * including edge cases and mathematical consistency checks.
  */
 
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import assert from 'node:assert';
 import {
   validateRosterFeasibility,
@@ -16,9 +16,11 @@ import {
   validatePlayerAvailable,
   validateTeamCap,
   validateEarlyRoundPick,
+  validateMandatoryRolePick,
+  getValidRolesForNextPick,
   validatePick,
 } from '../rule-engine';
-import type { DraftConfig, Player } from '@/types';
+import type { DraftConfig, Player } from '../../types';
 
 // ============================================================================
 // Test Helpers
@@ -362,6 +364,91 @@ describe('validateEarlyRoundPick', () => {
   });
 });
 
+describe('getValidRolesForNextPick', () => {
+  it('when freeSlots === 0 returns only roles with open mandatory slots', () => {
+    const config = createMockConfig({
+      rosterSize: 6,
+      mandatoryRoles: { Bat: 2, Bowl: 2, AR: 1, WK: 1 },
+      freeSlots: 0,
+    });
+    const roster: Player[] = [
+      createMockPlayer({ id: 'p1', role: 'Bat' }),
+      createMockPlayer({ id: 'p2', role: 'Bat' }), // Bat filled
+      createMockPlayer({ id: 'p3', role: 'Bowl' }),
+      // Bowl: need 1 more; AR: need 1; WK: need 1
+    ];
+    const valid = getValidRolesForNextPick(roster, config);
+    assert.strictEqual(valid.has('Bat'), false);
+    assert.strictEqual(valid.has('Bowl'), true);
+    assert.strictEqual(valid.has('AR'), true);
+    assert.strictEqual(valid.has('WK'), true);
+  });
+
+  it('when freeSlots === 0 and roster empty returns all mandatory roles', () => {
+    const config = createMockConfig({
+      rosterSize: 4,
+      mandatoryRoles: { Bat: 1, Bowl: 1, AR: 1, WK: 1 },
+      freeSlots: 0,
+    });
+    const valid = getValidRolesForNextPick([], config);
+    assert.strictEqual(valid.has('Bat'), true);
+    assert.strictEqual(valid.has('Bowl'), true);
+    assert.strictEqual(valid.has('AR'), true);
+    assert.strictEqual(valid.has('WK'), true);
+  });
+
+  it('when freeSlots > 0 returns all roles', () => {
+    const config = createMockConfig({ freeSlots: 2 });
+    const roster = [createMockPlayer({ id: 'p1', role: 'Bat' })];
+    const valid = getValidRolesForNextPick(roster, config);
+    assert.strictEqual(valid.has('Bat'), true);
+    assert.strictEqual(valid.has('Bowl'), true);
+    assert.strictEqual(valid.has('AR'), true);
+    assert.strictEqual(valid.has('WK'), true);
+  });
+});
+
+describe('validateMandatoryRolePick', () => {
+  it('when freeSlots === 0 allows pick that fills open mandatory slot', () => {
+    const config = createMockConfig({
+      rosterSize: 6,
+      mandatoryRoles: { Bat: 2, Bowl: 2, AR: 1, WK: 1 },
+      freeSlots: 0,
+    });
+    const roster: Player[] = [
+      createMockPlayer({ id: 'p1', role: 'Bowl' }),
+      createMockPlayer({ id: 'p2', role: 'AR' }),
+    ];
+    const player = createMockPlayer({ id: 'p3', role: 'Bowl' });
+    const result = validateMandatoryRolePick(player, roster, config);
+    assert.strictEqual(result.valid, true);
+  });
+
+  it('when freeSlots === 0 rejects pick for role that already has mandatory filled', () => {
+    const config = createMockConfig({
+      rosterSize: 6,
+      mandatoryRoles: { Bat: 2, Bowl: 2, AR: 1, WK: 1 },
+      freeSlots: 0,
+    });
+    const roster: Player[] = [
+      createMockPlayer({ id: 'p1', role: 'Bat' }),
+      createMockPlayer({ id: 'p2', role: 'Bat' }),
+    ];
+    const player = createMockPlayer({ id: 'p3', role: 'Bat' });
+    const result = validateMandatoryRolePick(player, roster, config);
+    assert.strictEqual(result.valid, false);
+    assert.ok(result.error?.includes('required role') || result.error?.includes('Still needed'));
+  });
+
+  it('when freeSlots > 0 allows any role', () => {
+    const config = createMockConfig({ freeSlots: 2 });
+    const roster = [createMockPlayer({ id: 'p1', role: 'Bat' })];
+    const player = createMockPlayer({ id: 'p2', role: 'AR' });
+    const result = validateMandatoryRolePick(player, roster, config);
+    assert.strictEqual(result.valid, true);
+  });
+});
+
 describe('validatePick', () => {
   it('should pass with valid pick', () => {
     const config = createMockConfig();
@@ -380,5 +467,43 @@ describe('validatePick', () => {
     const result = validatePick(player, roster, 4, config, draftedPlayerIds);
     assert.strictEqual(result.valid, false);
     assert.ok(result.errors && result.errors.length >= 2); // Already drafted + team cap
+  });
+
+  it('when freeSlots === 0 rejects pick that does not fill a required role', () => {
+    const config = createMockConfig({
+      rosterSize: 4,
+      mandatoryRoles: { Bat: 2, Bowl: 1, AR: 0, WK: 1 },
+      freeSlots: 0,
+      maxPerTeam: 2,
+      earlyRoundRule: { rounds: 1, minBat: 0, minBowl: 0 },
+    });
+    const roster: Player[] = [
+      createMockPlayer({ id: 'p1', role: 'Bat', team: 'CSK' }),
+      createMockPlayer({ id: 'p2', role: 'Bat', team: 'MI' }),
+      createMockPlayer({ id: 'p3', role: 'WK', team: 'GT' }),
+    ];
+    const player = createMockPlayer({ id: 'p4', role: 'AR', team: 'RR' }); // AR not required
+    const result = validatePick(player, roster, 1, config, []);
+    assert.strictEqual(result.valid, false);
+    assert.ok(
+      result.errors?.some(e => e.includes('required role') || e.includes('Still needed'))
+    );
+  });
+
+  it('when freeSlots === 0 allows pick that fills open mandatory slot', () => {
+    const config = createMockConfig({
+      rosterSize: 4,
+      mandatoryRoles: { Bat: 2, Bowl: 1, AR: 0, WK: 1 },
+      freeSlots: 0,
+      maxPerTeam: 2,
+      earlyRoundRule: { rounds: 1, minBat: 0, minBowl: 0 },
+    });
+    const roster: Player[] = [
+      createMockPlayer({ id: 'p1', role: 'Bat', team: 'CSK' }),
+      createMockPlayer({ id: 'p2', role: 'Bat', team: 'MI' }),
+    ];
+    const player = createMockPlayer({ id: 'p3', role: 'WK', team: 'GT' });
+    const result = validatePick(player, roster, 1, config, []);
+    assert.strictEqual(result.valid, true);
   });
 });

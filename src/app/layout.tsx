@@ -1,23 +1,33 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ToastProvider";
 
-const inter = Inter({
-  variable: "--font-geist-sans",
+const plusJakarta = Plus_Jakarta_Sans({
+  variable: "--font-sans-fallback",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
 
-const interMono = Inter({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-  weight: ["400", "500"],
-});
+const siteName = 'Fantasy Cricket Draft';
+const description = 'IPL Fantasy Cricket Draft System – real-time draft with smart validation.';
 
 export const metadata: Metadata = {
-  title: "Fantasy Cricket Draft",
-  description: "IPL Fantasy Cricket Draft System",
+  title: {
+    default: siteName,
+    template: `%s | ${siteName}`,
+  },
+  description,
+  openGraph: {
+    title: siteName,
+    description,
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: siteName,
+    description,
+  },
 };
 
 export default function RootLayout({
@@ -27,9 +37,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${inter.variable} ${interMono.variable} antialiased`}
-      >
+      <body className={`${plusJakarta.variable} antialiased`}>
         {children}
         <ToastProvider position="top-right" />
       </body>

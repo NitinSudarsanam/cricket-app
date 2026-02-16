@@ -8,8 +8,10 @@
 import {
   DraftConfig,
   Player,
+  PlayerRole,
   ValidationResult,
   IPL_TEAMS,
+  PLAYER_ROLES,
 } from '@/types';
 
 // ============================================================================
@@ -338,6 +340,79 @@ export function validateEarlyRoundPick(
 }
 
 /**
+ * Returns the set of roles that are valid for the next pick given current roster and config.
+ * When freeSlots === 0, only roles with open mandatory slots are valid.
+ * When freeSlots > 0, all roles are valid for this rule (Option A: no mandatory-first).
+ */
+export function getValidRolesForNextPick(
+  roster: Player[],
+  config: DraftConfig
+): Set<PlayerRole> {
+  const roleCount: Record<PlayerRole, number> = {
+    Bat: 0,
+    Bowl: 0,
+    AR: 0,
+    WK: 0,
+  };
+  for (const p of roster) {
+    roleCount[p.role] = (roleCount[p.role] ?? 0) + 1;
+  }
+
+  const valid = new Set<PlayerRole>();
+
+  if (config.freeSlots === 0) {
+    for (const role of PLAYER_ROLES) {
+      const required = config.mandatoryRoles[role];
+      const current = roleCount[role] ?? 0;
+      if (required > current) valid.add(role);
+    }
+    return valid;
+  }
+
+  for (const role of PLAYER_ROLES) {
+    valid.add(role);
+  }
+  return valid;
+}
+
+/**
+ * Validates that a pick fills an allowed role slot.
+ * When freeSlots === 0, the pick must fill an open mandatory slot for the player's role.
+ * Requirements: mandatory-only when required players equal roster size
+ */
+export function validateMandatoryRolePick(
+  player: Player,
+  roster: Player[],
+  config: DraftConfig
+): ValidationResult {
+  const validRoles = getValidRolesForNextPick(roster, config);
+  if (validRoles.has(player.role)) {
+    return { valid: true };
+  }
+
+  if (config.freeSlots === 0) {
+    const roleCount: Record<string, number> = {};
+    for (const r of PLAYER_ROLES) roleCount[r] = 0;
+    for (const p of roster) {
+      roleCount[p.role] = (roleCount[p.role] ?? 0) + 1;
+    }
+    const needed: string[] = [];
+    for (const r of PLAYER_ROLES) {
+      const open = config.mandatoryRoles[r] - (roleCount[r] ?? 0);
+      if (open > 0) needed.push(`${r} (${open})`);
+    }
+    return {
+      valid: false,
+      error: needed.length > 0
+        ? `You must pick a player that fills a required role. Still needed: ${needed.join(', ')}.`
+        : 'All required role slots are filled for this pick.',
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
  * Comprehensive pick validation orchestrator that runs all pick checks
  * 
  * Requirements: 5.2, 5.3, 5.4, 5.5
@@ -370,6 +445,13 @@ export function validatePick(
   if (!earlyRoundCheck.valid) {
     if (earlyRoundCheck.error) errors.push(earlyRoundCheck.error);
     if (earlyRoundCheck.errors) errors.push(...earlyRoundCheck.errors);
+  }
+
+  // Check mandatory-role pick (no free slots => must fill required role)
+  const mandatoryRoleCheck = validateMandatoryRolePick(player, roster, config);
+  if (!mandatoryRoleCheck.valid) {
+    if (mandatoryRoleCheck.error) errors.push(mandatoryRoleCheck.error);
+    if (mandatoryRoleCheck.errors) errors.push(...mandatoryRoleCheck.errors);
   }
 
   if (errors.length > 0) {

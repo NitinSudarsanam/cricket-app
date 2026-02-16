@@ -1,14 +1,35 @@
 'use client';
 
-import { Player, IPLTeam, IPL_TEAMS } from '@/types';
+import { useEffect, useState, useCallback } from 'react';
+import { Player, IPLTeam, IPL_TEAMS, PlayerRole } from '@/types';
 import { PlayerChip } from '@/components/PlayerChip';
 import { TEAM_COLORS } from '@/lib/team-colors';
+
+const CARD_SIZES_STORAGE_KEY = 'draft-player-card-sizes';
 
 export interface DraftBoardProps {
   availablePlayers: Player[];
   onPlayerSelect?: (player: Player) => void;
   disabled?: boolean;
   currentParticipantId?: string;
+  validRolesForPick?: Set<PlayerRole> | null;
+  allowDrag?: boolean;
+}
+
+function loadCardSizes(): Record<string, { w: number; h: number }> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = window.localStorage.getItem(CARD_SIZES_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, { w?: number; h?: number }>;
+    const result: Record<string, { w: number; h: number }> = {};
+    for (const [id, v] of Object.entries(parsed)) {
+      if (typeof v?.w === 'number' && typeof v?.h === 'number') result[id] = { w: v.w, h: v.h };
+    }
+    return result;
+  } catch {
+    return {};
+  }
 }
 
 export function DraftBoard({
@@ -16,7 +37,28 @@ export function DraftBoard({
   onPlayerSelect,
   disabled = false,
   currentParticipantId,
+  validRolesForPick = null,
+  allowDrag = false,
 }: DraftBoardProps) {
+  const [cardSizes, setCardSizes] = useState<Record<string, { w: number; h: number }>>({});
+
+  useEffect(() => {
+    setCardSizes(loadCardSizes());
+  }, []);
+
+  const handleResize = useCallback((playerId: string, width: number, height: number) => {
+    setCardSizes((prev) => {
+      const next = { ...prev, [playerId]: { w: width, h: height } };
+      try {
+        window.localStorage.setItem(CARD_SIZES_STORAGE_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  }, []);
+
+  const isChipDisabled = (player: Player) =>
+    disabled || (validRolesForPick != null && !validRolesForPick.has(player.role));
+
   // Group players by team
   const playersByTeam = availablePlayers.reduce((acc, player) => {
     if (!acc[player.team]) {
@@ -28,8 +70,14 @@ export function DraftBoard({
 
   return (
     <div className="w-full h-full overflow-auto">
-      {/* Desktop: 10-column grid */}
-      <div className="hidden lg:grid lg:grid-cols-10 gap-2 p-4 min-h-full">
+      {/* Flexible wrapping grid: all team boxes same size (md and up) */}
+      <div
+        className="hidden md:grid gap-2 p-4 min-h-full"
+        style={{
+          gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 180px))',
+          gridAutoRows: 'minmax(200px, 1fr)',
+        }}
+      >
         {IPL_TEAMS.map((team) => {
           const teamPlayers = playersByTeam[team] || [];
           const colors = TEAM_COLORS[team];
@@ -37,13 +85,12 @@ export function DraftBoard({
           return (
             <div
               key={team}
-              className="flex flex-col rounded-lg border-2 overflow-hidden h-fit min-h-[200px]"
+              className="flex flex-col rounded-lg border-2 overflow-hidden min-h-[200px]"
               style={{
                 borderColor: colors.border,
-                backgroundColor: `${colors.bg}33`, // 20% opacity
+                backgroundColor: `${colors.bg}33`,
               }}
             >
-              {/* Team header */}
               <div
                 className="px-2 py-2 font-semibold text-xs text-center border-b-2 flex-shrink-0"
                 style={{
@@ -51,15 +98,12 @@ export function DraftBoard({
                   borderColor: colors.border,
                 }}
               >
-                {team}
+                <span>{team}</span>
+                <span className="ml-1.5 text-slate-600 font-normal">{teamPlayers.length}</span>
               </div>
-
-              {/* Players list */}
               <div className="flex flex-col gap-2 p-2 flex-1">
                 {teamPlayers.length === 0 ? (
-                  <div className="text-xs text-gray-500 text-center py-4">
-                    No players
-                  </div>
+                  <div className="text-xs text-slate-500 text-center py-4">No players</div>
                 ) : (
                   teamPlayers.map((player) => (
                     <PlayerChip
@@ -67,61 +111,12 @@ export function DraftBoard({
                       player={player}
                       status="available"
                       onClick={onPlayerSelect}
-                      disabled={disabled}
-                    />
-                  ))
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Tablet: 2-column grid */}
-      <div className="hidden md:grid lg:hidden md:grid-cols-2 gap-3 p-4 min-h-full">
-        {IPL_TEAMS.map((team) => {
-          const teamPlayers = playersByTeam[team] || [];
-          const colors = TEAM_COLORS[team];
-
-          return (
-            <div
-              key={team}
-              className="flex flex-col rounded-lg border-2 overflow-hidden h-fit"
-              style={{
-                borderColor: colors.border,
-                backgroundColor: `${colors.bg}33`,
-              }}
-            >
-              {/* Team header */}
-              <div
-                className="px-4 py-3 font-semibold text-sm text-center border-b-2 flex-shrink-0 touch-manipulation"
-                style={{
-                  backgroundColor: colors.bg,
-                  borderColor: colors.border,
-                }}
-              >
-                <div className="flex items-center justify-between">
-                  <span>{team}</span>
-                  <span className="text-xs text-gray-600 font-normal">
-                    {teamPlayers.length}
-                  </span>
-                </div>
-              </div>
-
-              {/* Players list */}
-              <div className="flex flex-col gap-2 p-3">
-                {teamPlayers.length === 0 ? (
-                  <div className="text-sm text-gray-500 text-center py-4">
-                    No players available
-                  </div>
-                ) : (
-                  teamPlayers.map((player) => (
-                    <PlayerChip
-                      key={player.id}
-                      player={player}
-                      status="available"
-                      onClick={onPlayerSelect}
-                      disabled={disabled}
+                      disabled={isChipDisabled(player)}
+                      resizable
+                      width={undefined}
+                      height={undefined}
+                      onResize={(w, h) => handleResize(player.id, w, h)}
+                      draggable={allowDrag}
                     />
                   ))
                 )}
@@ -164,7 +159,7 @@ export function DraftBoard({
 
               <div className="mt-2 flex flex-col gap-2 px-1">
                 {teamPlayers.length === 0 ? (
-                  <div className="text-sm text-gray-500 text-center py-4">
+                  <div className="text-sm text-slate-500 text-center py-4">
                     No players available
                   </div>
                 ) : (
@@ -174,7 +169,12 @@ export function DraftBoard({
                       player={player}
                       status="available"
                       onClick={onPlayerSelect}
-                      disabled={disabled}
+                      disabled={isChipDisabled(player)}
+                      resizable
+                      width={undefined}
+                      height={undefined}
+                      onResize={(w, h) => handleResize(player.id, w, h)}
+                      draggable={allowDrag}
                     />
                   ))
                 )}

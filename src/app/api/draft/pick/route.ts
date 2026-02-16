@@ -6,8 +6,6 @@ import { validatePick } from '@/lib/rule-engine';
 import {
   getActiveDraftState,
   getCurrentParticipantId,
-  addPick,
-  advanceToNextPick,
   calculatePickNumber,
   DraftOrderType
 } from '@/lib/draft-state-manager';
@@ -93,22 +91,11 @@ export async function POST(request: NextRequest) {
 
     const draftConfig = prismaDraftConfigToDraftConfig(prismaDraftConfig);
 
-    // Determine draft order type (default to snake)
-    const draftOrder: DraftOrderType = 'snake';
+    // Use persisted draft order type from when draft was started
+    const draftOrder: DraftOrderType = (draftState.draftOrderType === 'linear' ? 'linear' : 'snake');
 
     // Verify it's the correct participant's turn
     const currentParticipantId = getCurrentParticipantId(draftState, draftOrder);
-
-    // Log for debugging
-    console.log('Pick attempt:', {
-      requestingParticipant: participantId,
-      currentParticipantId,
-      currentRound: draftState.currentRound,
-      currentPickIndex: draftState.currentPickIndex,
-      participantOrder: draftState.participantOrder,
-      draftOrder,
-      isSnakeRound: draftOrder === 'snake' && draftState.currentRound % 2 === 0
-    });
 
     if (currentParticipantId !== participantId) {
       return NextResponse.json(
@@ -205,22 +192,76 @@ export async function POST(request: NextRequest) {
       draftState.participantOrder.length
     );
 
-    // Add the pick to the draft state
-    await addPick(
-      draftState.id,
-      participantId,
-      playerId,
-      draftState.currentRound,
-      pickNumber
-    );
+    // Run pick + advance in a transaction with row-level lock to prevent race conditions
+    await prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT 1 FROM "DraftState" WHERE id = ${draftState.id} FOR UPDATE`;
+      const locked = await tx.draftState.findUnique({
+        where: { id: draftState.id },
+        include: {
+          draftOrders: { orderBy: { position: 'asc' } },
+          picks: true,
+        },
+      });
+      if (!locked) throw new Error('Draft state not found');
+      const orderType = locked.draftOrderType === 'linear' ? 'linear' : 'snake';
+      const participantOrder = locked.draftOrders.map((o) => o.participantId);
+      const currentForTurn =
+        orderType === 'snake' && locked.currentRound % 2 === 0
+          ? participantOrder[participantOrder.length - 1 - locked.currentPickIndex]
+          : participantOrder[locked.currentPickIndex];
+      if (currentForTurn !== participantId) {
+        throw new Error('CONFLICT: It is not your turn (another pick may have been made)');
+      }
+      const alreadyPicked = locked.picks.some((p) => p.playerId === playerId);
+      if (alreadyPicked) {
+        throw new Error('CONFLICT: Player already drafted');
+      }
+      await tx.pick.create({
+        data: {
+          draftStateId: draftState.id,
+          participantId,
+          playerId,
+          round: draftState.currentRound,
+          pickNumber,
+          timestamp: new Date(),
+        },
+      });
+      let nextRound = locked.currentRound;
+      let nextIndex = locked.currentPickIndex;
+      const isSnakeRound = orderType === 'snake' && nextRound % 2 === 0;
+      if (isSnakeRound) {
+        nextIndex--;
+        if (nextIndex < 0) {
+          nextRound++;
+          nextIndex = 0;
+        }
+      } else {
+        nextIndex++;
+        if (nextIndex >= participantOrder.length) {
+          nextRound++;
+          nextIndex =
+            orderType === 'snake' && nextRound % 2 === 0 ? participantOrder.length - 1 : 0;
+        }
+      }
+      const isComplete = nextRound > draftConfig.totalRounds;
+      await tx.draftState.update({
+        where: { id: draftState.id },
+        data: {
+          currentRound: isComplete ? draftConfig.totalRounds : nextRound,
+          currentPickIndex: isComplete ? participantOrder.length - 1 : nextIndex,
+          status: isComplete ? 'completed' : locked.status,
+          completedAt: isComplete ? new Date() : null,
+        },
+      });
+    });
 
-    // Advance to next pick
-    const updatedState = await advanceToNextPick(
-      draftState.id,
-      draftConfig.totalRounds,
-      draftState.participantOrder.length,
-      draftOrder
-    );
+    const updatedState = await getActiveDraftState();
+    if (!updatedState) {
+      return NextResponse.json(
+        { success: false, error: 'Failed to load draft state after pick' },
+        { status: 500 }
+      );
+    }
 
     // Get participant name for response
     const participant = await prisma.participant.findUnique({
@@ -276,6 +317,13 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
+    const message = error instanceof Error ? error.message : '';
+    if (message.startsWith('CONFLICT:')) {
+      return NextResponse.json(
+        { success: false, error: message.replace('CONFLICT: ', '') },
+        { status: 409 }
+      );
+    }
     console.error('Error making pick:', error);
     return NextResponse.json(
       {

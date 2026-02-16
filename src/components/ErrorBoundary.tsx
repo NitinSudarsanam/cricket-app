@@ -63,8 +63,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       }
 
       return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6">
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-white rounded-md border border-slate-200 shadow-sm p-6">
             <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full">
               <svg
                 className="w-6 h-6 text-red-600"
@@ -81,25 +81,25 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               </svg>
             </div>
             
-            <h2 className="mt-4 text-xl font-semibold text-gray-900 text-center">
+            <h2 className="mt-4 text-xl font-semibold text-slate-900 text-center">
               Something went wrong
             </h2>
             
-            <p className="mt-2 text-sm text-gray-600 text-center">
+            <p className="mt-2 text-sm text-slate-600 text-center">
               {this.state.error?.message || 'An unexpected error occurred'}
             </p>
             
             <div className="mt-6 flex gap-3">
               <button
                 onClick={this.handleRetry}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors font-medium"
               >
                 Try Again
               </button>
               
               <button
                 onClick={this.handleReport}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                className="flex-1 px-4 py-2 bg-slate-200 text-slate-700 rounded-md hover:bg-slate-300 transition-colors font-medium"
               >
                 Report Issue
               </button>
@@ -107,10 +107,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             
             {process.env.NODE_ENV === 'development' && this.state.error && (
               <details className="mt-4 text-xs">
-                <summary className="cursor-pointer text-gray-500 hover:text-gray-700">
+                <summary className="cursor-pointer text-slate-500 hover:text-slate-700">
                   Error Details (Development Only)
                 </summary>
-                <pre className="mt-2 p-2 bg-gray-100 rounded overflow-auto text-xs">
+                <pre className="mt-2 p-2 bg-slate-100 rounded overflow-auto text-xs">
                   {this.state.error.stack}
                 </pre>
               </details>

@@ -92,16 +92,31 @@ export async function GET(request: NextRequest) {
       });
 
       if (!activeDraftState) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'No active draft found'
-          },
-          { status: 404 }
-        );
+        // Fall back to most recent draft (any status) so admin can see completed/not_started and reset
+        const latestDraftState = await prisma.draftState.findFirst({
+          orderBy: { createdAt: 'desc' },
+          include: {
+            draftOrders: {
+              include: { participant: true },
+              orderBy: { position: 'asc' }
+            },
+            picks: {
+              include: { player: true, participant: true },
+              orderBy: { pickNumber: 'asc' }
+            },
+            draftConfig: true
+          }
+        });
+        if (!latestDraftState) {
+          return NextResponse.json(
+            { success: false, error: 'No draft found' },
+            { status: 404 }
+          );
+        }
+        draftState = latestDraftState;
+      } else {
+        draftState = activeDraftState;
       }
-
-      draftState = activeDraftState;
     }
 
     // Transform to response format
@@ -121,8 +136,8 @@ export async function GET(request: NextRequest) {
       timestamp: pick.timestamp
     }));
 
-    // Determine draft order type (default to snake)
-    const draftOrder: DraftOrderType = 'snake';
+    // Use persisted draft order type from draft state
+    const draftOrder: DraftOrderType = (draftState.draftOrderType === 'linear' ? 'linear' : 'snake');
 
     // Get current participant
     const currentParticipantId = getCurrentParticipantId(
@@ -132,6 +147,7 @@ export async function GET(request: NextRequest) {
         currentPickIndex: draftState.currentPickIndex,
         picks: [],
         participantOrder,
+        draftOrderType: draftOrder,
         status: draftState.status as any,
         startedAt: draftState.startedAt || undefined,
         completedAt: draftState.completedAt || undefined,
@@ -149,6 +165,7 @@ export async function GET(request: NextRequest) {
       id: draftState.id,
       currentRound: draftState.currentRound,
       currentPickIndex: draftState.currentPickIndex,
+      draftOrderType: draftOrder,
       status: draftState.status,
       participantOrder,
       picks,

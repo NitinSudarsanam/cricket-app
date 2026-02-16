@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Player, IPLTeam, PlayerRole, IPL_TEAMS, PLAYER_ROLES } from '@/types';
 import { PlayerChip } from '@/components/PlayerChip';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { Modal } from '@/components/Modal';
+import { Skeleton, SkeletonRow } from '@/components/Skeleton';
 import { useToast } from '@/hooks/useToast';
 
 interface PlayerFormData {
@@ -222,7 +223,48 @@ export function PlayerManagement() {
     });
 
   if (loading) {
-    return <LoadingSpinner variant="full-page" />;
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <Skeleton className="h-8 w-56 mb-2" />
+            <Skeleton className="h-4 w-72" />
+          </div>
+          <div className="flex gap-3">
+            <Skeleton className="h-10 w-32 rounded-md" />
+            <Skeleton className="h-10 w-28 rounded-md" />
+          </div>
+        </div>
+        <div className="bg-white p-3 md:p-4 rounded-md border border-slate-200 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i}>
+                <Skeleton className="h-4 w-16 mb-1" />
+                <Skeleton className="h-10 w-full rounded-md" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="bg-white rounded-md border border-slate-200 overflow-hidden">
+          <table className="w-full min-w-[640px]">
+            <thead className="bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Player</th>
+                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Team</th>
+                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Role</th>
+                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Foreign</th>
+                <th className="px-4 lg:px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <SkeletonRow key={i} cols={5} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -230,21 +272,21 @@ export function PlayerManagement() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-semibold text-gray-900">Player Management</h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <h2 className="text-2xl font-semibold text-slate-900">Player Management</h2>
+          <p className="text-sm text-slate-600 mt-1">
             Manage the player pool for your draft ({players.length} players)
           </p>
         </div>
         <div className="flex gap-3 flex-shrink-0">
           <button
             onClick={() => setIsImportModalOpen(true)}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors"
           >
             Import Players
           </button>
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-md hover:bg-emerald-700 transition-colors"
           >
             Add Player
           </button>
@@ -252,16 +294,51 @@ export function PlayerManagement() {
       </div>
 
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <div className="p-4 bg-red-50 border border-red-200 rounded-md text-red-700">
           {error}
         </div>
       )}
 
+      {players.length === 0 && (
+        <div className="bg-white rounded-md border border-slate-200 p-12 text-center">
+          <div className="text-slate-400 mb-4">
+            <svg
+              className="w-16 h-16 mx-auto"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-slate-900 mb-1">No players in the pool yet</h3>
+          <p className="text-sm text-slate-600 mb-6 max-w-sm mx-auto">
+            Add players manually or import a list to get started.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Add Player
+            </button>
+            <button
+              onClick={() => setIsImportModalOpen(true)}
+              className="px-5 py-2.5 bg-white text-slate-700 text-sm font-medium rounded-md border border-slate-300 hover:bg-slate-50 transition-colors"
+            >
+              Import Players
+            </button>
+          </div>
+        </div>
+      )}
+
+      {players.length > 0 && (
+        <>
       {/* Filters */}
-      <div className="bg-white p-3 md:p-4 rounded-lg border border-gray-200 space-y-3 md:space-y-4">
+      <div className="bg-white p-3 md:p-4 rounded-md border border-slate-200 space-y-3 md:space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           <div className="md:col-span-2 lg:col-span-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Search
             </label>
             <input
@@ -269,18 +346,18 @@ export function PlayerManagement() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by name..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:text-base"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm md:text-base"
             />
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Team
             </label>
             <select
               value={filterTeam}
               onChange={(e) => setFilterTeam(e.target.value as IPLTeam | 'all')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:text-base"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm md:text-base"
             >
               <option value="all">All Teams</option>
               {IPL_TEAMS.map((team) => (
@@ -290,13 +367,13 @@ export function PlayerManagement() {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Role
             </label>
             <select
               value={filterRole}
               onChange={(e) => setFilterRole(e.target.value as PlayerRole | 'all')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:text-base"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm md:text-base"
             >
               <option value="all">All Roles</option>
               {PLAYER_ROLES.map((role) => (
@@ -306,13 +383,13 @@ export function PlayerManagement() {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Sort By
             </label>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as 'name' | 'team' | 'role')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:text-base"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm md:text-base"
             >
               <option value="name">Name</option>
               <option value="team">Team</option>
@@ -323,24 +400,24 @@ export function PlayerManagement() {
       </div>
 
       {/* Player List */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-md border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px]">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                   Player
                 </th>
-                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                   Team
                 </th>
-                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                   Role
                 </th>
-                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                   Foreign
                 </th>
-                <th className="px-4 lg:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 lg:px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -348,24 +425,24 @@ export function PlayerManagement() {
             <tbody className="divide-y divide-gray-200">
               {filteredPlayers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 lg:px-6 py-8 text-center text-gray-500">
+                  <td colSpan={5} className="px-4 lg:px-6 py-8 text-center text-slate-500">
                     No players found
                   </td>
                 </tr>
               ) : (
                 filteredPlayers.map((player) => (
-                  <tr key={player.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={player.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-4 lg:px-6 py-4">
-                      <div className="font-medium text-gray-900">{player.name}</div>
+                      <div className="font-medium text-slate-900">{player.name}</div>
                     </td>
                     <td className="px-4 lg:px-6 py-4">
-                      <span className="text-sm text-gray-700">{player.team}</span>
+                      <span className="text-sm text-slate-700">{player.team}</span>
                     </td>
                     <td className="px-4 lg:px-6 py-4">
-                      <span className="text-sm text-gray-700">{player.role}</span>
+                      <span className="text-sm text-slate-700">{player.role}</span>
                     </td>
                     <td className="px-4 lg:px-6 py-4">
-                      <span className="text-sm text-gray-700">
+                      <span className="text-sm text-slate-700">
                         {player.isForeign ? 'Yes' : 'No'}
                       </span>
                     </td>
@@ -373,7 +450,7 @@ export function PlayerManagement() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => openEditModal(player)}
-                          className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                          className="text-sm text-emerald-600 hover:text-emerald-800 font-medium transition-colors"
                         >
                           Edit
                         </button>
@@ -392,16 +469,18 @@ export function PlayerManagement() {
           </table>
         </div>
       </div>
+        </>
+      )}
 
       {/* Add Player Modal */}
-      {isAddModalOpen && (
-        <Modal
-          title="Add New Player"
-          onClose={() => {
-            setIsAddModalOpen(false);
-            resetForm();
-          }}
-        >
+      <Modal
+        open={isAddModalOpen}
+        title="Add New Player"
+        onClose={() => {
+          setIsAddModalOpen(false);
+          resetForm();
+        }}
+      >
           <form onSubmit={handleAddPlayer} className="space-y-4">
             <PlayerForm formData={formData} setFormData={setFormData} />
             <div className="flex justify-end gap-3 pt-4">
@@ -411,31 +490,30 @@ export function PlayerManagement() {
                   setIsAddModalOpen(false);
                   resetForm();
                 }}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-md hover:bg-emerald-700"
               >
                 Add Player
               </button>
             </div>
           </form>
-        </Modal>
-      )}
+      </Modal>
 
       {/* Edit Player Modal */}
-      {isEditModalOpen && editingPlayer && (
-        <Modal
-          title="Edit Player"
-          onClose={() => {
-            setIsEditModalOpen(false);
-            setEditingPlayer(null);
-            resetForm();
-          }}
-        >
+      <Modal
+        open={isEditModalOpen && !!editingPlayer}
+        title="Edit Player"
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingPlayer(null);
+          resetForm();
+        }}
+      >
           <form onSubmit={handleEditPlayer} className="space-y-4">
             <PlayerForm formData={formData} setFormData={setFormData} />
             <div className="flex justify-end gap-3 pt-4">
@@ -446,87 +524,85 @@ export function PlayerManagement() {
                   setEditingPlayer(null);
                   resetForm();
                 }}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-md hover:bg-emerald-700"
               >
                 Save Changes
               </button>
             </div>
           </form>
-        </Modal>
-      )}
+      </Modal>
 
       {/* Delete Confirmation Modal */}
-      {deleteConfirmId && (
-        <Modal
-          title="Delete Player"
-          onClose={() => setDeleteConfirmId(null)}
-        >
-          <p className="text-gray-700 mb-6">
+      <Modal
+        open={!!deleteConfirmId}
+        title="Delete Player"
+        onClose={() => setDeleteConfirmId(null)}
+      >
+          <p className="text-slate-700 mb-6">
             Are you sure you want to delete this player? This action cannot be undone.
           </p>
           <div className="flex justify-end gap-3">
             <button
               onClick={() => setDeleteConfirmId(null)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50"
             >
               Cancel
             </button>
             <button
-              onClick={() => handleDeletePlayer(deleteConfirmId)}
+              onClick={() => { if (deleteConfirmId) handleDeletePlayer(deleteConfirmId); }}
               className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
             >
               Delete
             </button>
           </div>
-        </Modal>
-      )}
+      </Modal>
 
       {/* Import Modal */}
-      {isImportModalOpen && (
-        <Modal
-          title="Import Players"
-          onClose={() => {
-            setIsImportModalOpen(false);
-            setImportFile(null);
-            setImportResult(null);
-          }}
-        >
+      <Modal
+        open={isImportModalOpen}
+        title="Import Players"
+        onClose={() => {
+          setIsImportModalOpen(false);
+          setImportFile(null);
+          setImportResult(null);
+        }}
+      >
           <form onSubmit={handleImport} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-slate-700 mb-2">
                 Upload CSV or JSON file
               </label>
               <input
                 type="file"
                 accept=".csv,.json"
                 onChange={(e) => setImportFile(e.target.files?.[0] || null)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-slate-500 mt-2">
                 CSV format: name,team,role,isForeign
               </p>
             </div>
 
             {importResult && (
-              <div className={`p-4 rounded-lg ${importResult.failed > 0 ? 'bg-yellow-50 border border-yellow-200' : 'bg-green-50 border border-green-200'}`}>
-                <p className="font-medium text-gray-900 mb-2">
+              <div className={`p-4 rounded-lg ${importResult.failed > 0 ? 'bg-amber-50 border border-amber-200' : 'bg-emerald-50 border border-emerald-200'}`}>
+                <p className="font-medium text-slate-900 mb-2">
                   Import Complete
                 </p>
-                <p className="text-sm text-gray-700">
+                <p className="text-sm text-slate-700">
                   Successfully imported: {importResult.success}
                 </p>
                 {importResult.failed > 0 && (
                   <>
-                    <p className="text-sm text-gray-700">
+                    <p className="text-sm text-slate-700">
                       Failed: {importResult.failed}
                     </p>
-                    <div className="mt-2 text-xs text-gray-600 max-h-32 overflow-y-auto">
+                    <div className="mt-2 text-xs text-slate-600 max-h-32 overflow-y-auto">
                       {importResult.errors.map((error, i) => (
                         <div key={i}>• {error}</div>
                       ))}
@@ -544,21 +620,20 @@ export function PlayerManagement() {
                   setImportFile(null);
                   setImportResult(null);
                 }}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50"
               >
                 Close
               </button>
               <button
                 type="submit"
                 disabled={!importFile || importing}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-md hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {importing ? 'Importing...' : 'Import'}
               </button>
             </div>
           </form>
-        </Modal>
-      )}
+      </Modal>
     </div>
   );
 }
@@ -574,7 +649,7 @@ function PlayerForm({
   return (
     <>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-slate-700 mb-1">
           Player Name *
         </label>
         <input
@@ -582,20 +657,20 @@ function PlayerForm({
           required
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          className="w-full px-3 py-2.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
+          className="w-full px-3 py-2.5 md:py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-base"
           placeholder="Enter player name"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-slate-700 mb-1">
           Team *
         </label>
         <select
           required
           value={formData.team}
           onChange={(e) => setFormData({ ...formData, team: e.target.value as IPLTeam })}
-          className="w-full px-3 py-2.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
+          className="w-full px-3 py-2.5 md:py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-base"
         >
           {IPL_TEAMS.map((team) => (
             <option key={team} value={team}>{team}</option>
@@ -604,14 +679,14 @@ function PlayerForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-slate-700 mb-1">
           Role *
         </label>
         <select
           required
           value={formData.role}
           onChange={(e) => setFormData({ ...formData, role: e.target.value as PlayerRole })}
-          className="w-full px-3 py-2.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
+          className="w-full px-3 py-2.5 md:py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-base"
         >
           {PLAYER_ROLES.map((role) => (
             <option key={role} value={role}>{role}</option>
@@ -625,9 +700,9 @@ function PlayerForm({
           id="isForeign"
           checked={formData.isForeign}
           onChange={(e) => setFormData({ ...formData, isForeign: e.target.checked })}
-          className="w-5 h-5 md:w-4 md:h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 touch-manipulation"
+          className="w-5 h-5 md:w-4 md:h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 touch-manipulation"
         />
-        <label htmlFor="isForeign" className="ml-3 text-sm md:text-base text-gray-700 touch-manipulation">
+        <label htmlFor="isForeign" className="ml-3 text-sm md:text-base text-slate-700 touch-manipulation">
           Foreign Player
         </label>
       </div>
@@ -635,35 +710,3 @@ function PlayerForm({
   );
 }
 
-// Modal Component
-function Modal({ 
-  title, 
-  children, 
-  onClose 
-}: { 
-  title: string; 
-  children: React.ReactNode; 
-  onClose: () => void;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-black bg-opacity-50">
-      <div className="bg-white rounded-t-2xl md:rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto animate-slide-up">
-        <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
-          <h3 className="text-base md:text-lg font-semibold text-gray-900">{title}</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors p-2 touch-manipulation"
-            aria-label="Close"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        <div className="p-4 md:p-6">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-}

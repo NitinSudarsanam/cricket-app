@@ -16,7 +16,7 @@ export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-slate-700 mb-1">
             {label}
             {required && <span className="text-red-500 ml-1">*</span>}
           </label>
@@ -25,12 +25,12 @@ export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
         <select
           ref={ref}
           className={`
-            w-full px-3 py-2 border rounded-lg
+            w-full px-3 py-2 border rounded-md
             focus:ring-2 focus:outline-none transition-colors
             disabled:opacity-50 disabled:cursor-not-allowed
             ${hasError 
               ? 'border-red-300 focus:border-red-500 focus:ring-red-200' 
-              : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
+              : 'border-slate-300 focus:border-emerald-500 focus:ring-emerald-200'
             }
             ${className}
           `}

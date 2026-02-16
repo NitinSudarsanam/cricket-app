@@ -5,6 +5,68 @@ import { UpdatePlayerRequest, IPL_TEAMS, PLAYER_ROLES } from '@/types';
 import { isIPLTeam, isPlayerRole } from '@/lib/type-guards';
 
 /**
+ * GET /api/players/:id?includeScores=true&seasonId=
+ * Get player by id; optionally include PlayerScore for the given seasonId.
+ */
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const searchParams = request.nextUrl.searchParams;
+    const includeScores = searchParams.get('includeScores') === 'true';
+    const seasonId = searchParams.get('seasonId');
+
+    const player = await prisma.player.findUnique({
+      where: { id },
+      include:
+        includeScores && seasonId
+          ? {
+              playerScores: {
+                where: { seasonId },
+                take: 1,
+                orderBy: { updatedAt: 'desc' },
+              },
+            }
+          : undefined,
+    });
+
+    if (!player) {
+      return NextResponse.json({ success: false, error: 'Player not found' }, { status: 404 });
+    }
+
+    const data: Record<string, unknown> = {
+      id: player.id,
+      name: player.name,
+      team: player.team,
+      role: player.role,
+      isForeign: player.isForeign,
+      metadata: player.metadata,
+      createdAt: player.createdAt,
+      updatedAt: player.updatedAt,
+    };
+    const scores = 'playerScores' in player && Array.isArray(player.playerScores) ? player.playerScores : [];
+    if (includeScores && scores.length) {
+      data.scores = scores.map((ps: { seasonId: string | null; points: number; source: string; updatedAt: Date }) => ({
+        seasonId: ps.seasonId,
+        points: ps.points,
+        source: ps.source,
+        updatedAt: ps.updatedAt,
+      }));
+    }
+
+    return NextResponse.json({ success: true, data });
+  } catch (error) {
+    console.error('Error fetching player:', error);
+    return NextResponse.json(
+      { success: false, error: handleDatabaseError(error) },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * PUT /api/players/:id
  * Update an existing player
  */

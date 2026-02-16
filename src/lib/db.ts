@@ -9,8 +9,15 @@ import { Pool } from 'pg';
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 // Create connection pool and adapter for Prisma 7
+// Use longer timeouts for remote DBs (e.g. Supabase) to avoid P1008 "Operation has timed out"
 const connectionString = process.env.DATABASE_URL;
-const pool = connectionString ? new Pool({ connectionString }) : undefined;
+const pool = connectionString
+  ? new Pool({
+      connectionString,
+      connectionTimeoutMillis: 30000,
+      ssl: { rejectUnauthorized: false },
+    })
+  : undefined;
 const adapter = pool ? new PrismaPg(pool) : undefined;
 
 export const prisma =
@@ -69,9 +76,23 @@ export function handleDatabaseError(error: unknown): string {
     if (error.message.includes('ECONNREFUSED')) {
       return 'Unable to connect to database. Please check your connection.';
     }
-    
+    if (error.message.includes('does not exist')) {
+      return 'Database not found. Check DATABASE_URL and ensure the database name (after the last /) exists on your server.';
+    }
+    if (error.message.includes('timed out') || error.message.includes('P1008')) {
+      return 'Database operation timed out. If using a remote DB (e.g. Supabase), check network, region, and that the database is not paused.';
+    }
+
     return error.message;
   }
   
   return 'An unexpected database error occurred.';
+}
+
+/** Whether the error is a timeout (P1008) – use for 503 responses */
+export function isDatabaseTimeoutError(error: unknown): boolean {
+  if (error instanceof Error) {
+    return error.message.includes('timed out') || error.message.includes('P1008');
+  }
+  return typeof error === 'object' && error !== null && 'code' in error && (error as { code?: string }).code === 'P1008';
 }

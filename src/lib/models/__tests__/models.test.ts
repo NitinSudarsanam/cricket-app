@@ -4,6 +4,7 @@
  * These tests verify that type guards, validation, and mappers work correctly.
  */
 
+import { describe, it } from 'vitest';
 import {
   isIPLTeam,
   isPlayerRole,
@@ -26,8 +27,10 @@ import type {
   DraftConfig,
   IPLTeam,
   PlayerRole,
-} from '@/types';
+} from '../../../types';
 
+describe('Models', () => {
+  it('type guards, validation, and utilities', () => {
 // ============================================================================
 // Type Guard Tests
 // ============================================================================
@@ -189,3 +192,5 @@ console.log('✓ Utility Functions passed');
 
 console.log('\n✅ All model tests passed successfully!');
 console.log('Data models and TypeScript interfaces are working correctly.');
+  });
+});

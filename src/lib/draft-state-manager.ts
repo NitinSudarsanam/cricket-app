@@ -34,6 +34,7 @@ export async function initializeDraftState(
     data: {
       currentRound: 1,
       currentPickIndex: 0,
+      draftOrderType: orderType,
       status: 'in_progress',
       startedAt: new Date(),
       draftConfigId,
@@ -403,12 +404,15 @@ function transformToDraftState(prismaDraftState: any): DraftState {
     timestamp: pick.timestamp
   }));
 
+  const draftOrderType = (prismaDraftState.draftOrderType === 'linear' ? 'linear' : 'snake') as 'snake' | 'linear';
+
   return {
     id: prismaDraftState.id,
     currentRound: prismaDraftState.currentRound,
     currentPickIndex: prismaDraftState.currentPickIndex,
     picks,
     participantOrder,
+    draftOrderType,
     status: prismaDraftState.status,
     startedAt: prismaDraftState.startedAt,
     completedAt: prismaDraftState.completedAt,

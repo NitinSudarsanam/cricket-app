@@ -36,7 +36,27 @@ Automated deployment script for Vercel.
 ./scripts/deploy.sh production
 ```
 
-### 2. `analyze-bundle.js`
+### 2. `test-sportmonks-api.js`
+
+Tests the Sportmonks Cricket API (token, leagues, seasons, and optionally teams/squad). Use this to verify your API key and that Cricket is included in your plan.
+
+**Usage:**
+
+```bash
+node scripts/test-sportmonks-api.js
+# or
+npm run test:sportmonks
+```
+
+**Requires:** `SPORTMONKS_API_TOKEN` in `.env` (loaded from project root).
+
+**What it does:** Calls `GET /leagues`, `GET /seasons`, and `GET /teams?include=squad&filter[season_id]=...`. If leagues and seasons succeed, the script exits 0. A 500 on teams/squad is treated as a warning (may require a higher plan).
+
+### 3. `run-sync.js`
+
+Calls the app’s sync endpoint (app must be running). See main README for sync setup.
+
+### 4. `analyze-bundle.js`
 
 Analyzes Next.js build output and provides bundle size insights.
 
@@ -77,6 +97,10 @@ These scripts are defined in `package.json` and can be run with `npm run <script
 
 - `npm run analyze` - Analyze bundle sizes
 - `npm run build:analyze` - Build and analyze
+
+### API
+
+- `npm run test:sportmonks` - Test Sportmonks Cricket API (leagues, seasons)
 
 ### Database
 

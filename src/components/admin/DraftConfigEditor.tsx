@@ -162,12 +162,12 @@ export function DraftConfigEditor() {
 
   if (error) {
     return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+      <div className="p-4 bg-red-50 border border-red-200 rounded-md text-red-700">
         <p className="font-medium">Error loading configuration</p>
         <p className="text-sm mt-1">{error}</p>
         <button
           onClick={fetchConfig}
-          className="mt-3 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
+          className="mt-3 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
         >
           Retry
         </button>
@@ -177,7 +177,7 @@ export function DraftConfigEditor() {
 
   if (!config || !config.mandatoryRoles) {
     return (
-      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-700">
+      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-700">
         <p className="font-medium">No configuration found</p>
         <p className="text-sm mt-1">Please create a draft configuration first.</p>
       </div>
@@ -192,8 +192,8 @@ export function DraftConfigEditor() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-semibold text-gray-900">Draft Configuration</h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <h2 className="text-2xl font-semibold text-slate-900">Draft Configuration</h2>
+          <p className="text-sm text-slate-600 mt-1">
             Configure the rules and constraints for your draft
           </p>
         </div>
@@ -201,14 +201,14 @@ export function DraftConfigEditor() {
           <button
             onClick={validateConfig}
             disabled={validating}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors disabled:opacity-50"
           >
             {validating ? 'Validating...' : 'Validate'}
           </button>
           <button
             onClick={saveConfig}
             disabled={saving || config.isLocked}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? 'Saving...' : 'Save Configuration'}
           </button>
@@ -216,19 +216,19 @@ export function DraftConfigEditor() {
       </div>
 
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <div className="p-4 bg-red-50 border border-red-200 rounded-md text-red-700">
           {error}
         </div>
       )}
 
       {successMessage && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+        <div className="p-4 bg-green-50 border border-green-200 rounded-md text-green-700">
           {successMessage}
         </div>
       )}
 
       {validationErrors.length > 0 && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+        <div className="p-4 bg-red-50 border border-red-200 rounded-md">
           <h4 className="font-medium text-red-900 mb-2">Validation Errors:</h4>
           <ul className="list-disc list-inside space-y-1 text-sm text-red-700">
             {validationErrors.map((err, i) => (
@@ -239,21 +239,21 @@ export function DraftConfigEditor() {
       )}
 
       {config.isLocked && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800">
+        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-800">
           ⚠️ Configuration is locked because a draft is in progress
         </div>
       )}
 
       {/* Roster Size */}
-      <div className="bg-white p-6 rounded-lg border border-gray-200 space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">Roster Settings</h3>
+      <div className="bg-white p-6 rounded-md border border-slate-200 space-y-4">
+        <h3 className="text-lg font-semibold text-slate-900">Roster Settings</h3>
         
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-gray-700">
+            <label className="text-sm font-medium text-slate-700">
               Roster Size: {config.rosterSize}
             </label>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-slate-500">
               Total Rounds: {config.totalRounds}
             </span>
           </div>
@@ -264,9 +264,9 @@ export function DraftConfigEditor() {
             value={config.rosterSize}
             onChange={(e) => updateConfig({ rosterSize: parseInt(e.target.value) })}
             disabled={config.isLocked}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-2 bg-slate-200 rounded-md appearance-none cursor-pointer accent-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
           />
-          <div className="flex justify-between text-xs text-gray-500 mt-1">
+          <div className="flex justify-between text-xs text-slate-500 mt-1">
             <span>1</span>
             <span>20</span>
           </div>
@@ -274,7 +274,7 @@ export function DraftConfigEditor() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Min Players Per Team
             </label>
             <input
@@ -284,12 +284,12 @@ export function DraftConfigEditor() {
               value={config.minPerTeam}
               onChange={(e) => updateConfig({ minPerTeam: parseInt(e.target.value) || 0 })}
               disabled={config.isLocked}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Max Players Per Team
             </label>
             <input
@@ -299,19 +299,19 @@ export function DraftConfigEditor() {
               value={config.maxPerTeam}
               onChange={(e) => updateConfig({ maxPerTeam: parseInt(e.target.value) || 0 })}
               disabled={config.isLocked}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
         </div>
       </div>
 
       {/* Role Requirements */}
-      <div className="bg-white p-6 rounded-lg border border-gray-200 space-y-4">
+      <div className="bg-white p-6 rounded-md border border-slate-200 space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900">Mandatory Role Requirements</h3>
+          <h3 className="text-lg font-semibold text-slate-900">Mandatory Role Requirements</h3>
           <div className="text-sm">
-            <span className="text-gray-600">Total: </span>
-            <span className={`font-semibold ${mandatoryTotal > config.rosterSize ? 'text-red-600' : 'text-gray-900'}`}>
+            <span className="text-slate-600">Total: </span>
+            <span className={`font-semibold ${mandatoryTotal > config.rosterSize ? 'text-red-600' : 'text-slate-900'}`}>
               {mandatoryTotal} / {config.rosterSize}
             </span>
           </div>
@@ -319,7 +319,7 @@ export function DraftConfigEditor() {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Batsmen (Bat)
             </label>
             <input
@@ -329,12 +329,12 @@ export function DraftConfigEditor() {
               value={config.mandatoryRoles.Bat}
               onChange={(e) => updateMandatoryRoles('Bat', parseInt(e.target.value) || 0)}
               disabled={config.isLocked}
-              className="w-full px-3 py-2.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed text-base"
+              className="w-full px-3 py-2.5 md:py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed text-base"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Bowlers (Bowl)
             </label>
             <input
@@ -344,12 +344,12 @@ export function DraftConfigEditor() {
               value={config.mandatoryRoles.Bowl}
               onChange={(e) => updateMandatoryRoles('Bowl', parseInt(e.target.value) || 0)}
               disabled={config.isLocked}
-              className="w-full px-3 py-2.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed text-base"
+              className="w-full px-3 py-2.5 md:py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed text-base"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               All-Rounders (AR)
             </label>
             <input
@@ -359,12 +359,12 @@ export function DraftConfigEditor() {
               value={config.mandatoryRoles.AR}
               onChange={(e) => updateMandatoryRoles('AR', parseInt(e.target.value) || 0)}
               disabled={config.isLocked}
-              className="w-full px-3 py-2.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed text-base"
+              className="w-full px-3 py-2.5 md:py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed text-base"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Wicket-Keepers (WK)
             </label>
             <input
@@ -374,14 +374,14 @@ export function DraftConfigEditor() {
               value={config.mandatoryRoles.WK}
               onChange={(e) => updateMandatoryRoles('WK', parseInt(e.target.value) || 0)}
               disabled={config.isLocked}
-              className="w-full px-3 py-2.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed text-base"
+              className="w-full px-3 py-2.5 md:py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed text-base"
             />
           </div>
         </div>
 
-        <div className="pt-4 border-t border-gray-200">
+        <div className="pt-4 border-t border-slate-200">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Free Slots (Flexible picks):</span>
+            <span className="text-slate-600">Free Slots (Flexible picks):</span>
             <span className={`font-semibold ${freeSlots < 0 ? 'text-red-600' : 'text-green-600'}`}>
               {freeSlots}
             </span>
@@ -395,15 +395,15 @@ export function DraftConfigEditor() {
       </div>
 
       {/* Early Round Rules */}
-      <div className="bg-white p-6 rounded-lg border border-gray-200 space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">Early-Round Rules</h3>
-        <p className="text-sm text-gray-600">
+      <div className="bg-white p-6 rounded-md border border-slate-200 space-y-4">
+        <h3 className="text-lg font-semibold text-slate-900">Early-Round Rules</h3>
+        <p className="text-sm text-slate-600">
           Enforce minimum role requirements within the first N rounds
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Apply to First N Rounds
             </label>
             <input
@@ -413,12 +413,12 @@ export function DraftConfigEditor() {
               value={config.earlyRoundRule.rounds}
               onChange={(e) => updateEarlyRoundRule('rounds', parseInt(e.target.value) || 0)}
               disabled={config.isLocked}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Min Batsmen
             </label>
             <input
@@ -428,12 +428,12 @@ export function DraftConfigEditor() {
               value={config.earlyRoundRule.minBat}
               onChange={(e) => updateEarlyRoundRule('minBat', parseInt(e.target.value) || 0)}
               disabled={config.isLocked}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Min Bowlers
             </label>
             <input
@@ -443,13 +443,13 @@ export function DraftConfigEditor() {
               value={config.earlyRoundRule.minBowl}
               onChange={(e) => updateEarlyRoundRule('minBowl', parseInt(e.target.value) || 0)}
               disabled={config.isLocked}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
         </div>
 
         {config.earlyRoundRule.rounds > 0 && (
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-md text-sm text-emerald-800">
             ℹ️ Participants must draft at least {config.earlyRoundRule.minBat} Batsmen and{' '}
             {config.earlyRoundRule.minBowl} Bowlers within the first {config.earlyRoundRule.rounds} rounds
           </div>
@@ -457,30 +457,35 @@ export function DraftConfigEditor() {
       </div>
 
       {/* Summary */}
-      <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Configuration Summary</h3>
+      <div className="bg-slate-50 p-6 rounded-md border border-slate-200">
+        <h3 className="text-lg font-semibold text-slate-900 mb-4">Configuration Summary</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div>
-            <span className="text-gray-600">Roster Size:</span>
-            <span className="ml-2 font-medium text-gray-900">{config.rosterSize} players</span>
+            <span className="text-slate-600">Roster Size:</span>
+            <span className="ml-2 font-medium text-slate-900">{config.rosterSize} players</span>
           </div>
           <div>
-            <span className="text-gray-600">Total Rounds:</span>
-            <span className="ml-2 font-medium text-gray-900">{config.totalRounds}</span>
+            <span className="text-slate-600">Total Rounds:</span>
+            <span className="ml-2 font-medium text-slate-900">{config.totalRounds}</span>
           </div>
           <div>
-            <span className="text-gray-600">Team Constraints:</span>
-            <span className="ml-2 font-medium text-gray-900">
+            <span className="text-slate-600">Team Constraints:</span>
+            <span className="ml-2 font-medium text-slate-900">
               {config.minPerTeam} - {config.maxPerTeam} per team
             </span>
           </div>
           <div>
-            <span className="text-gray-600">Mandatory Roles:</span>
-            <span className="ml-2 font-medium text-gray-900">
+            <span className="text-slate-600">Mandatory Roles:</span>
+            <span className="ml-2 font-medium text-slate-900">
               {mandatoryTotal} required, {freeSlots} free
             </span>
           </div>
         </div>
+        {freeSlots < 0 && (
+          <p className="mt-4 text-sm text-red-600 font-medium" role="alert">
+            Mandatory roles exceed roster size. Reduce required roles or increase roster size.
+          </p>
+        )}
       </div>
     </div>
   );

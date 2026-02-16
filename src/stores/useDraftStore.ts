@@ -50,20 +50,26 @@ const initialState = {
 export const useDraftStore = create<DraftStore>((set, get) => ({
   ...initialState,
 
-  // Computed state helpers
+  // Computed state helpers (respect snake vs linear draft order)
   getCurrentParticipant: () => {
     const { draftState, allParticipants } = get();
     if (!draftState || draftState.participantOrder.length === 0) return null;
-    
-    const currentParticipantId = draftState.participantOrder[draftState.currentPickIndex];
+    const orderType = draftState.draftOrderType ?? 'snake';
+    const isSnakeRound = orderType === 'snake' && draftState.currentRound % 2 === 0;
+    const currentParticipantId = isSnakeRound
+      ? draftState.participantOrder[draftState.participantOrder.length - 1 - draftState.currentPickIndex]
+      : draftState.participantOrder[draftState.currentPickIndex];
     return allParticipants.find(p => p.id === currentParticipantId) || null;
   },
 
   isMyTurn: (participantId: string) => {
     const { draftState } = get();
     if (!draftState || draftState.participantOrder.length === 0) return false;
-    
-    const currentParticipantId = draftState.participantOrder[draftState.currentPickIndex];
+    const orderType = draftState.draftOrderType ?? 'snake';
+    const isSnakeRound = orderType === 'snake' && draftState.currentRound % 2 === 0;
+    const currentParticipantId = isSnakeRound
+      ? draftState.participantOrder[draftState.participantOrder.length - 1 - draftState.currentPickIndex]
+      : draftState.participantOrder[draftState.currentPickIndex];
     return currentParticipantId === participantId;
   },
 
@@ -121,15 +127,38 @@ export const useDraftStore = create<DraftStore>((set, get) => ({
       },
     ];
 
-    // Calculate next pick index
+    // Calculate next pick index respecting draft order type (snake vs linear)
     const totalParticipants = draftState.participantOrder.length;
-    let nextPickIndex = draftState.currentPickIndex + 1;
+    const orderType = draftState.draftOrderType ?? 'snake';
+    let nextPickIndex = draftState.currentPickIndex;
     let nextRound = draftState.currentRound;
 
-    // Check if we've completed a round
-    if (nextPickIndex >= totalParticipants) {
-      nextPickIndex = 0;
-      nextRound += 1;
+    // Determine if we're in a snake round (even rounds go in reverse)
+    const isSnakeRound = orderType === 'snake' && nextRound % 2 === 0;
+
+    // Advance the pick index
+    if (isSnakeRound) {
+      nextPickIndex--;
+      
+      // If we've reached the beginning, move to next round
+      if (nextPickIndex < 0) {
+        nextRound++;
+        nextPickIndex = 0; // Next round starts at beginning (odd round)
+      }
+    } else {
+      nextPickIndex++;
+      
+      // If we've reached the end, move to next round
+      if (nextPickIndex >= totalParticipants) {
+        nextRound++;
+        
+        // If next round is a snake round, start at the end
+        if (orderType === 'snake' && nextRound % 2 === 0) {
+          nextPickIndex = totalParticipants - 1;
+        } else {
+          nextPickIndex = 0;
+        }
+      }
     }
 
     set({

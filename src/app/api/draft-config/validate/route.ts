@@ -69,8 +69,9 @@ export async function POST(request: NextRequest) {
     };
 
     // Convert to application model for validation
-    const mandatoryTotal = updatedData.mandatoryBat + updatedData.mandatoryBowl + 
+    const mandatoryTotal = updatedData.mandatoryBat + updatedData.mandatoryBowl +
                           updatedData.mandatoryAR + updatedData.mandatoryWK;
+    const freeSlots = updatedData.rosterSize - mandatoryTotal;
     const configToValidate = {
       id: currentConfig.id,
       rosterSize: updatedData.rosterSize,
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
         AR: updatedData.mandatoryAR,
         WK: updatedData.mandatoryWK
       },
-      freeSlots: updatedData.rosterSize - mandatoryTotal,
+      freeSlots,
       earlyRoundRule: {
         rounds: updatedData.earlyRounds,
         minBat: updatedData.earlyMinBat,
@@ -91,6 +92,18 @@ export async function POST(request: NextRequest) {
       },
       isLocked: currentConfig.isLocked
     };
+
+    // Fail fast when mandatory roles exceed roster size (invalid config)
+    if (freeSlots < 0) {
+      return NextResponse.json({
+        success: true,
+        valid: false,
+        errors: [
+          `Mandatory roles total (${mandatoryTotal}) exceeds roster size (${updatedData.rosterSize}). Free slots cannot be negative (${freeSlots}).`,
+        ],
+        config: configToValidate,
+      });
+    }
 
     // Get player pool and participant count for validation
     const players = await prisma.player.findMany();

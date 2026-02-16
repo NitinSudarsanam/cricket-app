@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useCallback } from 'react';
 import { Player, DraftConfig, IPLTeam, PlayerRole, IPL_TEAMS, PLAYER_ROLES } from '@/types';
 import { PlayerChip } from '@/components/PlayerChip';
 import { TEAM_COLORS } from '@/lib/team-colors';
@@ -8,13 +9,41 @@ export interface RosterSidebarProps {
   roster: Player[];
   draftConfig: DraftConfig;
   participantName: string;
+  onPlayerDrop?: (playerId: string) => void;
 }
 
 export function RosterSidebar({
   roster,
   draftConfig,
   participantName,
+  onPlayerDrop,
 }: RosterSidebarProps) {
+  const [dragOver, setDragOver] = useState(false);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    setDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragOver(false);
+      const data = e.dataTransfer.getData('application/json');
+      if (!data || !onPlayerDrop) return;
+      try {
+        const { playerId } = JSON.parse(data) as { playerId?: string };
+        if (playerId) onPlayerDrop(playerId);
+      } catch {}
+    },
+    [onPlayerDrop]
+  );
   // Calculate team counts
   const teamCount = roster.reduce((acc, player) => {
     acc[player.team] = (acc[player.team] || 0) + 1;
@@ -31,26 +60,31 @@ export function RosterSidebar({
   const remainingSlots = draftConfig.rosterSize - roster.length;
 
   return (
-    <div className="w-full h-full bg-white border-l border-gray-200 flex flex-col">
+    <div className="w-full h-full bg-white border-l border-slate-200 flex flex-col">
       {/* Header */}
-      <div className="px-4 py-4 border-b border-gray-200 flex-shrink-0">
-        <h2 className="text-lg font-semibold text-gray-900">{participantName}</h2>
-        <p className="text-sm text-gray-600 mt-1">
+      <div className="px-4 py-4 border-b border-slate-200 flex-shrink-0">
+        <h2 className="text-lg font-semibold text-slate-900">{participantName}</h2>
+        <p className="text-sm text-slate-600 mt-1">
           {roster.length} / {draftConfig.rosterSize} players
         </p>
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-        {/* My Roster */}
-        <div className="px-4 py-4 border-b border-gray-200">
-          <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thin">
+        {/* My Roster - drop zone for drag-to-draft */}
+        <div
+          className={`px-4 py-4 border-b border-slate-200 transition-colors ${dragOver ? 'bg-emerald-50 border-emerald-300 rounded-md' : ''}`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">
             My Roster
           </h3>
-          
+
           {roster.length === 0 ? (
-            <div className="text-sm text-gray-500 text-center py-8">
-              No players drafted yet
+            <div className="text-sm text-slate-500 text-center py-8">
+              {onPlayerDrop ? 'Drop a player here to draft' : 'No players drafted yet'}
             </div>
           ) : (
             <div className="flex flex-col gap-2">
@@ -66,8 +100,8 @@ export function RosterSidebar({
         </div>
 
         {/* Team Count Summary */}
-        <div className="px-4 py-4 border-b border-gray-200">
-          <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+        <div className="px-4 py-4 border-b border-slate-200">
+          <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">
             Team Distribution
           </h3>
           
@@ -82,16 +116,16 @@ export function RosterSidebar({
               return (
                 <div key={team} className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-gray-700">{team}</span>
+                    <span className="font-medium text-slate-700">{team}</span>
                     <span
                       className={`font-semibold ${
-                        isAtLimit ? 'text-red-600' : 'text-gray-600'
+                        isAtLimit ? 'text-red-600' : 'text-slate-600'
                       }`}
                     >
                       {count} / {max}
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                  <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
                     <div
                       className="h-full transition-all duration-300"
                       style={{
@@ -107,8 +141,8 @@ export function RosterSidebar({
         </div>
 
         {/* Role Count Summary */}
-        <div className="px-4 py-4 border-b border-gray-200">
-          <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+        <div className="px-4 py-4 border-b border-slate-200">
+          <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">
             Role Requirements
           </h3>
           
@@ -122,7 +156,7 @@ export function RosterSidebar({
               return (
                 <div key={role} className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-gray-700">
+                    <span className="font-medium text-slate-700">
                       {role === 'Bat' && 'Batsman'}
                       {role === 'Bowl' && 'Bowler'}
                       {role === 'AR' && 'All-Rounder'}
@@ -137,7 +171,7 @@ export function RosterSidebar({
                       {isSatisfied && ' ✓'}
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                  <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
                     <div
                       className={`h-full transition-all duration-300 ${
                         isSatisfied ? 'bg-green-500' : 'bg-orange-400'
@@ -153,37 +187,37 @@ export function RosterSidebar({
 
         {/* Constraints Tracker */}
         <div className="px-4 py-4">
-          <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+          <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">
             Constraints
           </h3>
           
           <div className="space-y-2 text-sm">
             {/* Remaining slots */}
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Remaining Slots</span>
-              <span className="font-semibold text-gray-900">{remainingSlots}</span>
+              <span className="text-slate-600">Remaining Slots</span>
+              <span className="font-semibold text-slate-900">{remainingSlots}</span>
             </div>
 
             {/* Free slots (after mandatory roles) */}
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Free Slots</span>
-              <span className="font-semibold text-gray-900">{draftConfig.freeSlots}</span>
+              <span className="text-slate-600">Free Slots</span>
+              <span className="font-semibold text-slate-900">{draftConfig.freeSlots}</span>
             </div>
 
             {/* Early round rules */}
             {draftConfig.earlyRoundRule.rounds > 0 && (
-              <div className="mt-3 pt-3 border-t border-gray-200">
-                <p className="text-xs text-gray-500 mb-2">Early Round Rules (First {draftConfig.earlyRoundRule.rounds} rounds)</p>
+              <div className="mt-3 pt-3 border-t border-slate-200">
+                <p className="text-xs text-slate-500 mb-2">Early Round Rules (First {draftConfig.earlyRoundRule.rounds} rounds)</p>
                 <div className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-600">Min Batsmen</span>
-                    <span className="font-medium text-gray-900">
+                    <span className="text-slate-600">Min Batsmen</span>
+                    <span className="font-medium text-slate-900">
                       {draftConfig.earlyRoundRule.minBat}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-600">Min Bowlers</span>
-                    <span className="font-medium text-gray-900">
+                    <span className="text-slate-600">Min Bowlers</span>
+                    <span className="font-medium text-slate-900">
                       {draftConfig.earlyRoundRule.minBowl}
                     </span>
                   </div>
@@ -193,7 +227,7 @@ export function RosterSidebar({
 
             {/* Warning for teams at limit */}
             {IPL_TEAMS.some(team => (teamCount[team] || 0) >= draftConfig.maxPerTeam) && (
-              <div className="mt-3 pt-3 border-t border-gray-200">
+              <div className="mt-3 pt-3 border-t border-slate-200">
                 <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-md">
                   <p className="text-xs text-red-800 font-medium">
                     ⚠️ Team cap reached for:

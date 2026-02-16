@@ -8,7 +8,7 @@
   display: block;
   font-size: 0.875rem;
   font-weight: 500;
-  color: rgb(55, 65, 81); /* gray-700 */
+  color: rgb(51, 65, 85); /* slate-700 */
   margin-bottom: 0.25rem;
 }
 
@@ -21,8 +21,8 @@
   width: 100%;
   padding: 0.5rem 0.75rem;
   border: 1px solid;
-  border-radius: 0.5rem;
-  transition: all 0.15s ease-in-out;
+  border-radius: 6px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .input:focus {
@@ -36,12 +36,12 @@
 }
 
 .inputDefault {
-  border-color: rgb(209, 213, 219); /* gray-300 */
+  border-color: rgb(203, 213, 225); /* slate-300 */
 }
 
 .inputDefault:focus {
-  border-color: rgb(59, 130, 246); /* blue-500 */
-  --tw-ring-color: rgb(191, 219, 254); /* blue-200 */
+  border-color: rgb(5, 150, 105); /* emerald-600 */
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2);
 }
 
 .inputError {
@@ -71,5 +71,5 @@
 .helperText {
   margin-top: 0.25rem;
   font-size: 0.875rem;
-  color: rgb(107, 114, 128); /* gray-500 */
+  color: rgb(100, 116, 139); /* slate-500 */
 }

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import { handleDatabaseError } from '@/lib/db';
+import { prisma, handleDatabaseError, isDatabaseTimeoutError } from '@/lib/db';
 import { CreatePlayerRequest, Player, IPL_TEAMS, PLAYER_ROLES } from '@/types';
 import { isIPLTeam, isPlayerRole } from '@/lib/type-guards';
 
@@ -25,12 +24,11 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Error fetching players:', error);
+    const message = handleDatabaseError(error);
+    const status = isDatabaseTimeoutError(error) ? 503 : 500;
     return NextResponse.json(
-      { 
-        success: false,
-        error: handleDatabaseError(error)
-      },
-      { status: 500 }
+      { success: false, error: message },
+      { status }
     );
   }
 }
@@ -96,12 +94,11 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error('Error creating player:', error);
+    const message = handleDatabaseError(error);
+    const status = isDatabaseTimeoutError(error) ? 503 : 500;
     return NextResponse.json(
-      { 
-        success: false,
-        error: handleDatabaseError(error)
-      },
-      { status: 500 }
+      { success: false, error: message },
+      { status }
     );
   }
 }

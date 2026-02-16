@@ -41,6 +41,7 @@ export function prismaPlayerToPlayer(prismaPlayer: PrismaPlayer): Player {
     role: prismaPlayer.role as PlayerRole,
     isForeign: prismaPlayer.isForeign,
     metadata: prismaPlayer.metadata as Record<string, any> | undefined,
+    externalId: prismaPlayer.externalId ?? undefined,
     createdAt: prismaPlayer.createdAt,
     updatedAt: prismaPlayer.updatedAt,
   };
@@ -54,6 +55,7 @@ export function playerToPrismaPlayer(player: Player): Omit<PrismaPlayer, 'create
     role: player.role,
     isForeign: player.isForeign,
     metadata: player.metadata || null,
+    externalId: player.externalId ?? null,
   };
 }
 

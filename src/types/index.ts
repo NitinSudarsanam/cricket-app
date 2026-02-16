@@ -32,6 +32,7 @@ export interface Player {
   role: PlayerRole;
   isForeign: boolean;
   metadata?: Record<string, any>;
+  externalId?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -100,6 +101,7 @@ export interface DraftState {
   currentPickIndex: number;
   picks: PickRecord[];
   participantOrder: string[]; // Array of participant IDs
+  draftOrderType?: 'snake' | 'linear';
   status: DraftStatus;
   startedAt?: Date;
   completedAt?: Date;

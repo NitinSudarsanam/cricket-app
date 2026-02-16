@@ -91,6 +91,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Optional: require that sync has been run before draft (set REQUIRE_SYNC_BEFORE_DRAFT=true to enable)
+    const requireSync = process.env.REQUIRE_SYNC_BEFORE_DRAFT === 'true' || process.env.REQUIRE_SYNC_BEFORE_DRAFT === '1';
+    if (requireSync) {
+      const [leagueCount, seasonCount] = await Promise.all([
+        prisma.league.count(),
+        prisma.season.count(),
+      ]);
+      if (leagueCount === 0 || seasonCount === 0) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Sync team data from Sportmonks first via Admin → Sync, then try starting the draft again.'
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     // Map Prisma config to DraftConfig interface
     const draftConfig = prismaDraftConfigToDraftConfig(prismaDraftConfig);
 

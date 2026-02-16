@@ -48,9 +48,8 @@ npm run db:seed
 ```
 
 This adds sample data:
-- 100 sample players
+- 120 IPL-style players (all 10 teams)
 - 1 draft configuration
-- 4 sample participants
 
 ## If You Get Connection Errors
 
@@ -64,9 +63,9 @@ This means the database connection failed. Check:
    - Verify the connection string
 
 2. **Connection String is Correct**
-   - Your current connection: `postgresql://postgres:cricketapp2610$@db.ihvvbqrujlzkzrnotmwd.supabase.co:5432/postgres`
-   - Make sure the password is correct
-   - Check if there are any special characters that need escaping
+   - Set `DATABASE_URL` in your `.env` (see `.env.example`)
+   - Use the connection string from your Supabase project settings
+   - Make sure the password is correct and any special characters are URL-encoded
 
 3. **Network/Firewall**
    - Make sure your firewall allows connections to Supabase

@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Player, DraftConfig } from '@/types';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { ErrorState } from '@/components/ErrorState';
+import { Skeleton } from '@/components/Skeleton';
 import { PlayerChip } from '@/components/PlayerChip';
 
 interface ParticipantRoster {
@@ -60,12 +62,21 @@ export function DraftResultsView() {
 
   const fetchResults = async () => {
     try {
+      setError(null);
       const response = await fetch('/api/draft/results');
-      if (!response.ok) {
-        throw new Error('Failed to fetch draft results');
+      const data = await response.json().catch(() => ({}));
+
+      if (response.status === 404 || (data.success === false && !data.data)) {
+        setResults(null);
+        setError(null);
+        setLoading(false);
+        return;
       }
-      const data = await response.json();
-      if (data.success) {
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch draft results');
+      }
+      if (data.success && data.data) {
         setResults(data.data);
         setSelectedParticipant(data.data.participantRosters[0]?.participantId || null);
       } else {
@@ -149,27 +160,40 @@ export function DraftResultsView() {
   };
 
   if (loading) {
-    return <LoadingSpinner variant="full-page" />;
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-8 w-44 mb-2" />
+            <Skeleton className="h-4 w-80" />
+          </div>
+          <div className="flex gap-3">
+            <Skeleton className="h-10 w-24 rounded-md" />
+            <Skeleton className="h-10 w-20 rounded-md" />
+          </div>
+        </div>
+        <div className="bg-white rounded-md border border-slate-200 p-6 space-y-4">
+          <Skeleton className="h-6 w-48" />
+          <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full rounded-md" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-semibold text-gray-900">Draft Results</h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <h2 className="text-2xl font-semibold text-slate-900">Draft Results</h2>
+          <p className="text-sm text-slate-600 mt-1">
             View completed draft results and export data
           </p>
         </div>
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <p className="text-red-700">{error}</p>
-          <button
-            onClick={fetchResults}
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-          >
-            Retry
-          </button>
-        </div>
+        <ErrorState message={error} onRetry={fetchResults} title="Failed to load results" />
       </div>
     );
   }
@@ -178,13 +202,32 @@ export function DraftResultsView() {
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-semibold text-gray-900">Draft Results</h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <h2 className="text-2xl font-semibold text-slate-900">Draft Results</h2>
+          <p className="text-sm text-slate-600 mt-1">
             View completed draft results and export data
           </p>
         </div>
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
-          <p className="text-gray-600">No completed draft found</p>
+        <div className="bg-slate-50 border border-slate-200 rounded-md p-8 text-center">
+          <div className="text-slate-500 mb-4">
+            <svg
+              className="w-12 h-12 mx-auto mb-3 text-slate-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-slate-900 mb-1">No completed draft yet</h3>
+          <p className="text-sm text-slate-600 mb-4">
+            Complete a draft to see results and export rosters here.
+          </p>
+          <Link
+            href="/admin/monitor"
+            className="inline-block px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-700 transition-colors"
+          >
+            Go to Monitor Draft
+          </Link>
         </div>
       </div>
     );
@@ -199,8 +242,8 @@ export function DraftResultsView() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-gray-900">Draft Results</h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <h2 className="text-2xl font-semibold text-slate-900">Draft Results</h2>
+          <p className="text-sm text-slate-600 mt-1">
             View completed draft results and export data
           </p>
         </div>
@@ -208,14 +251,14 @@ export function DraftResultsView() {
           <select
             value={exportFormat}
             onChange={(e) => setExportFormat(e.target.value as 'json' | 'csv')}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            className="px-3 py-2 border border-slate-300 rounded-md text-sm"
           >
             <option value="json">JSON</option>
             <option value="csv">CSV</option>
           </select>
           <button
             onClick={handleExport}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+            className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 text-sm font-medium"
           >
             📥 Export
           </button>
@@ -223,27 +266,17 @@ export function DraftResultsView() {
       </div>
 
       {/* Summary Card */}
-      <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg p-6">
-        <h3 className="text-xl font-bold mb-2">🎉 Draft Complete!</h3>
-        <p className="text-green-100 mb-4">
+      <div className="bg-emerald-600 text-white rounded-md p-6">
+        <h3 className="text-xl font-bold mb-2">Draft complete</h3>
+        <p className="text-emerald-100 mb-4">
           All {results.draftState.totalRounds} rounds completed with {results.totalPicks} total picks
         </p>
-        <div className="bg-white bg-opacity-20 rounded-lg px-4 py-3">
-          {results.allParticipantsMeetRequirements ? (
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">✅</span>
-              <span className="font-medium">
-                All participants met mandatory role requirements
-              </span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">⚠️</span>
-              <span className="font-medium">
-                Some participants did not meet mandatory role requirements
-              </span>
-            </div>
-          )}
+        <div className="bg-white bg-opacity-20 rounded-md px-4 py-3">
+          <span className="font-medium">
+            {results.allParticipantsMeetRequirements
+              ? 'All participants met mandatory role requirements'
+              : 'Some participants did not meet mandatory role requirements'}
+          </span>
         </div>
       </div>
 
@@ -251,8 +284,8 @@ export function DraftResultsView() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Participant List */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">
+          <div className="bg-white rounded-md border border-slate-200 p-4">
+            <h3 className="text-lg font-semibold text-slate-900 mb-3">
               Participants
             </h3>
             <div className="space-y-2">
@@ -260,18 +293,18 @@ export function DraftResultsView() {
                 <button
                   key={pr.participantId}
                   onClick={() => setSelectedParticipant(pr.participantId)}
-                  className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${
+                  className={`w-full text-left px-4 py-3 rounded-md border-2 transition-all ${
                     selectedParticipant === pr.participantId
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300 bg-white'
+                      ? 'border-emerald-500 bg-emerald-50'
+                      : 'border-slate-200 hover:border-slate-300 bg-white'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-gray-900">
+                      <p className="font-medium text-slate-900">
                         {pr.participantName}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-slate-500">
                         Position {pr.position + 1}
                       </p>
                     </div>
@@ -290,28 +323,28 @@ export function DraftResultsView() {
         {/* Selected Roster Details */}
         <div className="lg:col-span-2">
           {selectedRoster && (
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            <div className="bg-white rounded-md border border-slate-200 p-6">
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">
                 {selectedRoster.participantName}'s Roster
               </h3>
 
               {/* Role Validation */}
-              <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">
+              <div className="bg-slate-50 rounded-md p-4 mb-4">
+                <h4 className="text-sm font-medium text-slate-700 mb-2">
                   Role Requirements
                 </h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {(['Bat', 'Bowl', 'AR', 'WK'] as const).map(role => (
                     <div
                       key={role}
-                      className={`px-3 py-2 rounded-lg ${
+                      className={`px-3 py-2 rounded-md ${
                         selectedRoster.roleValidation[role]
                           ? 'bg-green-100 border border-green-300'
                           : 'bg-red-100 border border-red-300'
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-gray-700">
+                        <span className="text-xs font-medium text-slate-700">
                           {role}
                         </span>
                         {selectedRoster.roleValidation[role] ? (
@@ -320,7 +353,7 @@ export function DraftResultsView() {
                           <span className="text-red-600">✗</span>
                         )}
                       </div>
-                      <p className="text-sm font-bold text-gray-900 mt-1">
+                      <p className="text-sm font-bold text-slate-900 mt-1">
                         {selectedRoster.roleCount[role]} /{' '}
                         {selectedRoster.mandatoryRoles[role]}
                       </p>
@@ -330,8 +363,8 @@ export function DraftResultsView() {
               </div>
 
               {/* Team Distribution */}
-              <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">
+              <div className="bg-slate-50 rounded-md p-4 mb-4">
+                <h4 className="text-sm font-medium text-slate-700 mb-2">
                   Team Distribution
                 </h4>
                 <div className="flex flex-wrap gap-2">
@@ -340,12 +373,12 @@ export function DraftResultsView() {
                     .map(([team, count]) => (
                       <div
                         key={team}
-                        className="px-3 py-1 bg-white border border-gray-200 rounded-full"
+                        className="px-3 py-1 bg-white border border-slate-200 rounded-full"
                       >
-                        <span className="text-xs font-medium text-gray-700">
+                        <span className="text-xs font-medium text-slate-700">
                           {team}
                         </span>
-                        <span className="text-xs font-bold text-gray-900 ml-1">
+                        <span className="text-xs font-bold text-slate-900 ml-1">
                           {count}
                         </span>
                       </div>
@@ -355,7 +388,7 @@ export function DraftResultsView() {
 
               {/* Roster Players */}
               <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-2">
+                <h4 className="text-sm font-medium text-slate-700 mb-2">
                   Players ({selectedRoster.roster.length})
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">

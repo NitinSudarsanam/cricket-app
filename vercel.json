@@ -11,5 +11,5 @@
       "maxDuration": 10
     }
   },
-  "crons": []
+  "crons": [{"path": "/api/sync/cricket-data", "schedule": "*/15 * * * *"}]
 }

@@ -92,8 +92,15 @@ export function ConsistencyChecker() {
     return null;
   }
 
-  const isValid = validationResult.valid;
-  const errorMessages = validationResult.errors || (validationResult.error ? [validationResult.error] : []);
+  // Config is invalid if API says so OR if mandatory roles exceed roster (negative free slots)
+  const hasNegativeFreeSlots = config.freeSlots < 0;
+  const isValid = validationResult.valid && !hasNegativeFreeSlots;
+  const errorMessages = hasNegativeFreeSlots
+    ? [
+        `Mandatory roles exceed roster size. Free slots: ${config.freeSlots}. Reduce required roles or increase roster size.`,
+        ...(validationResult.errors || (validationResult.error ? [validationResult.error] : [])),
+      ]
+    : (validationResult.errors || (validationResult.error ? [validationResult.error] : []));
 
   return (
     <div className="space-y-6">

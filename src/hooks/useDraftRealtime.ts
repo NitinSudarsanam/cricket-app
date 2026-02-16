@@ -130,6 +130,14 @@ export function useDraftRealtime(
       });
 
       isSubscribedRef.current = true;
+
+      // Sync initial state: if Pusher is already connected we would have missed the 'connected' event
+      const current = pusherRef.current.connection.state;
+      if (current === 'connected') {
+        callbacksRef.current.onConnectionStateChange?.('connected');
+      } else if (current === 'connecting' || current === 'unavailable') {
+        callbacksRef.current.onConnectionStateChange?.('connecting');
+      }
     } catch (error) {
       console.error('Error subscribing to draft channel:', error);
     }
