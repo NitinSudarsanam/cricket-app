@@ -9,17 +9,17 @@ import { Pool } from 'pg';
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 // Create connection pool and adapter for Prisma 7
+// Only use adapter in development - Vercel has issues with pg adapter in serverless
 // Use longer timeouts for remote DBs (e.g. Supabase) to avoid P1008 "Operation has timed out"
 const connectionString = process.env.DATABASE_URL;
-const pool = connectionString
+const useAdapter = process.env.NODE_ENV !== 'production' && connectionString;
+const pool = useAdapter
   ? new Pool({
       connectionString,
       connectionTimeoutMillis: 30000,
       idleTimeoutMillis: 30000,
-      max: 1, // Limit connections for serverless
-      ssl: process.env.NODE_ENV === 'production' 
-        ? { rejectUnauthorized: false }
-        : false,
+      max: 1,
+      ssl: false,
     })
   : undefined;
 const adapter = pool ? new PrismaPg(pool) : undefined;
