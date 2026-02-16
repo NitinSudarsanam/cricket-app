@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ErrorState } from '@/components/ErrorState';
 import { Skeleton } from '@/components/Skeleton';
 
@@ -34,7 +34,27 @@ interface PlayerLeaderboardItem {
   source: string;
 }
 
-type Tab = 'teams' | 'players';
+interface FantasyLeaderboardItem {
+  participantId: string;
+  participantName: string;
+  totalPoints: number;
+  playerCount: number;
+  players: Array<{
+    playerId: string;
+    playerName: string;
+    team: string;
+    points: number;
+  }>;
+}
+
+interface DraftStateItem {
+  id: string;
+  status: string;
+  startedAt: string | null;
+  completedAt: string | null;
+}
+
+type Tab = 'teams' | 'players' | 'fantasy';
 
 export function LeaderboardView() {
   const [seasons, setSeasons] = useState<SeasonItem[]>([]);
@@ -42,14 +62,20 @@ export function LeaderboardView() {
   const [tab, setTab] = useState<Tab>('teams');
   const [teams, setTeams] = useState<TeamLeaderboardItem[]>([]);
   const [players, setPlayers] = useState<PlayerLeaderboardItem[]>([]);
+  const [fantasy, setFantasy] = useState<FantasyLeaderboardItem[]>([]);
   const [teamsTotal, setTeamsTotal] = useState(0);
   const [playersTotal, setPlayersTotal] = useState(0);
+  const [fantasyTotal, setFantasyTotal] = useState(0);
+  const [draftStates, setDraftStates] = useState<DraftStateItem[]>([]);
+  const [selectedDraftId, setSelectedDraftId] = useState<string>('');
   const [loadingSeasons, setLoadingSeasons] = useState(true);
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
+  const [expandedParticipant, setExpandedParticipant] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSeasons();
+    fetchDraftStates();
   }, []);
 
   useEffect(() => {
@@ -58,10 +84,12 @@ export function LeaderboardView() {
     } else {
       setTeams([]);
       setPlayers([]);
+      setFantasy([]);
       setTeamsTotal(0);
       setPlayersTotal(0);
+      setFantasyTotal(0);
     }
-  }, [seasonId]);
+  }, [seasonId, selectedDraftId]);
 
   const fetchSeasons = async () => {
     try {
@@ -82,19 +110,53 @@ export function LeaderboardView() {
     }
   };
 
+  const fetchDraftStates = async () => {
+    try {
+      const res = await fetch('/api/draft/state');
+      const data = await res.json();
+      if (res.ok && data.success && data.data) {
+        // We get the most recent draft, but we'll show it as the option
+        setDraftStates([{
+          id: data.data.id,
+          status: data.data.status,
+          startedAt: data.data.startedAt,
+          completedAt: data.data.completedAt,
+        }]);
+        if (data.data.id && !selectedDraftId) {
+          setSelectedDraftId(data.data.id);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching draft states:', err);
+    }
+  };
+
   const fetchLeaderboard = async () => {
     if (!seasonId) return;
     setLoadingLeaderboard(true);
     setError(null);
     try {
-      const [teamsRes, playersRes] = await Promise.all([
+      const requests = [
         fetch(`/api/leaderboard/teams?seasonId=${encodeURIComponent(seasonId)}&limit=50`),
         fetch(`/api/leaderboard/players?seasonId=${encodeURIComponent(seasonId)}&limit=50`),
-      ]);
+      ];
+
+      // Add fantasy request if we have a draft selected
+      if (selectedDraftId) {
+        requests.push(
+          fetch(`/api/leaderboard/fantasy?draftStateId=${encodeURIComponent(selectedDraftId)}&seasonId=${encodeURIComponent(seasonId)}&limit=50`)
+        );
+      }
+
+      const responses = await Promise.all(requests);
+      const [teamsRes, playersRes, fantasyRes] = responses;
+      
       const teamsData = await teamsRes.json();
       const playersData = await playersRes.json();
+      
       if (!teamsRes.ok) throw new Error(teamsData.error || 'Failed to fetch team leaderboard');
       if (!playersRes.ok) throw new Error(playersData.error || 'Failed to fetch player leaderboard');
+      
       if (teamsData.success && teamsData.data) {
         setTeams(teamsData.data.items ?? []);
         setTeamsTotal(teamsData.data.total ?? 0);
@@ -102,6 +164,15 @@ export function LeaderboardView() {
       if (playersData.success && playersData.data) {
         setPlayers(playersData.data.items ?? []);
         setPlayersTotal(playersData.data.total ?? 0);
+      }
+
+      // Handle fantasy data if available
+      if (fantasyRes) {
+        const fantasyData = await fantasyRes.json();
+        if (fantasyRes.ok && fantasyData.success && fantasyData.data) {
+          setFantasy(fantasyData.data.items ?? []);
+          setFantasyTotal(fantasyData.data.total ?? 0);
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load leaderboard');
@@ -216,6 +287,17 @@ export function LeaderboardView() {
                   >
                     Players ({playersTotal})
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setTab('fantasy')}
+                    className={`py-3 px-1 border-b-2 text-sm font-medium transition-colors ${
+                      tab === 'fantasy'
+                        ? 'border-emerald-600 text-emerald-600'
+                        : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                    }`}
+                  >
+                    Fantasy ({fantasyTotal})
+                  </button>
                 </nav>
               </div>
 
@@ -280,7 +362,7 @@ export function LeaderboardView() {
                     </div>
                   )}
                 </div>
-              ) : (
+              ) : tab === 'players' ? (
                 <div className="bg-white rounded-md border border-slate-200 overflow-hidden">
                   {players.length === 0 ? (
                     <p className="p-6 text-sm text-slate-500 text-center">
@@ -313,6 +395,78 @@ export function LeaderboardView() {
                               <td className="px-4 py-3 text-sm text-slate-600">{row.team}</td>
                               <td className="px-4 py-3 text-sm text-slate-900 text-right font-medium">{row.points}</td>
                             </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-white rounded-md border border-slate-200 overflow-hidden">
+                  {!selectedDraftId ? (
+                    <p className="p-6 text-sm text-slate-500 text-center">
+                      No draft data available. Complete a draft to see fantasy leaderboard.
+                    </p>
+                  ) : fantasy.length === 0 ? (
+                    <p className="p-6 text-sm text-slate-500 text-center">
+                      No fantasy rankings yet. Participants need drafted players with points from this season.
+                    </p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-slate-200">
+                        <thead className="bg-slate-50">
+                          <tr>
+                            <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                              Rank
+                            </th>
+                            <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                              Participant
+                            </th>
+                            <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
+                              Total Points
+                            </th>
+                            <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
+                              Players
+                            </th>
+                            <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">
+                              Details
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-slate-200">
+                          {fantasy.map((row, idx) => (
+                            <React.Fragment key={row.participantId}>
+                              <tr className="hover:bg-slate-50/50">
+                                <td className="px-4 py-3 text-sm font-medium text-slate-900">{idx + 1}</td>
+                                <td className="px-4 py-3 text-sm font-semibold text-slate-900">{row.participantName}</td>
+                                <td className="px-4 py-3 text-sm text-slate-900 text-right font-bold text-emerald-600">{row.totalPoints}</td>
+                                <td className="px-4 py-3 text-sm text-slate-600 text-right">{row.playerCount}</td>
+                                <td className="px-4 py-3 text-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => setExpandedParticipant(expandedParticipant === row.participantId ? null : row.participantId)}
+                                    className="text-xs text-emerald-600 hover:text-emerald-700 font-medium"
+                                  >
+                                    {expandedParticipant === row.participantId ? 'Hide' : 'Show'}
+                                  </button>
+                                </td>
+                              </tr>
+                              {expandedParticipant === row.participantId && (
+                                <tr>
+                                  <td colSpan={5} className="px-4 py-3 bg-slate-50">
+                                    <div className="text-xs text-slate-700 font-medium mb-2">Drafted Players:</div>
+                                    <div className="space-y-1">
+                                      {row.players.map((player) => (
+                                        <div key={player.playerId} className="flex justify-between items-center text-xs py-1 px-2 bg-white rounded border border-slate-200">
+                                          <span className="text-slate-700">{player.playerName} <span className="text-slate-500">({player.team})</span></span>
+                                          <span className="font-medium text-slate-900">{player.points} pts</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
                           ))}
                         </tbody>
                       </table>

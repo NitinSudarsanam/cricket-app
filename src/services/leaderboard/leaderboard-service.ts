@@ -125,3 +125,106 @@ export async function getPlayerLeaderboard(
     total,
   };
 }
+
+// ============================================================================
+// Fantasy Leaderboard (Draft Participants)
+// ============================================================================
+
+export interface FantasyPlayerItem {
+  playerId: string;
+  playerName: string;
+  team: string;
+  points: number;
+}
+
+export interface FantasyLeaderboardItem {
+  participantId: string;
+  participantName: string;
+  totalPoints: number;
+  playerCount: number;
+  players: FantasyPlayerItem[];
+}
+
+export interface FantasyLeaderboardOptions {
+  draftStateId: string;
+  seasonId: string;
+  limit?: number;
+  offset?: number;
+  sort?: 'points' | 'name';
+}
+
+export async function getFantasyLeaderboard(
+  options: FantasyLeaderboardOptions
+): Promise<{ items: FantasyLeaderboardItem[]; total: number }> {
+  const limit = Math.min(options.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
+  const offset = options.offset ?? 0;
+  const sort = options.sort ?? 'points';
+
+  // Fetch all picks for this draft with participant and player details
+  const picks = await prisma.pick.findMany({
+    where: {
+      draftStateId: options.draftStateId,
+    },
+    include: {
+      participant: true,
+      player: {
+        include: {
+          playerScores: {
+            where: {
+              seasonId: options.seasonId,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  // Group by participant and calculate totals
+  const participantMap = new Map<string, FantasyLeaderboardItem>();
+
+  for (const pick of picks) {
+    const participantId = pick.participantId;
+    const playerPoints =
+      pick.player.playerScores.reduce((sum, score) => sum + score.points, 0) || 0;
+
+    if (!participantMap.has(participantId)) {
+      participantMap.set(participantId, {
+        participantId,
+        participantName: pick.participant.name,
+        totalPoints: 0,
+        playerCount: 0,
+        players: [],
+      });
+    }
+
+    const item = participantMap.get(participantId)!;
+    item.totalPoints += playerPoints;
+    item.playerCount += 1;
+    item.players.push({
+      playerId: pick.player.id,
+      playerName: pick.player.name,
+      team: pick.player.team,
+      points: playerPoints,
+    });
+  }
+
+  // Convert to array and sort
+  let items = Array.from(participantMap.values());
+
+  if (sort === 'name') {
+    items.sort((a, b) => a.participantName.localeCompare(b.participantName));
+  } else {
+    // Sort by totalPoints descending (highest first)
+    items.sort((a, b) => b.totalPoints - a.totalPoints);
+  }
+
+  const total = items.length;
+  
+  // Apply pagination
+  items = items.slice(offset, offset + limit);
+
+  return {
+    items,
+    total,
+  };
+}

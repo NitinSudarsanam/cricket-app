@@ -5,6 +5,7 @@ import { prismaDraftConfigToDraftConfig } from '@/lib/model-mappers';
 import { validatePick } from '@/lib/rule-engine';
 import {
   getActiveDraftState,
+  getDraftState,
   getCurrentParticipantId,
   calculatePickNumber,
   DraftOrderType
@@ -255,7 +256,9 @@ export async function POST(request: NextRequest) {
       });
     });
 
-    const updatedState = await getActiveDraftState();
+    // Fetch updated state by ID (not getActiveDraftState, which only finds 'in_progress'/'paused')
+    // This ensures we can return the draft state even if it just transitioned to 'completed'
+    const updatedState = await getDraftState(draftState.id);
     if (!updatedState) {
       return NextResponse.json(
         { success: false, error: 'Failed to load draft state after pick' },
