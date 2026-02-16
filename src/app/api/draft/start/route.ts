@@ -5,6 +5,7 @@ import { prismaDraftConfigToDraftConfig } from '@/lib/model-mappers';
 import { validateDraftConfiguration } from '@/lib/rule-engine';
 import { initializeDraftState, DraftOrderType } from '@/lib/draft-state-manager';
 import { broadcastEvent, EVENTS } from '@/lib/pusher-server';
+import { requireAdmin } from '@/lib/auth-helpers';
 
 /**
  * POST /api/draft/start
@@ -18,6 +19,15 @@ import { broadcastEvent, EVENTS } from '@/lib/pusher-server';
  */
 export async function POST(request: NextRequest) {
   try {
+    // Admin authentication (defense-in-depth - middleware also checks)
+    const adminAuth = await requireAdmin(request);
+    if (!adminAuth.success) {
+      return NextResponse.json(
+        { success: false, error: adminAuth.error },
+        { status: adminAuth.status }
+      );
+    }
+
     const body = await request.json();
 
     // Validate required fields
@@ -36,6 +46,17 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: 'At least one participant is required'
+        },
+        { status: 400 }
+      );
+    }
+
+    // Limit array size to prevent DoS
+    if (body.participantIds.length > 20) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Cannot start draft with more than 20 participants'
         },
         { status: 400 }
       );

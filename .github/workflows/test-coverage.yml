@@ -1,0 +1,56 @@
+name: Test Coverage Report
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  coverage:
+    name: Coverage Report
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: cricket-app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: cricket-app
+        run: npm ci
+
+      - name: Run tests with coverage
+        working-directory: cricket-app
+        run: npm run test:coverage
+
+      - name: Check coverage thresholds
+        working-directory: cricket-app
+        run: |
+          # Coverage thresholds are enforced in vitest.config.ts
+          # This step will fail if thresholds are not met
+          npm run test:coverage
+
+      - name: Comment coverage on PR
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          recreate: true
+          message: |
+            ## 📊 Test Coverage Report
+            
+            Coverage thresholds:
+            - Lines: 70%
+            - Functions: 70%
+            - Branches: 65%
+            - Statements: 70%
+            
+            See coverage report in artifacts.

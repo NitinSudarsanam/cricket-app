@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { handleDatabaseError } from '@/lib/db';
 import { CreatePlayerRequest, IPL_TEAMS, PLAYER_ROLES } from '@/types';
 import { isIPLTeam, isPlayerRole } from '@/lib/type-guards';
+import { requireAdmin } from '@/lib/auth-helpers';
 
 interface ImportError {
   row: number;
@@ -58,6 +59,15 @@ function validatePlayerRecord(player: any, rowIndex: number): { valid: boolean; 
  */
 export async function POST(request: NextRequest) {
   try {
+    // Admin authentication (defense-in-depth - middleware also checks)
+    const adminAuth = await requireAdmin(request);
+    if (!adminAuth.success) {
+      return NextResponse.json(
+        { success: false, error: adminAuth.error },
+        { status: adminAuth.status }
+      );
+    }
+
     const body = await request.json();
 
     // Validate that body is an array
@@ -76,6 +86,17 @@ export async function POST(request: NextRequest) {
         { 
           success: false,
           error: 'Cannot import empty array'
+        },
+        { status: 400 }
+      );
+    }
+
+    // Limit array size to prevent DoS
+    if (body.length > 500) {
+      return NextResponse.json(
+        { 
+          success: false,
+          error: 'Cannot import more than 500 players at once'
         },
         { status: 400 }
       );

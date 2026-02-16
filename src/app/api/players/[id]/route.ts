@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { handleDatabaseError } from '@/lib/db';
 import { UpdatePlayerRequest, IPL_TEAMS, PLAYER_ROLES } from '@/types';
 import { isIPLTeam, isPlayerRole } from '@/lib/type-guards';
+import { requireAdmin } from '@/lib/auth-helpers';
 
 /**
  * GET /api/players/:id?includeScores=true&seasonId=
@@ -75,6 +76,15 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Admin authentication (defense-in-depth - middleware also checks)
+    const adminAuth = await requireAdmin(request);
+    if (!adminAuth.success) {
+      return NextResponse.json(
+        { success: false, error: adminAuth.error },
+        { status: adminAuth.status }
+      );
+    }
+
     const { id } = await params;
     const body: UpdatePlayerRequest = await request.json();
 
@@ -154,6 +164,15 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Admin authentication (defense-in-depth - middleware also checks)
+    const adminAuth = await requireAdmin(request);
+    if (!adminAuth.success) {
+      return NextResponse.json(
+        { success: false, error: adminAuth.error },
+        { status: adminAuth.status }
+      );
+    }
+
     const { id } = await params;
 
     // Check if player exists

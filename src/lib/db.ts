@@ -19,7 +19,13 @@ const pool = connectionString
       connectionTimeoutMillis: 30000,
       idleTimeoutMillis: 30000,
       max: 1, // Limit connections for serverless
-      ssl: { rejectUnauthorized: false }, // Required by Supabase
+      // SSL configuration: Supabase requires SSL but doesn't provide CA cert
+      // In production, if Supabase provides a CA certificate, use:
+      // ssl: { rejectUnauthorized: true, ca: process.env.DATABASE_CA_CERT }
+      // For now, we accept any certificate (known Supabase limitation)
+      ssl: process.env.NODE_ENV === 'production' && process.env.DATABASE_CA_CERT
+        ? { rejectUnauthorized: true, ca: process.env.DATABASE_CA_CERT }
+        : { rejectUnauthorized: false },
     })
   : undefined;
 const adapter = pool ? new PrismaPg(pool) : undefined;
@@ -87,7 +93,10 @@ export function handleDatabaseError(error: unknown): string {
       return 'Database operation timed out. If using a remote DB (e.g. Supabase), check network, region, and that the database is not paused.';
     }
 
-    return error.message;
+    // Don't leak internal error messages - return generic message
+    // Log the actual error server-side for debugging
+    console.error('Database error (sanitized):', error.message);
+    return 'An unexpected database error occurred.';
   }
   
   return 'An unexpected database error occurred.';

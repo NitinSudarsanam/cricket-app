@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { handleDatabaseError } from '@/lib/db';
 import { resetDraftState } from '@/lib/draft-state-manager';
 import { broadcastEvent, EVENTS } from '@/lib/pusher-server';
+import { requireAdmin } from '@/lib/auth-helpers';
 
 /**
  * POST /api/draft/reset
@@ -28,16 +29,14 @@ export async function POST(request: NextRequest) {
       body = {};
     }
 
-    // Simple admin authentication (in production, use proper auth)
-    // Disabled for development - uncomment in production
-    // const adminSecret = body.adminSecret || request.headers.get('x-admin-secret');
-    // const expectedSecret = process.env.ADMIN_SECRET;
-    // if (expectedSecret && adminSecret !== expectedSecret) {
-    //   return NextResponse.json(
-    //     { success: false, error: 'Unauthorized. Admin access required.' },
-    //     { status: 401 }
-    //   );
-    // }
+    // Admin authentication (defense-in-depth - middleware also checks)
+    const adminAuth = await requireAdmin(request);
+    if (!adminAuth.success) {
+      return NextResponse.json(
+        { success: false, error: adminAuth.error },
+        { status: adminAuth.status }
+      );
+    }
 
     let draftStateId = body.draftStateId;
 

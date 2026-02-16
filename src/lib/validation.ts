@@ -80,6 +80,8 @@ export function validateCreatePlayerRequest(request: unknown): ValidationResult 
 
   if (!req.name || typeof req.name !== 'string' || req.name.trim().length === 0) {
     errors.push('Name is required and must be a non-empty string');
+  } else if (req.name.trim().length > 100) {
+    errors.push('Name must not exceed 100 characters');
   }
 
   if (!isIPLTeam(req.team)) {
@@ -116,6 +118,8 @@ export function validateUpdatePlayerRequest(request: unknown): ValidationResult 
 
   if (req.name !== undefined && (typeof req.name !== 'string' || req.name.trim().length === 0)) {
     errors.push('Name must be a non-empty string if provided');
+  } else if (req.name !== undefined && typeof req.name === 'string' && req.name.trim().length > 100) {
+    errors.push('Name must not exceed 100 characters');
   }
 
   if (req.team !== undefined && !isIPLTeam(req.team)) {
@@ -251,6 +255,16 @@ export function validateUpdateDraftConfigRequest(request: unknown): ValidationRe
     if (typeof req.maxPerTeam !== 'number' || req.maxPerTeam < 0) {
       errors.push('Max per team must be a non-negative number');
     }
+  }
+
+  if (
+    req.minPerTeam !== undefined &&
+    req.maxPerTeam !== undefined &&
+    typeof req.minPerTeam === 'number' &&
+    typeof req.maxPerTeam === 'number' &&
+    req.minPerTeam > req.maxPerTeam
+  ) {
+    errors.push('Min per team cannot exceed max per team');
   }
 
   if (req.mandatoryRoles !== undefined) {

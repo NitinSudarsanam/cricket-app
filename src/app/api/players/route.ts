@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma, handleDatabaseError, isDatabaseTimeoutError } from '@/lib/db';
 import { CreatePlayerRequest, Player, IPL_TEAMS, PLAYER_ROLES } from '@/types';
 import { isIPLTeam, isPlayerRole } from '@/lib/type-guards';
+import { requireAdmin } from '@/lib/auth-helpers';
 
 /**
  * GET /api/players
@@ -39,6 +40,15 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
   try {
+    // Admin authentication (defense-in-depth - middleware also checks)
+    const adminAuth = await requireAdmin(request);
+    if (!adminAuth.success) {
+      return NextResponse.json(
+        { success: false, error: adminAuth.error },
+        { status: adminAuth.status }
+      );
+    }
+
     const body: CreatePlayerRequest = await request.json();
 
     // Validate required fields

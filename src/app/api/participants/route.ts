@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { handleDatabaseError } from '@/lib/db';
+import { requireAdmin } from '@/lib/auth-helpers';
 
 /**
  * GET /api/participants
@@ -80,6 +81,15 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    // Admin authentication (defense-in-depth - middleware also checks)
+    const adminAuth = await requireAdmin(request);
+    if (!adminAuth.success) {
+      return NextResponse.json(
+        { success: false, error: adminAuth.error },
+        { status: adminAuth.status }
+      );
+    }
+
     const body = await request.json();
 
     // Validate required fields
@@ -93,8 +103,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate email format if provided
+    // Validate name length
+    if (typeof body.name === 'string' && body.name.trim().length > 100) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Name must not exceed 100 characters'
+        },
+        { status: 400 }
+      );
+    }
+
+    // Validate email format and length if provided
     if (body.email) {
+      if (typeof body.email === 'string' && body.email.trim().length > 254) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Email must not exceed 254 characters'
+          },
+          { status: 400 }
+        );
+      }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(body.email)) {
         return NextResponse.json(

@@ -16,13 +16,9 @@ export const revalidate = 0;
 interface HealthStatus {
   status: 'healthy' | 'unhealthy';
   timestamp: string;
-  uptime: number;
   database: {
     connected: boolean;
-    responseTime?: number;
   };
-  environment: string;
-  version: string;
 }
 
 export async function GET() {
@@ -31,12 +27,9 @@ export async function GET() {
   const health: HealthStatus = {
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
     database: {
       connected: false,
     },
-    environment: process.env.NODE_ENV || 'development',
-    version: process.env.npm_package_version || '1.0.0',
   };
 
   try {
@@ -46,7 +39,6 @@ export async function GET() {
     const dbEndTime = Date.now();
     
     health.database.connected = true;
-    health.database.responseTime = dbEndTime - dbStartTime;
   } catch (error) {
     console.error('Health check - Database error:', error);
     health.status = 'unhealthy';

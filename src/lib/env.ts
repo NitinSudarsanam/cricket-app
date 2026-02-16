@@ -40,6 +40,11 @@ export function validateEnv() {
     'ADMIN_SECRET',
   ] as const;
 
+  // In production, SESSION_SECRET is also required (separate from ADMIN_SECRET)
+  if (serverEnv.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
+    errors.push('SESSION_SECRET is required in production and must be separate from ADMIN_SECRET');
+  }
+
   for (const varName of requiredServerVars) {
     if (!serverEnv[varName]) {
       errors.push(`Missing required environment variable: ${varName}`);
@@ -58,9 +63,26 @@ export function validateEnv() {
     }
   }
 
-  // Validation warnings (non-blocking)
-  if (serverEnv.ADMIN_SECRET === 'dev-secret-change-in-production' && serverEnv.NODE_ENV === 'production') {
-    console.warn('⚠️  WARNING: Using default ADMIN_SECRET in production! Please set a secure value.');
+  // Production security checks (hard errors)
+  if (serverEnv.NODE_ENV === 'production') {
+    // Enforce strong ADMIN_SECRET
+    if (!serverEnv.ADMIN_SECRET || 
+        serverEnv.ADMIN_SECRET === 'dev-secret-change-in-production' ||
+        serverEnv.ADMIN_SECRET.length < 32) {
+      errors.push('ADMIN_SECRET must be at least 32 characters long in production and must not be the default value');
+    }
+
+    // Enforce separate SESSION_SECRET
+    if (!process.env.SESSION_SECRET) {
+      errors.push('SESSION_SECRET is required in production and must be separate from ADMIN_SECRET');
+    } else if (process.env.SESSION_SECRET.length < 32) {
+      errors.push('SESSION_SECRET must be at least 32 characters long in production');
+    }
+
+    // Ensure SESSION_SECRET is different from ADMIN_SECRET
+    if (process.env.SESSION_SECRET === serverEnv.ADMIN_SECRET) {
+      errors.push('SESSION_SECRET must be different from ADMIN_SECRET in production');
+    }
   }
 
   if (errors.length > 0) {

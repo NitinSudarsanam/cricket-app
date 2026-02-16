@@ -10,9 +10,12 @@ const COOKIE_NAME = 'participant_session';
 const MAX_AGE = 60 * 60 * 24; // 24 hours
 
 function getSecret(): string {
-  const secret = process.env.SESSION_SECRET || process.env.ADMIN_SECRET;
+  // In production, SESSION_SECRET is required (enforced by env validation)
+  // In development, fall back to ADMIN_SECRET for convenience
+  const secret = process.env.SESSION_SECRET || 
+                 (process.env.NODE_ENV !== 'production' ? process.env.ADMIN_SECRET : undefined);
   if (!secret) {
-    throw new Error('SESSION_SECRET or ADMIN_SECRET must be set for participant session');
+    throw new Error('SESSION_SECRET must be set (required in production, optional in development)');
   }
   return secret;
 }

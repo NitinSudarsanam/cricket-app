@@ -4,6 +4,7 @@ import { prismaDraftConfigToDraftConfig } from '@/lib/model-mappers';
 import { validateUpdateDraftConfigRequest } from '@/lib/validation';
 import { validateDraftConfiguration } from '@/lib/rule-engine';
 import { UpdateDraftConfigRequest } from '@/types';
+import { requireAdmin } from '@/lib/auth-helpers';
 
 /**
  * GET /api/draft-config
@@ -63,6 +64,15 @@ export async function GET() {
  */
 export async function PUT(request: NextRequest) {
   try {
+    // Admin authentication (defense-in-depth - middleware also checks)
+    const adminAuth = await requireAdmin(request);
+    if (!adminAuth.success) {
+      return NextResponse.json(
+        { success: false, error: adminAuth.error },
+        { status: adminAuth.status }
+      );
+    }
+
     const body: UpdateDraftConfigRequest = await request.json();
 
     // Validate request structure

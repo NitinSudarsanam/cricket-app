@@ -10,8 +10,7 @@
  * Requirements: All requirements
  */
 
-import { describe, it } from 'node:test';
-import assert from 'node:assert';
+import { describe, it, expect } from 'vitest';
 import {
   validateDraftConfiguration,
   validatePick,
@@ -80,11 +79,8 @@ describe('Integration Test: Invalid Configurations', () => {
     const players = createMockPlayers(100);
     const result = validateDraftConfiguration(config, players, 4);
 
-    assert.strictEqual(result.valid, false, 'Should reject invalid configuration');
-    assert.ok(
-      result.errors?.some(e => e.includes('exceeds maximum possible players')),
-      'Should have team capacity error'
-    );
+    expect(result.valid).toBe(false);
+    expect(result.errors?.some(e => e.includes('exceeds maximum possible players'))).toBe(true);
   });
 
   it('should reject configuration with mandatory roles exceeding roster size', () => {
@@ -108,11 +104,8 @@ describe('Integration Test: Invalid Configurations', () => {
     const players = createMockPlayers(20); // Need 10 × 4 = 40
     const result = validateDraftConfiguration(config, players, 4);
 
-    assert.strictEqual(result.valid, false, 'Should reject insufficient player pool');
-    assert.ok(
-      result.errors?.some(e => e.includes('insufficient')),
-      'Should have player pool error'
-    );
+    expect(result.valid).toBe(false);
+    expect(result.errors?.some(e => e.includes('insufficient'))).toBe(true);
   });
 
   it('should reject configuration with early round rules exceeding total rounds', () => {
@@ -124,11 +117,8 @@ describe('Integration Test: Invalid Configurations', () => {
     const players = createMockPlayers(100);
     const result = validateDraftConfiguration(config, players, 4);
 
-    assert.strictEqual(result.valid, false, 'Should reject invalid early round rules');
-    assert.ok(
-      result.errors?.some(e => e.includes('cannot exceed total rounds')),
-      'Should have early round error'
-    );
+    expect(result.valid).toBe(false);
+    expect(result.errors?.some(e => e.includes('cannot exceed total rounds'))).toBe(true);
   });
 
   it('should reject configuration with minPerTeam > maxPerTeam', () => {
@@ -139,11 +129,8 @@ describe('Integration Test: Invalid Configurations', () => {
     const players = createMockPlayers(100);
     const result = validateDraftConfiguration(config, players, 4);
 
-    assert.strictEqual(result.valid, false, 'Should reject invalid team constraints');
-    assert.ok(
-      result.errors?.some(e => e.includes('cannot exceed maximum per team')),
-      'Should have team constraint error'
-    );
+    expect(result.valid).toBe(false);
+    expect(result.errors?.some(e => e.includes('cannot exceed maximum per team'))).toBe(true);
   });
 
   it('should reject configuration with impossible early round requirements', () => {
@@ -155,11 +142,8 @@ describe('Integration Test: Invalid Configurations', () => {
     const players = createMockPlayers(100);
     const result = validateDraftConfiguration(config, players, 4);
 
-    assert.strictEqual(result.valid, false, 'Should reject impossible early round rules');
-    assert.ok(
-      result.errors?.some(e => e.includes('exceeds mandatory')),
-      'Should have early round feasibility error'
-    );
+    expect(result.valid).toBe(false);
+    expect(result.errors?.some(e => e.includes('exceeds mandatory'))).toBe(true);
   });
 
   it('should reject configuration with zero maxPerTeam', () => {
@@ -168,7 +152,7 @@ describe('Integration Test: Invalid Configurations', () => {
     });
     const result = validateTeamConstraints(config);
 
-    assert.strictEqual(result.valid, false, 'Should reject zero maxPerTeam');
+    expect(result.valid).toBe(false);
   });
 
   it('should reject configuration with negative values', () => {
@@ -177,7 +161,7 @@ describe('Integration Test: Invalid Configurations', () => {
     });
     const result = validateRosterFeasibility(config);
 
-    assert.strictEqual(result.valid, false, 'Should reject negative roster size');
+    expect(result.valid).toBe(false);
   });
 });
 
@@ -190,11 +174,8 @@ describe('Integration Test: Concurrent Pick Attempts', () => {
 
     const result = validatePick(player, roster, 1, config, draftedPlayerIds);
 
-    assert.strictEqual(result.valid, false, 'Should reject already drafted player');
-    assert.ok(
-      result.errors?.some(e => e.includes('already been drafted')),
-      'Should have already drafted error'
-    );
+    expect(result.valid).toBe(false);
+    expect(result.errors?.some(e => e.includes('already been drafted'))).toBe(true);
   });
 
   it('should handle race condition with multiple picks for same player', () => {
@@ -204,11 +185,11 @@ describe('Integration Test: Concurrent Pick Attempts', () => {
     
     // First pick should succeed
     const result1 = validatePick(player, roster, 1, config, []);
-    assert.strictEqual(result1.valid, true, 'First pick should succeed');
+    expect(result1.valid).toBe(true);
 
     // Second pick should fail (player now drafted)
     const result2 = validatePick(player, roster, 1, config, ['player-1']);
-    assert.strictEqual(result2.valid, false, 'Second pick should fail');
+    expect(result2.valid).toBe(false);
   });
 
   it('should reject pick when team cap is reached', () => {
@@ -219,11 +200,8 @@ describe('Integration Test: Concurrent Pick Attempts', () => {
 
     const result = validatePick(player, roster, 1, config, draftedPlayerIds);
 
-    assert.strictEqual(result.valid, false, 'Should reject when team cap reached');
-    assert.ok(
-      result.errors?.some(e => e.includes('Maximum players from CSK reached')),
-      'Should have team cap error'
-    );
+    expect(result.valid).toBe(false);
+    expect(result.errors?.some(e => e.includes('Maximum players from CSK reached'))).toBe(true);
   });
 
   it('should reject pick violating early round constraints', () => {
@@ -240,11 +218,8 @@ describe('Integration Test: Concurrent Pick Attempts', () => {
     // Round 4, need 2 Bat but have 0
     const result = validatePick(player, roster, 4, config, draftedPlayerIds);
 
-    assert.strictEqual(result.valid, false, 'Should reject early round violation');
-    assert.ok(
-      result.errors?.some(e => e.includes('Must draft')),
-      'Should have early round constraint error'
-    );
+    expect(result.valid).toBe(false);
+    expect(result.errors?.some(e => e.includes('Must draft'))).toBe(true);
   });
 });
 
@@ -265,13 +240,9 @@ describe('Integration Test: Browser Refresh During Draft', () => {
     // Simulate state restoration after refresh
     const stateAfterRefresh = { ...stateBeforeRefresh };
 
-    assert.deepStrictEqual(
-      stateAfterRefresh,
-      stateBeforeRefresh,
-      'State should be preserved after refresh'
-    );
-    assert.strictEqual(stateAfterRefresh.picks.length, 3, 'Should have all picks');
-    assert.strictEqual(stateAfterRefresh.currentRound, 3, 'Should maintain current round');
+    expect(stateAfterRefresh).toEqual(stateBeforeRefresh);
+    expect(stateAfterRefresh.picks.length).toBe(3);
+    expect(stateAfterRefresh.currentRound).toBe(3);
   });
 
   it('should validate picks are still valid after refresh', () => {
@@ -290,7 +261,7 @@ describe('Integration Test: Browser Refresh During Draft', () => {
       console.log('Validation errors:', result.errors || result.error);
     }
 
-    assert.strictEqual(result.valid, true, 'Valid pick should still be valid after refresh');
+    expect(result.valid).toBe(true);
   });
 });
 
@@ -303,9 +274,9 @@ describe('Integration Test: Network Failure Scenarios', () => {
 
     try {
       validatePick(player, roster, 1, config, draftedPlayerIds);
-      assert.fail('Should throw error for missing player');
+      throw new Error('Should throw error for missing player');
     } catch (error) {
-      assert.ok(error, 'Should throw error for missing player data');
+      expect(error).toBeDefined();
     }
   });
 
@@ -317,9 +288,9 @@ describe('Integration Test: Network Failure Scenarios', () => {
 
     try {
       validatePick(player, roster, 1, config, draftedPlayerIds);
-      assert.fail('Should throw error for missing config');
+      throw new Error('Should throw error for missing config');
     } catch (error) {
-      assert.ok(error, 'Should throw error for missing config data');
+      expect(error).toBeDefined();
     }
   });
 
@@ -337,7 +308,7 @@ describe('Integration Test: Network Failure Scenarios', () => {
     
     // Depending on implementation, this might fail or succeed
     // The important thing is it doesn't crash
-    assert.ok(result, 'Should return a result without crashing');
+    expect(result).toBeDefined();
   });
 });
 
@@ -358,7 +329,7 @@ describe('Integration Test: Boundary Conditions', () => {
     ];
     const result = validateDraftConfiguration(config, players, 4);
 
-    assert.strictEqual(result.valid, true, 'Should accept minimum roster size');
+    expect(result.valid).toBe(true);
   });
 
   it('should handle maximum roster size (20)', () => {
@@ -373,7 +344,7 @@ describe('Integration Test: Boundary Conditions', () => {
     const players = createMockPlayers(200);
     const result = validateDraftConfiguration(config, players, 4);
 
-    assert.strictEqual(result.valid, true, 'Should accept maximum roster size');
+    expect(result.valid).toBe(true);
   });
 
   it('should handle single participant', () => {
@@ -381,7 +352,7 @@ describe('Integration Test: Boundary Conditions', () => {
     const players = createMockPlayers(50);
     const result = validateDraftConfiguration(config, players, 1);
 
-    assert.strictEqual(result.valid, true, 'Should accept single participant');
+    expect(result.valid).toBe(true);
   });
 
   it('should handle many participants', () => {
@@ -392,7 +363,7 @@ describe('Integration Test: Boundary Conditions', () => {
     const players = createMockPlayers(500);
     const result = validateDraftConfiguration(config, players, 20);
 
-    assert.strictEqual(result.valid, true, 'Should accept many participants');
+    expect(result.valid).toBe(true);
   });
 
   it('should handle all players from same team (with appropriate maxPerTeam)', () => {
@@ -407,7 +378,7 @@ describe('Integration Test: Boundary Conditions', () => {
     );
     const result = validateDraftConfiguration(config, players, 4);
 
-    assert.strictEqual(result.valid, true, 'Should accept all players from same team');
+    expect(result.valid).toBe(true);
   });
 
   it('should handle zero free slots', () => {
@@ -418,7 +389,7 @@ describe('Integration Test: Boundary Conditions', () => {
     });
     const result = validateRosterFeasibility(config);
 
-    assert.strictEqual(result.valid, true, 'Should accept zero free slots');
+    expect(result.valid).toBe(true);
   });
 
   it('should handle no early round rules', () => {
@@ -427,7 +398,7 @@ describe('Integration Test: Boundary Conditions', () => {
     });
     const result = validateEarlyRoundRules(config);
 
-    assert.strictEqual(result.valid, true, 'Should accept no early round rules');
+    expect(result.valid).toBe(true);
   });
 });
 
@@ -436,7 +407,7 @@ describe('Integration Test: Data Validation', () => {
     const player = createMockPlayer({ team: 'INVALID' as any });
     
     // In a real implementation, this should be validated
-    assert.ok(player.team, 'Player should have a team');
+    expect(player.team).toBeDefined();
   });
 
   it('should reject invalid role names', () => {
@@ -449,14 +420,14 @@ describe('Integration Test: Data Validation', () => {
   it('should handle missing player metadata', () => {
     const player = createMockPlayer({ metadata: undefined });
     
-    assert.strictEqual(player.metadata, undefined, 'Metadata should be optional');
+    expect(player.metadata).toBeUndefined();
   });
 
   it('should handle empty player name', () => {
     const player = createMockPlayer({ name: '' });
     
     // In a real implementation, this should be validated
-    assert.strictEqual(typeof player.name, 'string', 'Name should be a string');
+    expect(typeof player.name).toBe('string');
   });
 });
 
@@ -469,8 +440,8 @@ describe('Integration Test: Performance Edge Cases', () => {
     const result = validateDraftConfiguration(config, players, 4);
     const endTime = Date.now();
 
-    assert.strictEqual(result.valid, true, 'Should validate large player pool');
-    assert.ok(endTime - startTime < 1000, 'Should complete validation in under 1 second');
+    expect(result.valid).toBe(true);
+    expect(endTime - startTime).toBeLessThan(1000);
   });
 
   it('should handle many validation errors efficiently', () => {
@@ -488,8 +459,8 @@ describe('Integration Test: Performance Edge Cases', () => {
     const result = validateDraftConfiguration(config, players, 4);
     const endTime = Date.now();
 
-    assert.strictEqual(result.valid, false, 'Should detect multiple errors');
-    assert.ok(result.errors && result.errors.length > 0, 'Should have multiple errors');
-    assert.ok(endTime - startTime < 1000, 'Should complete validation quickly even with errors');
+    expect(result.valid).toBe(false);
+    expect(result.errors && result.errors.length > 0).toBe(true);
+    expect(endTime - startTime).toBeLessThan(1000);
   });
 });

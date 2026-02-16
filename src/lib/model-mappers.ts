@@ -40,7 +40,7 @@ export function prismaPlayerToPlayer(prismaPlayer: PrismaPlayer): Player {
     team: prismaPlayer.team as IPLTeam,
     role: prismaPlayer.role as PlayerRole,
     isForeign: prismaPlayer.isForeign,
-    metadata: prismaPlayer.metadata as Record<string, any> | undefined,
+    metadata: prismaPlayer.metadata ? (prismaPlayer.metadata as Record<string, any>) : undefined,
     externalId: prismaPlayer.externalId ?? undefined,
     createdAt: prismaPlayer.createdAt,
     updatedAt: prismaPlayer.updatedAt,

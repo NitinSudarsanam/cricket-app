@@ -12,6 +12,7 @@ import {
 } from '@/lib/draft-state-manager';
 import { Player } from '@/types';
 import { broadcastEvent, EVENTS } from '@/lib/pusher-server';
+import { getParticipantSession } from '@/lib/session';
 
 /**
  * POST /api/draft/pick
@@ -49,6 +50,21 @@ export async function POST(request: NextRequest) {
     }
 
     const { participantId, playerId } = body;
+
+    // Verify participant session (defense-in-depth - middleware also checks)
+    const session = await getParticipantSession();
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+    if (session.participantId !== participantId) {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden' },
+        { status: 403 }
+      );
+    }
 
     // Get the active draft state - force fresh read
     // Force Prisma to bypass any caching
@@ -99,17 +115,17 @@ export async function POST(request: NextRequest) {
     const currentParticipantId = getCurrentParticipantId(draftState, draftOrder);
 
     if (currentParticipantId !== participantId) {
+      // Log debug info server-side only (security: don't expose internal state)
+      console.log('Pick attempted out of turn:', {
+        currentRound: draftState.currentRound,
+        currentPickIndex: draftState.currentPickIndex,
+        expectedParticipant: currentParticipantId,
+        attemptedParticipant: participantId,
+      });
       return NextResponse.json(
         {
           success: false,
-          error: `It is not your turn. Waiting for participant ${currentParticipantId} to pick.`,
-          debug: {
-            currentRound: draftState.currentRound,
-            currentPickIndex: draftState.currentPickIndex,
-            participantOrder: draftState.participantOrder,
-            expectedParticipant: currentParticipantId,
-            yourId: participantId
-          }
+          error: 'It is not your turn.'
         },
         { status: 403 }
       );
