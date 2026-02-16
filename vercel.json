@@ -6,10 +6,5 @@
   "framework": "nextjs",
   "outputDirectory": ".next",
   "regions": ["iad1"],
-  "functions": {
-    "src/app/api/**/*.ts": {
-      "maxDuration": 10
-    }
-  },
   "crons": [{"path": "/api/sync/cricket-data", "schedule": "0 0 * * *"}]
 }
