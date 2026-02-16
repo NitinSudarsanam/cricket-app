@@ -5,6 +5,7 @@ import { DraftState, Player, DraftStatus } from '@/types';
 import { Modal } from '@/components/Modal';
 import { Skeleton } from '@/components/Skeleton';
 import { PlayerChip } from '@/components/PlayerChip';
+import { Button, Badge, Card, StatDisplay } from '@/components/ui';
 
 interface ParticipantWithRoster {
   id: string;
@@ -242,7 +243,7 @@ export function DraftMonitor() {
           <Skeleton className="h-40 rounded-md" />
           <Skeleton className="h-40 rounded-md" />
         </div>
-        <div className="bg-white rounded-md border border-slate-200 p-6 space-y-4">
+        <div className="card-padded stack-lg">
           <Skeleton className="h-6 w-40" />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -290,55 +291,48 @@ export function DraftMonitor() {
         </div>
         <div className="flex gap-3 flex-shrink-0">
           {draftState?.status === 'completed' && (
-            <a
-              href="/admin/results"
-              className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 transition-colors"
-            >
+            <a href="/admin/results" className="btn-success inline-flex items-center">
               📊 View Results
             </a>
           )}
           {!isDraftActive && Array.isArray(participants) && participants.length > 0 && (
-            <button
+            <Button
               onClick={() => setShowStartModal(true)}
               disabled={actionLoading === 'start'}
-              className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              variant="success"
             >
               {actionLoading === 'start' ? 'Starting...' : '🚀 Start Draft'}
-            </button>
+            </Button>
           )}
           {isDraftActive && draftState && (
             <React.Fragment key="draft-active-buttons">
-              <a
-                href="/draft"
-                className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-md hover:bg-blue-700 transition-colors"
-              >
+              <a href="/draft" className="btn-success inline-flex items-center">
                 👁️ View Draft
               </a>
               {draftState.status === 'in_progress' && (
-                <button
+                <Button
                   onClick={handlePauseDraft}
                   disabled={actionLoading === 'pause'}
-                  className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {actionLoading === 'pause' ? 'Pausing...' : 'Pause Draft'}
-                </button>
+                </Button>
               )}
               {draftState.status === 'paused' && (
-                <button
+                <Button
                   onClick={handleResumeDraft}
                   disabled={actionLoading === 'resume'}
-                  className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-md hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  variant="success"
                 >
                   {actionLoading === 'resume' ? 'Resuming...' : 'Resume Draft'}
-                </button>
+                </Button>
               )}
-              <button
+              <Button
                 onClick={handleResetDraft}
                 disabled={actionLoading === 'reset'}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                variant="danger"
               >
                 {actionLoading === 'reset' ? 'Resetting...' : 'Reset Draft'}
-              </button>
+              </Button>
             </React.Fragment>
           )}
         </div>
@@ -352,37 +346,27 @@ export function DraftMonitor() {
 
       {/* Draft Status */}
       {isDraftActive && draftState ? (
-        <div className="bg-white p-4 md:p-6 rounded-md border border-slate-200">
-          <h3 className="text-base md:text-lg font-semibold text-slate-900 mb-3 md:mb-4">Draft Status</h3>
+        <Card padded className="stack-md">
+          <h3 className="heading-md">Draft Status</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
             <div>
-              <div className="text-xs md:text-sm text-slate-600">Status</div>
+              <div className="data-label">Status</div>
               <div className="mt-1">
                 <StatusBadge status={draftState.status} />
               </div>
             </div>
-            <div>
-              <div className="text-xs md:text-sm text-slate-600">Current Round</div>
-              <div className="text-base md:text-lg font-semibold text-slate-900 mt-1">
-                {draftState.currentRound}
-              </div>
-            </div>
-            <div>
-              <div className="text-xs md:text-sm text-slate-600">Total Picks</div>
-              <div className="text-base md:text-lg font-semibold text-slate-900 mt-1">
-                {draftState.picks?.length || 0}
-              </div>
-            </div>
+            <StatDisplay label="Current Round" value={draftState.currentRound} size="md" />
+            <StatDisplay label="Total Picks" value={draftState.picks?.length || 0} size="md" />
             <div className="col-span-2 md:col-span-1">
-              <div className="text-xs md:text-sm text-slate-600">On the Clock</div>
-              <div className="text-base md:text-lg font-semibold text-emerald-600 mt-1 truncate">
+              <div className="data-label">On the Clock</div>
+              <div className="stat-value-highlight mt-1 truncate">
                 {currentParticipant?.name || 'Unknown'}
               </div>
             </div>
           </div>
-        </div>
+        </Card>
       ) : (
-        <div className="bg-gray-50 p-8 rounded-md border border-slate-200 text-center">
+        <Card padded className="text-center">
           <div className="text-slate-500 mb-2">
             <svg
               className="w-12 h-12 mx-auto mb-3"
@@ -402,13 +386,13 @@ export function DraftMonitor() {
           <p className="text-sm text-slate-600">
             Start a draft to begin monitoring
           </p>
-        </div>
+        </Card>
       )}
 
       {/* Participants and Rosters */}
-      <div className="bg-white rounded-md border border-slate-200">
+      <Card padded className="p-0 draft-monitor-card">
         <div className="p-6 border-b border-slate-200">
-          <h3 className="text-lg font-semibold text-slate-900">
+          <h3 className="heading-md">
             Participants ({Array.isArray(participants) ? participants.length : 0})
           </h3>
         </div>
@@ -454,14 +438,14 @@ export function DraftMonitor() {
             )}
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Recent Picks */}
       {isDraftActive && 
        draftState && 
        Array.isArray(draftState.picks) && 
        draftState.picks.length > 0 && (
-        <div className="bg-white rounded-md border border-slate-200">
+        <Card padded className="p-0">
           <div className="p-6 border-b border-slate-200">
             <h3 className="text-lg font-semibold text-slate-900">
               Recent Picks
@@ -503,7 +487,7 @@ export function DraftMonitor() {
                 })}
             </div>
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Start Draft Modal */}
@@ -522,18 +506,16 @@ export function DraftMonitor() {
 // Status Badge Component
 function StatusBadge({ status }: { status: DraftStatus }) {
   const statusConfig = {
-    not_started: { label: 'Not Started', color: 'bg-gray-100 text-slate-700' },
-    in_progress: { label: 'In Progress', color: 'bg-green-100 text-green-700' },
-    paused: { label: 'Paused', color: 'bg-yellow-100 text-yellow-700' },
-    completed: { label: 'Completed', color: 'bg-blue-100 text-emerald-700' },
+    not_started: { label: 'Not Started', variant: 'neutral' as const },
+    in_progress: { label: 'In Progress', variant: 'success' as const },
+    paused: { label: 'Paused', variant: 'warning' as const },
+    completed: { label: 'Completed', variant: 'info' as const },
   };
 
   const config = statusConfig[status];
 
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}>
-      {config.label}
-    </span>
+    <Badge variant={config.variant}>{config.label}</Badge>
   );
 }
 

@@ -1,0 +1,115 @@
+/**
+ * Form Components Styles
+ * 
+ * Semantic class names for form inputs, selects, and related elements.
+ */
+
+/* Form Input */
+.form-container {
+    width: 100%;
+}
+
+.form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: rgb(51, 65, 85);
+    margin-bottom: 0.25rem;
+}
+
+.form-label-required {
+    color: rgb(239, 68, 68);
+    margin-left: 0.25rem;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid;
+    border-radius: 6px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-input:focus {
+    outline: none;
+}
+
+.form-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.form-input-default {
+    border-color: rgb(203, 213, 225);
+}
+
+.form-input-default:focus {
+    border-color: rgb(5, 150, 105);
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2);
+}
+
+.form-input-error {
+    border-color: rgb(252, 165, 165);
+}
+
+.form-input-error:focus {
+    border-color: rgb(239, 68, 68);
+    --tw-ring-color: rgb(254, 202, 202);
+}
+
+.form-select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid;
+    border-radius: 6px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-select:focus {
+    outline: none;
+    ring: 2px;
+}
+
+.form-select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.form-select-default {
+    border-color: rgb(203, 213, 225);
+}
+
+.form-select-default:focus {
+    border-color: rgb(5, 150, 105);
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2);
+}
+
+.form-select-error {
+    border-color: rgb(252, 165, 165);
+}
+
+.form-select-error:focus {
+    border-color: rgb(239, 68, 68);
+    --tw-ring-color: rgb(254, 202, 202);
+}
+
+.form-error-message {
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: rgb(220, 38, 38);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.form-error-icon {
+    width: 1rem;
+    height: 1rem;
+    fill: currentColor;
+}
+
+.form-helper-text {
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: rgb(100, 116, 139);
+}

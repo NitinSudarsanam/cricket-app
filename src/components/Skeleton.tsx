@@ -1,11 +1,26 @@
 'use client';
 
-import { classNames } from '@/utils/classNames';
+import { cn } from '@/lib/utils';
+import { cva, type VariantProps } from 'class-variance-authority';
 
-export interface SkeletonProps {
+const skeletonVariants = cva(
+  "animate-pulse bg-slate-200",
+  {
+    variants: {
+      variant: {
+        text: "rounded h-4",
+        rect: "rounded-lg",
+        circle: "rounded-full"
+      }
+    },
+    defaultVariants: {
+      variant: "rect"
+    }
+  }
+);
+
+export interface SkeletonProps extends VariantProps<typeof skeletonVariants> {
   className?: string;
-  /** Optional: use for different shapes (default: rounded rectangle) */
-  variant?: 'text' | 'rect' | 'circle';
 }
 
 /**
@@ -13,16 +28,9 @@ export interface SkeletonProps {
  * Use for loading states to keep layout stable.
  */
 export function Skeleton({ className = '', variant = 'rect' }: SkeletonProps) {
-  const base = 'animate-pulse bg-slate-200';
-  const variants = {
-    text: 'rounded h-4',
-    rect: 'rounded-lg',
-    circle: 'rounded-full',
-  };
-
   return (
     <div
-      className={classNames(base, variants[variant], className)}
+      className={cn(skeletonVariants({ variant }), className)}
       role="presentation"
       aria-hidden="true"
     />

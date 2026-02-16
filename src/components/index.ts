@@ -3,7 +3,7 @@ export { PlayerChip } from './PlayerChip';
 export type { PlayerChipProps } from './PlayerChip';
 
 export { LoadingSpinner } from './LoadingSpinner';
-export type { LoadingSpinnerProps, LoadingSpinnerVariant } from './LoadingSpinner';
+export type { LoadingSpinnerProps } from './LoadingSpinner';
 
 export { ErrorBoundary } from './ErrorBoundary';
 

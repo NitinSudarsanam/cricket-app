@@ -1,0 +1,104 @@
+/**
+ * Base Global Styles
+ * 
+ * This file contains:
+ * - Tailwind CSS import
+ * - CSS custom properties (design tokens)
+ * - Tailwind theme configuration
+ * - Base body styles
+ * - Global focus-visible styles
+ */
+
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc;
+  --foreground: #1e293b;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+  --text-primary: #1e293b;
+  --text-muted: #64748b;
+  --accent: #047857;
+  --accent-hover: #065f46;
+  --accent-light: #ecfdf5;
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
+  --danger-light: #fef2f2;
+  --warning: #d97706;
+  --warning-light: #fffbeb;
+  --border-strong: #cbd5e1;
+  --radius: 6px;
+
+  /* IPL Team Colors - Background */
+  --team-csk-bg: #FEF3C7;
+  --team-mi-bg: #DBEAFE;
+  --team-gt-bg: #E0E7FF;
+  --team-rr-bg: #F3E8FF;
+  --team-rcb-bg: #FEE2E2;
+  --team-kkr-bg: #E5E7EB;
+  --team-lsg-bg: #CFFAFE;
+  --team-srh-bg: #FED7AA;
+  --team-pbks-bg: #FECDD3;
+  --team-dc-bg: #D1FAE5;
+  
+  /* IPL Team Colors - Border */
+  --team-csk-border: #FCD34D;
+  --team-mi-border: #60A5FA;
+  --team-gt-border: #818CF8;
+  --team-rr-border: #C084FC;
+  --team-rcb-border: #F87171;
+  --team-kkr-border: #9CA3AF;
+  --team-lsg-border: #22D3EE;
+  --team-srh-border: #FB923C;
+  --team-pbks-border: #FB7185;
+  --team-dc-border: #34D399;
+  
+  /* IPL Team Colors - Hover */
+  --team-csk-hover: #FDE68A;
+  --team-mi-hover: #BFDBFE;
+  --team-gt-hover: #C7D2FE;
+  --team-rr-hover: #E9D5FF;
+  --team-rcb-hover: #FECACA;
+  --team-kkr-hover: #D1D5DB;
+  --team-lsg-hover: #A5F3FC;
+  --team-srh-hover: #FDE68A;
+  --team-pbks-hover: #FBCFE8;
+  --team-dc-hover: #A7F3D0;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --font-sans: var(--font-sans-fallback);
+  --font-mono: var(--font-mono-fallback);
+  --color-card: var(--surface);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-muted);
+  --radius-default: var(--radius);
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans-fallback), system-ui, -apple-system, sans-serif;
+}
+
+/* Global focus-visible – accent ring */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--accent);
+}

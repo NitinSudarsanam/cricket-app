@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { runSyncFromSportmonks, checkSportmonksApi, type SportmonksCheckResult } from '@/app/admin/sync/actions';
 import { ErrorState } from '@/components/ErrorState';
 import { Skeleton } from '@/components/Skeleton';
+import { Button } from '@/components/ui';
 
 interface LeagueItem {
   id: string;
@@ -151,10 +152,10 @@ export function SyncView() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="stack-xl">
       <div>
         <h2 className="text-2xl font-semibold text-slate-900">Load from Sportmonks</h2>
-        <p className="text-sm text-slate-600 mt-1">
+        <p className="text-muted mt-1">
           Sync leagues, seasons, teams, and draft player pool. Select a season and run sync to populate data for draft and leaderboard.
         </p>
       </div>
@@ -163,21 +164,16 @@ export function SyncView() {
         <ErrorState message={error} onRetry={() => setError(null)} title="Error" />
       )}
 
-      <div className="bg-white rounded-md border border-slate-200 p-6 space-y-4">
-        <h3 className="text-sm font-semibold text-slate-900">0. Check Sportmonks API</h3>
-        <p className="text-sm text-slate-600">
+      <div className="card-padded stack-lg">
+        <h3 className="section-title">0. Check Sportmonks API</h3>
+        <p className="text-muted">
           Verify your API token and that Sportmonks returns leagues, seasons, and squad data.
         </p>
-        <button
-          type="button"
-          onClick={handleCheckApi}
-          disabled={checkingApi}
-          className="px-4 py-2 bg-slate-100 text-slate-800 text-sm font-medium rounded-md hover:bg-slate-200 disabled:opacity-50"
-        >
+        <Button type="button" onClick={handleCheckApi} disabled={checkingApi} variant="secondary">
           {checkingApi ? 'Checking…' : 'Check Sportmonks API'}
-        </button>
+        </Button>
         {apiCheck && (
-          <div className="mt-3 p-3 bg-slate-50 rounded border border-slate-200 text-sm">
+          <div className="mt-3 p-3 bg-surface rounded border border-slate-200 text-sm">
             {apiCheck.success ? (
               <ul className="space-y-1 text-slate-700">
                 <li>Token: set</li>
@@ -201,32 +197,33 @@ export function SyncView() {
         )}
       </div>
 
-      <div className="bg-white rounded-md border border-slate-200 p-6 space-y-4">
-        <h3 className="text-sm font-semibold text-slate-900">1. Fetch leagues and seasons</h3>
-        <p className="text-sm text-slate-600">
+      <div className="card-padded stack-lg">
+        <h3 className="section-title">1. Fetch leagues and seasons</h3>
+        <p className="text-muted">
           If the lists below are empty, run a full sync first to pull leagues and seasons from Sportmonks.
         </p>
-        <button
+        <Button
           type="button"
           onClick={() => handleSync({})}
           disabled={syncing}
-          className="px-4 py-2 bg-slate-100 text-slate-800 text-sm font-medium rounded-md hover:bg-slate-200 disabled:opacity-50"
+          variant="secondary"
         >
           {syncing ? 'Syncing…' : 'Run full sync (no filter)'}
-        </button>
+        </Button>
       </div>
 
-      <div className="bg-white rounded-md border border-slate-200 p-6 space-y-4">
-        <h3 className="text-sm font-semibold text-slate-900">2. Select league and season</h3>
+      <div className="card-padded stack-lg">
+        <h3 className="section-title">2. Select league and season</h3>
         <div className="flex flex-wrap items-center gap-3">
-          <button
+          <Button
             type="button"
             onClick={handleLoadLeagues}
             disabled={loadingLeagues}
-            className="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50"
+            variant="secondary"
+            size="sm"
           >
             Refresh leagues
-          </button>
+          </Button>
           <select
             value={leagueId}
             onChange={(e) => handleLeagueChange(e.target.value)}
@@ -237,14 +234,15 @@ export function SyncView() {
               <option key={l.id} value={l.id}>{l.name}</option>
             ))}
           </select>
-          <button
+          <Button
             type="button"
             onClick={handleLoadSeasons}
             disabled={loadingSeasons || !leagueId}
-            className="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 disabled:opacity-50"
+            variant="secondary"
+            size="sm"
           >
             Load seasons
-          </button>
+          </Button>
           <select
             value={seasonId}
             onChange={(e) => setSeasonId(e.target.value)}
@@ -267,24 +265,26 @@ export function SyncView() {
         )}
       </div>
 
-      <div className="bg-white rounded-md border border-slate-200 p-6 space-y-4">
-        <h3 className="text-sm font-semibold text-slate-900">3. Load season from Sportmonks</h3>
-        <p className="text-sm text-slate-600">
+      <div className="card-padded stack-lg">
+        <h3 className="section-title">3. Load season from Sportmonks</h3>
+        <p className="text-muted">
           This syncs teams, draft players (squads), and optionally fixtures for the selected season.
         </p>
-        <button
+        <Button
           type="button"
-          onClick={() => handleSync({ seasonId: seasonId || undefined, leagueId: leagueId || undefined })}
+          onClick={() =>
+            handleSync({ seasonId: seasonId || undefined, leagueId: leagueId || undefined })
+          }
           disabled={syncing || !seasonId}
-          className="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-700 disabled:opacity-50"
+          variant="primary"
         >
           {syncing ? 'Syncing…' : 'Load season from Sportmonks'}
-        </button>
+        </Button>
       </div>
 
       {result && (
-        <div className="bg-white rounded-md border border-slate-200 p-6 space-y-3">
-          <h3 className="text-sm font-semibold text-slate-900">Last sync result</h3>
+        <div className="card-padded stack-md">
+          <h3 className="section-title">Last sync result</h3>
           <ul className="text-sm text-slate-700 space-y-1">
             <li>Leagues: {result.leaguesUpserted}</li>
             <li>Seasons: {result.seasonsUpserted}</li>

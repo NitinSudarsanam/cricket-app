@@ -1,0 +1,10 @@
+.draft-board {
+  background-color: var(--background);
+}
+
+.draft-board-column {
+  background-color: #ffffff;
+  border-radius: 0.75rem;
+  border: 2px solid var(--border);
+}
+

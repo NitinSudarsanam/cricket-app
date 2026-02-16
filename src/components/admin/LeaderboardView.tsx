@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { ErrorState } from '@/components/ErrorState';
 import { Skeleton } from '@/components/Skeleton';
+import { Button, Card } from '@/components/ui';
 
 interface SeasonItem {
   id: string;
@@ -183,19 +184,19 @@ export function LeaderboardView() {
 
   if (loadingSeasons) {
     return (
-      <div className="space-y-6">
+      <div className="stack-xl">
         <div>
           <Skeleton className="h-8 w-48 mb-2" />
           <Skeleton className="h-4 w-72" />
         </div>
-        <div className="bg-white rounded-md border border-slate-200 p-6">
+        <Card padded>
           <Skeleton className="h-10 w-56 mb-4" />
-          <div className="space-y-2">
+          <div className="stack-sm">
             {Array.from({ length: 8 }).map((_, i) => (
               <Skeleton key={i} className="h-12 w-full rounded-md" />
             ))}
           </div>
-        </div>
+        </Card>
       </div>
     );
   }
@@ -212,7 +213,7 @@ export function LeaderboardView() {
       </div>
 
       {seasons.length === 0 ? (
-        <div className="bg-slate-50 border border-slate-200 rounded-md p-8 text-center">
+        <Card padded className="bg-slate-50 text-center">
           <div className="text-slate-500 mb-4">
             <svg
               className="w-12 h-12 mx-auto text-slate-400"
@@ -227,7 +228,7 @@ export function LeaderboardView() {
           <p className="text-sm text-slate-600 max-w-md mx-auto">
             Run sync to pull leagues and seasons from Sportmonks. Then leaderboard data will appear here after matches are processed.
           </p>
-        </div>
+        </Card>
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-3">
@@ -247,14 +248,15 @@ export function LeaderboardView() {
                 </option>
               ))}
             </select>
-            <button
+            <Button
               type="button"
               onClick={fetchLeaderboard}
               disabled={loadingLeaderboard}
-              className="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 disabled:opacity-50"
+              variant="secondary"
+              size="sm"
             >
               {loadingLeaderboard ? 'Loading…' : 'Refresh'}
-            </button>
+            </Button>
           </div>
 
           {error && (
@@ -302,15 +304,15 @@ export function LeaderboardView() {
               </div>
 
               {loadingLeaderboard ? (
-                <div className="bg-white rounded-md border border-slate-200 p-6">
+                <Card padded>
                   <div className="space-y-2">
                     {Array.from({ length: 10 }).map((_, i) => (
                       <Skeleton key={i} className="h-10 w-full rounded-md" />
                     ))}
                   </div>
-                </div>
+                </Card>
               ) : tab === 'teams' ? (
-                <div className="bg-white rounded-md border border-slate-200 overflow-hidden">
+                <Card padded className="p-0 overflow-hidden">
                   {teams.length === 0 ? (
                     <p className="p-6 text-sm text-slate-500 text-center">
                       No team standings for this season yet. Sync fixtures and process finished matches to see rankings.
@@ -361,9 +363,9 @@ export function LeaderboardView() {
                       </table>
                     </div>
                   )}
-                </div>
+                </Card>
               ) : tab === 'players' ? (
-                <div className="bg-white rounded-md border border-slate-200 overflow-hidden">
+                <Card padded className="p-0 overflow-hidden">
                   {players.length === 0 ? (
                     <p className="p-6 text-sm text-slate-500 text-center">
                       No player rankings for this season yet. Player points are derived from team standings after sync.
@@ -400,9 +402,9 @@ export function LeaderboardView() {
                       </table>
                     </div>
                   )}
-                </div>
+                </Card>
               ) : (
-                <div className="bg-white rounded-md border border-slate-200 overflow-hidden">
+                <Card padded className="p-0 overflow-hidden">
                   {!selectedDraftId ? (
                     <p className="p-6 text-sm text-slate-500 text-center">
                       No draft data available. Complete a draft to see fantasy leaderboard.
@@ -472,7 +474,7 @@ export function LeaderboardView() {
                       </table>
                     </div>
                   )}
-                </div>
+                </Card>
               )}
             </>
           )}

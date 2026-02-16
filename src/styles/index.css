@@ -1,0 +1,28 @@
+/**
+ * Main Styles Entry Point
+ * 
+ * This is the main stylesheet that imports all CSS modules.
+ * Import this file in your root layout to load all styles.
+ * 
+ * Structure:
+ * - globals/base.css - Core styles, design tokens, Tailwind config
+ * - utilities/components.css - Semantic component utility classes
+ * - utilities/team-colors.css - IPL team color utility classes
+ * - utilities/animations.css - Keyframe animations and animation classes
+ * - utilities/helpers.css - Scrollbar, touch, mobile optimizations
+ * 
+ * Component-specific CSS modules are located in:
+ * - components/*.module.css
+ */
+
+@import "./globals/base.css";
+@import "./utilities/components.css";
+@import "./utilities/team-colors.css";
+@import "./utilities/animations.css";
+@import "./utilities/helpers.css";
+@import "./components/PlayerChip.css";
+@import "./components/Forms.css";
+@import "./components/LoadingSpinner.css";
+@import "./components/AdminLayout.css";
+@import "./components/DraftBoard.css";
+@import "./components/DraftMonitor.css";

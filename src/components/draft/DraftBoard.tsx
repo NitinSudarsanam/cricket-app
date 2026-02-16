@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Player, IPLTeam, IPL_TEAMS, PlayerRole } from '@/types';
 import { PlayerChip } from '@/components/PlayerChip';
-import { TEAM_COLORS } from '@/lib/team-colors';
+import { TEAM_COLORS } from '@/config/team-colors';
 
 const CARD_SIZES_STORAGE_KEY = 'draft-player-card-sizes';
 

@@ -6,6 +6,7 @@ import { Player, DraftConfig } from '@/types';
 import { ErrorState } from '@/components/ErrorState';
 import { Skeleton } from '@/components/Skeleton';
 import { PlayerChip } from '@/components/PlayerChip';
+import { Button, Card, Badge, StatDisplay } from '@/components/ui';
 
 interface ParticipantRoster {
   participantId: string;
@@ -207,7 +208,7 @@ export function DraftResultsView() {
             View completed draft results and export data
           </p>
         </div>
-        <div className="bg-slate-50 border border-slate-200 rounded-md p-8 text-center">
+        <Card padded className="bg-slate-50 text-center">
           <div className="text-slate-500 mb-4">
             <svg
               className="w-12 h-12 mx-auto mb-3 text-slate-400"
@@ -222,13 +223,10 @@ export function DraftResultsView() {
           <p className="text-sm text-slate-600 mb-4">
             Complete a draft to see results and export rosters here.
           </p>
-          <Link
-            href="/admin/monitor"
-            className="inline-block px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-700 transition-colors"
-          >
+          <Link href="/admin/monitor" className="inline-block btn-primary">
             Go to Monitor Draft
           </Link>
-        </div>
+        </Card>
       </div>
     );
   }
@@ -238,16 +236,16 @@ export function DraftResultsView() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="stack-xl">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex-center-between">
         <div>
           <h2 className="text-2xl font-semibold text-slate-900">Draft Results</h2>
-          <p className="text-sm text-slate-600 mt-1">
+          <p className="text-muted mt-1">
             View completed draft results and export data
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex-center gap-3">
           <select
             value={exportFormat}
             onChange={(e) => setExportFormat(e.target.value as 'json' | 'csv')}
@@ -256,17 +254,14 @@ export function DraftResultsView() {
             <option value="json">JSON</option>
             <option value="csv">CSV</option>
           </select>
-          <button
-            onClick={handleExport}
-            className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 text-sm font-medium"
-          >
+          <Button onClick={handleExport} variant="primary">
             📥 Export
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Summary Card */}
-      <div className="bg-emerald-600 text-white rounded-md p-6">
+      <Card padded className="bg-emerald-600 text-white">
         <h3 className="text-xl font-bold mb-2">Draft complete</h3>
         <p className="text-emerald-100 mb-4">
           All {results.draftState.totalRounds} rounds completed with {results.totalPicks} total picks
@@ -278,13 +273,13 @@ export function DraftResultsView() {
               : 'Some participants did not meet mandatory role requirements'}
           </span>
         </div>
-      </div>
+      </Card>
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Participant List */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-md border border-slate-200 p-4">
+          <Card padded>
             <h3 className="text-lg font-semibold text-slate-900 mb-3">
               Participants
             </h3>
@@ -301,35 +296,29 @@ export function DraftResultsView() {
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-slate-900">
-                        {pr.participantName}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        Position {pr.position + 1}
-                      </p>
+                      <p className="font-medium text-slate-900">{pr.participantName}</p>
+                      <p className="text-xs text-slate-500">Position {pr.position + 1}</p>
                     </div>
-                    {pr.allRolesMet ? (
-                      <span className="text-green-600 text-xl">✓</span>
-                    ) : (
-                      <span className="text-red-600 text-xl">✗</span>
-                    )}
+                    <Badge variant={pr.allRolesMet ? 'success' : 'danger'}>
+                      {pr.allRolesMet ? 'OK' : 'Check'}
+                    </Badge>
                   </div>
                 </button>
               ))}
             </div>
-          </div>
+          </Card>
         </div>
 
         {/* Selected Roster Details */}
         <div className="lg:col-span-2">
           {selectedRoster && (
-            <div className="bg-white rounded-md border border-slate-200 p-6">
+            <Card padded>
               <h3 className="text-lg font-semibold text-slate-900 mb-4">
                 {selectedRoster.participantName}'s Roster
               </h3>
 
               {/* Role Validation */}
-              <div className="bg-slate-50 rounded-md p-4 mb-4">
+              <Card padded className="bg-slate-50 mb-4">
                 <h4 className="text-sm font-medium text-slate-700 mb-2">
                   Role Requirements
                 </h4>
@@ -360,10 +349,10 @@ export function DraftResultsView() {
                     </div>
                   ))}
                 </div>
-              </div>
+              </Card>
 
               {/* Team Distribution */}
-              <div className="bg-slate-50 rounded-md p-4 mb-4">
+              <Card padded className="bg-slate-50 mb-4">
                 <h4 className="text-sm font-medium text-slate-700 mb-2">
                   Team Distribution
                 </h4>
@@ -384,7 +373,7 @@ export function DraftResultsView() {
                       </div>
                     ))}
                 </div>
-              </div>
+              </Card>
 
               {/* Roster Players */}
               <div>
@@ -401,7 +390,7 @@ export function DraftResultsView() {
                   ))}
                 </div>
               </div>
-            </div>
+            </Card>
           )}
         </div>
       </div>

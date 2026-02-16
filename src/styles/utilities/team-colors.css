@@ -1,0 +1,30 @@
+/**
+ * Team Color Utility Classes
+ * 
+ * Provides utility classes for IPL team colors (10 teams).
+ * Each team has background and border color variants.
+ */
+
+/* Team Background Colors */
+.team-csk-bg { background-color: var(--team-csk-bg); }
+.team-mi-bg { background-color: var(--team-mi-bg); }
+.team-gt-bg { background-color: var(--team-gt-bg); }
+.team-rr-bg { background-color: var(--team-rr-bg); }
+.team-rcb-bg { background-color: var(--team-rcb-bg); }
+.team-kkr-bg { background-color: var(--team-kkr-bg); }
+.team-lsg-bg { background-color: var(--team-lsg-bg); }
+.team-srh-bg { background-color: var(--team-srh-bg); }
+.team-pbks-bg { background-color: var(--team-pbks-bg); }
+.team-dc-bg { background-color: var(--team-dc-bg); }
+
+/* Team Border Colors */
+.team-csk-border { border-color: var(--team-csk-border); }
+.team-mi-border { border-color: var(--team-mi-border); }
+.team-gt-border { border-color: var(--team-gt-border); }
+.team-rr-border { border-color: var(--team-rr-border); }
+.team-rcb-border { border-color: var(--team-rcb-border); }
+.team-kkr-border { border-color: var(--team-kkr-border); }
+.team-lsg-border { border-color: var(--team-lsg-border); }
+.team-srh-border { border-color: var(--team-srh-border); }
+.team-pbks-border { border-color: var(--team-pbks-border); }
+.team-dc-border { border-color: var(--team-dc-border); }

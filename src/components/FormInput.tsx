@@ -1,10 +1,25 @@
 'use client';
 
 import { InputHTMLAttributes, forwardRef } from 'react';
-import styles from '@/styles/components/FormInput.module.css';
-import { classNames, conditionalClass } from '@/utils/classNames';
+import { cn } from '@/lib/utils';
+import { cva, type VariantProps } from 'class-variance-authority';
 
-export interface FormInputProps extends InputHTMLAttributes<HTMLInputElement> {
+const inputVariants = cva(
+  "form-input",
+  {
+    variants: {
+      variant: {
+        default: "form-input-default",
+        error: "form-input-error"
+      }
+    },
+    defaultVariants: {
+      variant: "default"
+    }
+  }
+);
+
+export interface FormInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'>, VariantProps<typeof inputVariants> {
   label?: string;
   error?: string;
   helperText?: string;
@@ -14,33 +29,32 @@ export interface FormInputProps extends InputHTMLAttributes<HTMLInputElement> {
 /**
  * FormInput Component
  * 
- * A reusable form input component with label, error, and helper text support.
- * Follows Single Responsibility Principle: Handles form input rendering and validation display.
- * Follows Interface Segregation Principle: Extends only necessary HTML input attributes.
+ * Semantic form input component.
  */
 export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
-  ({ label, error, helperText, required, className = '', ...props }, ref) => {
+  ({ label, error, helperText, required, className = '', variant, ...props }, ref) => {
     const hasError = !!error;
-    
+    const inputVariant = hasError ? 'error' : (variant || 'default');
+
     return (
-      <div className={styles.container}>
+      <div className="form-container">
         {label && (
           <InputLabel label={label} required={required} />
         )}
-        
+
         <Input
           ref={ref}
-          hasError={hasError}
+          variant={inputVariant}
           className={className}
           aria-invalid={hasError}
           aria-describedby={getAriaDescribedBy(props.id, hasError, helperText)}
           {...props}
         />
-        
+
         {hasError && (
           <ErrorMessage id={props.id} error={error!} />
         )}
-        
+
         {!hasError && helperText && (
           <HelperText id={props.id} text={helperText} />
         )}
@@ -51,35 +65,21 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
 
 FormInput.displayName = 'FormInput';
 
-/**
- * Input Label Component
- * Follows Single Responsibility: Only renders the label
- */
 function InputLabel({ label, required }: { label: string; required?: boolean }) {
   return (
-    <label className={styles.label}>
+    <label className="form-label">
       {label}
-      {required && <span className={styles.required}>*</span>}
+      {required && <span className="form-label-required">*</span>}
     </label>
   );
 }
 
-/**
- * Input Field Component
- * Follows Single Responsibility: Only renders the input field
- */
-const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement> & { hasError: boolean }>(
-  ({ hasError, className, ...props }, ref) => {
-    const inputClasses = classNames(
-      styles.input,
-      conditionalClass(hasError, styles.inputError, styles.inputDefault),
-      className
-    );
-    
+const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement> & VariantProps<typeof inputVariants>>(
+  ({ variant, className, ...props }, ref) => {
     return (
       <input
         ref={ref}
-        className={inputClasses}
+        className={cn(inputVariants({ variant }), className)}
         {...props}
       />
     );
@@ -88,15 +88,11 @@ const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>
 
 Input.displayName = 'Input';
 
-/**
- * Error Message Component
- * Follows Single Responsibility: Only renders error messages
- */
 function ErrorMessage({ id, error }: { id?: string; error: string }) {
   return (
-    <p 
+    <p
       id={id ? `${id}-error` : undefined}
-      className={styles.errorMessage}
+      className="form-error-message"
     >
       <ErrorIcon />
       {error}
@@ -104,41 +100,29 @@ function ErrorMessage({ id, error }: { id?: string; error: string }) {
   );
 }
 
-/**
- * Helper Text Component
- * Follows Single Responsibility: Only renders helper text
- */
 function HelperText({ id, text }: { id?: string; text: string }) {
   return (
-    <p 
+    <p
       id={id ? `${id}-helper` : undefined}
-      className={styles.helperText}
+      className="form-helper-text"
     >
       {text}
     </p>
   );
 }
 
-/**
- * Error Icon Component
- * Follows Single Responsibility: Only renders the error icon
- */
 function ErrorIcon() {
   return (
-    <svg className={styles.errorIcon} fill="currentColor" viewBox="0 0 20 20">
-      <path 
-        fillRule="evenodd" 
-        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" 
-        clipRule="evenodd" 
+    <svg className="form-error-icon" fill="currentColor" viewBox="0 0 20 20">
+      <path
+        fillRule="evenodd"
+        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+        clipRule="evenodd"
       />
     </svg>
   );
 }
 
-/**
- * Get aria-describedby attribute value
- * Follows Single Responsibility: Only handles accessibility attribute logic
- */
 function getAriaDescribedBy(
   id: string | undefined,
   hasError: boolean,

@@ -13,6 +13,7 @@ import { ValidationError } from '@/components/ValidationError';
 import { useDraftSync } from '@/hooks/useDraftSync';
 import { makePick } from '@/lib/draft-api-client';
 import { useToast } from '@/hooks/useToast';
+import { Button, Alert } from '@/components/ui';
 
 const LAYOUT_STORAGE_KEY = 'draft-layout';
 const DEFAULT_SIDEBAR_WIDTH = 320;
@@ -325,7 +326,7 @@ export function DraftInterface({
             const isCurrentParticipant = p.id === currentParticipantId;
             const isOnClock = currentParticipantIdOnClock === p.id;
             return (
-              <button
+              <Button
                 key={p.id}
                 onClick={async () => {
                   const res = await fetch('/api/auth/participant', {
@@ -335,15 +336,13 @@ export function DraftInterface({
                   });
                   if (res.ok) window.location.href = '/draft';
                 }}
-                className={`px-3 py-1 rounded text-sm font-medium transition-all ${
-                  isCurrentParticipant 
-                    ? 'bg-emerald-600 text-white shadow-sm' 
-                    : 'bg-white text-slate-700 hover:bg-gray-100'
-                } ${isOnClock ? 'ring-2 ring-emerald-500 ring-offset-2' : ''}`}
+                variant={isCurrentParticipant ? 'success' : 'secondary'}
+                size="sm"
+                className={isOnClock ? 'ring-2 ring-emerald-500 ring-offset-2' : ''}
                 title={isOnClock ? `${p.name} - On the clock!` : p.name}
               >
                 {p.name}
-              </button>
+              </Button>
             );
           })}
         </div>
@@ -361,9 +360,9 @@ export function DraftInterface({
 
       {/* Your turn banner - above board when it's the user's turn */}
       {isDraftActive && isMyTurn && (
-        <div className="bg-emerald-600 text-white px-4 py-2 text-center text-sm font-semibold animate-pulse-subtle">
+        <Alert variant="success" className="text-center font-semibold animate-pulse-subtle">
           Your turn to pick – select a player below
-        </div>
+        </Alert>
       )}
 
       {/* Main content area: resizable board | sidebar (desktop) and resizable history height */}
@@ -405,15 +404,16 @@ export function DraftInterface({
           </div>
 
           {/* Mobile Roster Button - Fixed at bottom */}
-          <button
+          <Button
             onClick={() => setShowMobileRoster(!showMobileRoster)}
-            className="lg:hidden fixed bottom-20 right-4 z-30 bg-emerald-600 text-white px-4 py-3 rounded-full shadow-sm flex items-center gap-2 touch-manipulation active:scale-95 transition-transform"
+            variant="success"
+            className="lg:hidden fixed bottom-20 right-4 z-30 rounded-full shadow-lg flex items-center gap-2 touch-manipulation active:scale-95 transition-transform"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
             <span className="font-medium">My Roster ({currentRoster.length})</span>
-          </button>
+          </Button>
         </div>
 
         {/* Horizontal resizer for Pick History */}

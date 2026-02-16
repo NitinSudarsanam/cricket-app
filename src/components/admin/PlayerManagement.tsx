@@ -6,6 +6,7 @@ import { PlayerChip } from '@/components/PlayerChip';
 import { Modal } from '@/components/Modal';
 import { Skeleton, SkeletonRow } from '@/components/Skeleton';
 import { useToast } from '@/hooks/useToast';
+import { Button, Card } from '@/components/ui';
 
 interface PlayerFormData {
   name: string;
@@ -278,29 +279,19 @@ export function PlayerManagement() {
           </p>
         </div>
         <div className="flex gap-3 flex-shrink-0">
-          <button
-            onClick={() => setIsImportModalOpen(true)}
-            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors"
-          >
+          <Button variant="secondary" onClick={() => setIsImportModalOpen(true)}>
             Import Players
-          </button>
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-md hover:bg-emerald-700 transition-colors"
-          >
+          </Button>
+          <Button variant="success" onClick={() => setIsAddModalOpen(true)}>
             Add Player
-          </button>
+          </Button>
         </div>
       </div>
 
-      {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-md text-red-700">
-          {error}
-        </div>
-      )}
+      {error && <div className="alert alert-danger alert-text-danger">{error}</div>}
 
       {players.length === 0 && (
-        <div className="bg-white rounded-md border border-slate-200 p-12 text-center">
+        <Card padded className="text-center">
           <div className="text-slate-400 mb-4">
             <svg
               className="w-16 h-16 mx-auto"
@@ -316,26 +307,20 @@ export function PlayerManagement() {
             Add players manually or import a list to get started.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <button
-              onClick={() => setIsAddModalOpen(true)}
-              className="px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-            >
+            <Button variant="primary" onClick={() => setIsAddModalOpen(true)}>
               Add Player
-            </button>
-            <button
-              onClick={() => setIsImportModalOpen(true)}
-              className="px-5 py-2.5 bg-white text-slate-700 text-sm font-medium rounded-md border border-slate-300 hover:bg-slate-50 transition-colors"
-            >
+            </Button>
+            <Button variant="secondary" onClick={() => setIsImportModalOpen(true)}>
               Import Players
-            </button>
+            </Button>
           </div>
-        </div>
+        </Card>
       )}
 
       {players.length > 0 && (
         <>
       {/* Filters */}
-      <div className="bg-white p-3 md:p-4 rounded-md border border-slate-200 space-y-3 md:space-y-4">
+      <Card padded className="space-y-3 md:space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           <div className="md:col-span-2 lg:col-span-1">
             <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -397,10 +382,10 @@ export function PlayerManagement() {
             </select>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Player List */}
-      <div className="bg-white rounded-md border border-slate-200 overflow-hidden">
+      <Card padded className="p-0 table-container overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px]">
             <thead className="bg-slate-50 border-b border-slate-200">
@@ -468,7 +453,7 @@ export function PlayerManagement() {
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
         </>
       )}
 
@@ -484,22 +469,19 @@ export function PlayerManagement() {
           <form onSubmit={handleAddPlayer} className="space-y-4">
             <PlayerForm formData={formData} setFormData={setFormData} />
             <div className="flex justify-end gap-3 pt-4">
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={() => {
                   setIsAddModalOpen(false);
                   resetForm();
                 }}
-                className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50"
               >
                 Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-md hover:bg-emerald-700"
-              >
+              </Button>
+              <Button type="submit" variant="success">
                 Add Player
-              </button>
+              </Button>
             </div>
           </form>
       </Modal>
@@ -517,23 +499,20 @@ export function PlayerManagement() {
           <form onSubmit={handleEditPlayer} className="space-y-4">
             <PlayerForm formData={formData} setFormData={setFormData} />
             <div className="flex justify-end gap-3 pt-4">
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={() => {
                   setIsEditModalOpen(false);
                   setEditingPlayer(null);
                   resetForm();
                 }}
-                className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50"
               >
                 Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-md hover:bg-emerald-700"
-              >
+              </Button>
+              <Button type="submit" variant="success">
                 Save Changes
-              </button>
+              </Button>
             </div>
           </form>
       </Modal>
@@ -548,18 +527,17 @@ export function PlayerManagement() {
             Are you sure you want to delete this player? This action cannot be undone.
           </p>
           <div className="flex justify-end gap-3">
-            <button
-              onClick={() => setDeleteConfirmId(null)}
-              className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50"
-            >
+            <Button variant="secondary" onClick={() => setDeleteConfirmId(null)}>
               Cancel
-            </button>
-            <button
-              onClick={() => { if (deleteConfirmId) handleDeletePlayer(deleteConfirmId); }}
-              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                if (deleteConfirmId) handleDeletePlayer(deleteConfirmId);
+              }}
             >
               Delete
-            </button>
+            </Button>
           </div>
       </Modal>
 
@@ -613,24 +591,20 @@ export function PlayerManagement() {
             )}
 
             <div className="flex justify-end gap-3 pt-4">
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={() => {
                   setIsImportModalOpen(false);
                   setImportFile(null);
                   setImportResult(null);
                 }}
-                className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50"
               >
                 Close
-              </button>
-              <button
-                type="submit"
-                disabled={!importFile || importing}
-                className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-md hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
+              </Button>
+              <Button type="submit" disabled={!importFile || importing} variant="success">
                 {importing ? 'Importing...' : 'Import'}
-              </button>
+              </Button>
             </div>
           </form>
       </Modal>
@@ -648,8 +622,8 @@ function PlayerForm({
 }) {
   return (
     <>
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">
+      <div className="form-group">
+        <label className="text-sm font-medium text-slate-700">
           Player Name *
         </label>
         <input
@@ -662,8 +636,8 @@ function PlayerForm({
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">
+      <div className="form-group">
+        <label className="text-sm font-medium text-slate-700">
           Team *
         </label>
         <select
@@ -678,8 +652,8 @@ function PlayerForm({
         </select>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">
+      <div className="form-group">
+        <label className="text-sm font-medium text-slate-700">
           Role *
         </label>
         <select

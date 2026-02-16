@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { Player, DraftConfig, IPLTeam, PlayerRole, IPL_TEAMS, PLAYER_ROLES } from '@/types';
 import { PlayerChip } from '@/components/PlayerChip';
-import { TEAM_COLORS } from '@/lib/team-colors';
+import { TEAM_COLORS } from '@/config/team-colors';
 
 export interface RosterSidebarProps {
   roster: Player[];
@@ -78,12 +78,12 @@ export function RosterSidebar({
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
-          <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">
+          <h3 className="section-title mb-3">
             My Roster
           </h3>
 
           {roster.length === 0 ? (
-            <div className="text-sm text-slate-500 text-center py-8">
+            <div className="text-muted text-center py-8">
               {onPlayerDrop ? 'Drop a player here to draft' : 'No players drafted yet'}
             </div>
           ) : (
@@ -101,11 +101,11 @@ export function RosterSidebar({
 
         {/* Team Count Summary */}
         <div className="px-4 py-4 border-b border-slate-200">
-          <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">
+          <h3 className="section-title mb-3">
             Team Distribution
           </h3>
           
-          <div className="space-y-2">
+          <div className="stack-sm">
             {IPL_TEAMS.map((team) => {
               const count = teamCount[team] || 0;
               const max = draftConfig.maxPerTeam;
@@ -142,11 +142,11 @@ export function RosterSidebar({
 
         {/* Role Count Summary */}
         <div className="px-4 py-4 border-b border-slate-200">
-          <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">
+          <h3 className="section-title mb-3">
             Role Requirements
           </h3>
           
-          <div className="space-y-3">
+          <div className="stack-md">
             {PLAYER_ROLES.map((role) => {
               const count = roleCount[role] || 0;
               const required = draftConfig.mandatoryRoles[role];
@@ -187,11 +187,11 @@ export function RosterSidebar({
 
         {/* Constraints Tracker */}
         <div className="px-4 py-4">
-          <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">
+          <h3 className="section-title mb-3">
             Constraints
           </h3>
           
-          <div className="space-y-2 text-sm">
+          <div className="stack-sm text-sm">
             {/* Remaining slots */}
             <div className="flex items-center justify-between">
               <span className="text-slate-600">Remaining Slots</span>

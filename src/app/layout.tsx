@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
-import "./globals.css";
+import "@/styles/index.css";
 import { ToastProvider } from "@/components/ToastProvider";
 
 const plusJakarta = Plus_Jakarta_Sans({

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { DraftConfig } from '@/types';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { Button, Card, Alert, StatDisplay, Badge } from '@/components/ui';
 
 interface ValidationResult {
   valid: boolean;
@@ -81,11 +82,7 @@ export function ConsistencyChecker() {
   }
 
   if (error) {
-    return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-        {error}
-      </div>
-    );
+    return <Alert variant="danger">{error}</Alert>;
   }
 
   if (!config || !validationResult) {
@@ -107,29 +104,22 @@ export function ConsistencyChecker() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-gray-900">Configuration Consistency Check</h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <h2 className="text-2xl font-semibold text-slate-900">Configuration Consistency Check</h2>
+          <p className="text-sm text-slate-600 mt-1">
             Validates that your draft configuration is mathematically feasible
           </p>
         </div>
-        <button
-          onClick={handleRecheck}
-          disabled={checking}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-        >
+        <Button onClick={handleRecheck} disabled={checking} variant="secondary">
           {checking ? 'Checking...' : 'Recheck'}
-        </button>
+        </Button>
       </div>
 
       {/* Validation Result Card */}
-      <div
-        className={`
-          p-6 rounded-lg border-2 transition-all
-          ${isValid 
-            ? 'bg-green-50 border-green-300' 
-            : 'bg-red-50 border-red-300'
-          }
-        `}
+      <Card
+        padded
+        className={
+          isValid ? 'bg-green-50 border-2 border-green-300' : 'bg-red-50 border-2 border-red-300'
+        }
       >
         <div className="flex items-start gap-4">
           {/* Icon */}
@@ -200,17 +190,14 @@ export function ConsistencyChecker() {
             )}
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Configuration Details */}
-      <div className="bg-white p-6 rounded-lg border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Current Configuration</h3>
+      <Card padded>
+        <h3 className="text-lg font-semibold text-slate-900 mb-4">Current Configuration</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Roster Size:</span>
-              <span className="font-medium text-gray-900">{config.rosterSize}</span>
-            </div>
+            <StatDisplay label="Roster Size" value={config.rosterSize} size="md" />
             <div className="flex justify-between">
               <span className="text-gray-600">Total Rounds:</span>
               <span className="font-medium text-gray-900">{config.totalRounds}</span>
@@ -245,29 +232,33 @@ export function ConsistencyChecker() {
           </div>
         </div>
 
-        <div className="mt-4 pt-4 border-t border-gray-200">
+        <div className="mt-4 pt-4 border-t border-slate-200">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Free Slots:</span>
-            <span className={`font-semibold ${config.freeSlots < 0 ? 'text-red-600' : 'text-green-600'}`}>
+            <span className="text-slate-600">Free Slots:</span>
+            <span
+              className={`font-semibold ${
+                config.freeSlots < 0 ? 'text-red-600' : 'text-emerald-600'
+              }`}
+            >
               {config.freeSlots}
             </span>
           </div>
         </div>
 
         {config.earlyRoundRule.rounds > 0 && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <h4 className="text-sm font-medium text-gray-900 mb-2">Early-Round Rules</h4>
-            <div className="text-sm text-gray-700">
-              Within first {config.earlyRoundRule.rounds} rounds: 
-              {' '}{config.earlyRoundRule.minBat} Batsmen, {config.earlyRoundRule.minBowl} Bowlers
+          <div className="mt-4 pt-4 border-t border-slate-200">
+            <h4 className="text-sm font-medium text-slate-900 mb-2">Early-Round Rules</h4>
+            <div className="text-sm text-slate-700">
+              Within first {config.earlyRoundRule.rounds} rounds:{' '}
+              {config.earlyRoundRule.minBat} Batsmen, {config.earlyRoundRule.minBowl} Bowlers
             </div>
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Validation Checks Breakdown */}
-      <div className="bg-white p-6 rounded-lg border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Validation Checks</h3>
+      <Card padded>
+        <h3 className="text-lg font-semibold text-slate-900 mb-4">Validation Checks</h3>
         <div className="space-y-3">
           <ValidationCheck
             label="Roster Feasibility"
@@ -294,7 +285,7 @@ export function ConsistencyChecker() {
             passed={isValid}
           />
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

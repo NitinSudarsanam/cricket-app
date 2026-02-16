@@ -7,16 +7,32 @@ import {
   useRef,
   ReactNode,
 } from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '@/lib/utils';
 
-export interface ModalProps {
+const modalPanelVariants = cva(
+  "bg-white rounded-t-2xl md:rounded-md border border-slate-200 shadow-sm w-full max-h-[90vh] overflow-y-auto animate-slide-up focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2",
+  {
+    variants: {
+      size: {
+        sm: "max-w-sm",
+        md: "max-w-md",
+        lg: "max-w-2xl"
+      }
+    },
+    defaultVariants: {
+      size: "md"
+    }
+  }
+);
+
+export interface ModalProps extends VariantProps<typeof modalPanelVariants> {
   open: boolean;
   onClose: () => void;
   title: string;
   children: ReactNode;
   /** Close when clicking the backdrop (default: true) */
   closeOnBackdropClick?: boolean;
-  /** Max width of the panel (default: md) */
-  size?: 'sm' | 'md' | 'lg';
 }
 
 const FOCUSABLE =
@@ -25,12 +41,6 @@ const FOCUSABLE =
 function getFocusables(container: HTMLElement): HTMLElement[] {
   return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE));
 }
-
-const sizeClasses = {
-  sm: 'max-w-sm',
-  md: 'max-w-md',
-  lg: 'max-w-2xl',
-};
 
 export function Modal({
   open,
@@ -132,7 +142,7 @@ export function Modal({
         aria-labelledby={titleId}
         tabIndex={-1}
         onKeyDown={handleKeyDownPanel}
-        className={`bg-white rounded-t-2xl md:rounded-md border border-slate-200 shadow-sm w-full max-h-[90vh] overflow-y-auto animate-slide-up focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${sizeClasses[size]}`}
+        className={cn(modalPanelVariants({ size }))}
       >
         <div className="flex items-center justify-between p-4 md:p-6 border-b border-slate-200 sticky top-0 bg-white z-10">
           <h2 id={titleId} className="text-base md:text-lg font-semibold text-slate-900">

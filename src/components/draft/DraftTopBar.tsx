@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { DraftState } from '@/types';
+import { Badge, Alert } from '@/components/ui';
 
 export interface DraftTopBarProps {
   draftState: DraftState;
@@ -71,31 +72,31 @@ export function DraftTopBar({
   }, [draftState.picks.length, showTimer, timerSeconds]);
 
   return (
-    <div className="bg-white border-b border-slate-200">
-      <div className="max-w-7xl mx-auto px-3 md:px-4 py-3 md:py-4">
+    <div className="header-bar">
+      <div className="container-page py-3 md:py-4">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
-          <div className="flex items-center gap-4 md:gap-6 overflow-x-auto">
-            <div className="flex flex-col flex-shrink-0">
-              <span className="text-xs text-slate-500 uppercase tracking-wide">Round</span>
-              <span className="text-xl md:text-2xl font-bold text-slate-900">
+          <div className="flex-center gap-4 md:gap-6 overflow-x-auto">
+            <div className="stat-group">
+              <span className="stat-label">Round</span>
+              <span className="stat-value">
                 {draftState.currentRound}
               </span>
             </div>
-            <div className="h-10 md:h-12 w-px bg-slate-300 flex-shrink-0" />
-            <div className="flex flex-col flex-shrink-0 min-w-0">
-              <span className="text-xs text-slate-500 uppercase tracking-wide">On the Clock</span>
-              <span className="text-base md:text-lg font-semibold text-emerald-600 truncate">
+            <div className="divider-vertical h-10 md:h-12" />
+            <div className="stat-group min-w-0">
+              <span className="stat-label">On the Clock</span>
+              <span className="stat-value-highlight">
                 {currentParticipant?.name || 'Unknown'}
               </span>
             </div>
             {showTimer && draftState.status === 'in_progress' && (
               <>
-                <div className="h-10 md:h-12 w-px bg-slate-300 flex-shrink-0" />
-                <div className="flex flex-col flex-shrink-0">
-                  <span className="text-xs text-slate-500 uppercase tracking-wide">Time Left</span>
+                <div className="divider-vertical h-10 md:h-12" />
+                <div className="stat-group">
+                  <span className="stat-label">Time Left</span>
                   <span
-                    className={`text-xl md:text-2xl font-bold ${
-                      timeRemaining <= 10 ? 'text-red-600' : 'text-slate-900'
+                    className={`stat-value ${
+                      timeRemaining <= 10 ? 'text-red-600' : ''
                     }`}
                   >
                     {timeRemaining}s
@@ -104,35 +105,35 @@ export function DraftTopBar({
               </>
             )}
           </div>
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="flex-center gap-3 min-w-0">
             {connectionState !== undefined && (
-              <span
-                className={`flex-shrink-0 px-2 py-1 rounded-full text-xs font-medium ${
+              <Badge
+                variant={
                   connectionState === 'connected'
-                    ? 'bg-emerald-100 text-emerald-800'
+                    ? 'success'
                     : connectionState === 'connecting'
-                      ? 'bg-amber-100 text-amber-800'
-                      : 'bg-red-100 text-red-800'
-                }`}
+                    ? 'warning'
+                    : 'danger'
+                }
                 aria-live="polite"
               >
                 {connectionState === 'connected'
                   ? 'Connected'
                   : connectionState === 'connecting'
-                    ? 'Reconnecting…'
-                    : 'Disconnected'}
-              </span>
+                  ? 'Reconnecting…'
+                  : 'Disconnected'}
+              </Badge>
             )}
-            <div className="flex flex-col gap-2 min-w-[140px] md:min-w-[180px] flex-1">
-              <div className="flex items-center justify-between text-xs text-slate-600">
+            <div className="flex-stack gap-2 min-w-[140px] md:min-w-[180px] flex-1">
+              <div className="flex-center-between text-xs text-slate-600">
                 <span>Draft Progress</span>
                 <span className="font-medium">
                   {completedPicks} / {totalPicks} picks
                 </span>
               </div>
-              <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+              <div className="progress-bar">
                 <div
-                  className="bg-emerald-600 h-full transition-all duration-300 ease-out"
+                  className="progress-bar-fill"
                   style={{ width: `${progressPercentage}%` }}
                 />
               </div>
@@ -140,14 +141,14 @@ export function DraftTopBar({
           </div>
         </div>
         {draftState.status === 'paused' && (
-          <div className="mt-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-md">
-            <p className="text-sm text-amber-800 font-medium">Draft is paused</p>
-          </div>
+          <Alert variant="warning" className="mt-3">
+            Draft is paused
+          </Alert>
         )}
         {draftState.status === 'completed' && (
-          <div className="mt-3 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-md">
-            <p className="text-sm text-emerald-800 font-medium">Draft completed</p>
-          </div>
+          <Alert variant="success" className="mt-3">
+            Draft completed
+          </Alert>
         )}
       </div>
     </div>

@@ -1,0 +1,13 @@
+.admin-shell {
+  background-color: var(--background);
+}
+
+.admin-sidebar {
+  background-color: #ffffff;
+  border-right: 1px solid var(--border);
+}
+
+.admin-content {
+  background-color: var(--background);
+}
+

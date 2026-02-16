@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { PickRecord, Player } from '@/types';
-import { TEAM_COLORS } from '@/lib/team-colors';
+import { TEAM_COLORS } from '@/config/team-colors';
 
 export interface PickHistoryProps {
   picks: PickRecord[];

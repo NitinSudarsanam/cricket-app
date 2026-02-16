@@ -1,6 +1,7 @@
 'use client';
 
 import { Component, ReactNode } from 'react';
+import { Button, Card } from '@/components/ui';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -64,7 +65,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
       return (
         <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-white rounded-md border border-slate-200 shadow-sm p-6">
+          <Card padded className="max-w-md w-full shadow-sm">
             <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full">
               <svg
                 className="w-6 h-6 text-red-600"
@@ -90,19 +91,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             </p>
             
             <div className="mt-6 flex gap-3">
-              <button
-                onClick={this.handleRetry}
-                className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors font-medium"
-              >
+              <Button className="flex-1" onClick={this.handleRetry}>
                 Try Again
-              </button>
-              
-              <button
-                onClick={this.handleReport}
-                className="flex-1 px-4 py-2 bg-slate-200 text-slate-700 rounded-md hover:bg-slate-300 transition-colors font-medium"
-              >
+              </Button>
+              <Button className="flex-1" variant="secondary" onClick={this.handleReport}>
                 Report Issue
-              </button>
+              </Button>
             </div>
             
             {process.env.NODE_ENV === 'development' && this.state.error && (
@@ -115,7 +109,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 </pre>
               </details>
             )}
-          </div>
+          </Card>
         </div>
       );
     }

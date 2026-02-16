@@ -1,11 +1,17 @@
 /**
  * Class Name Utilities
  * 
- * Utility functions for managing CSS class names following SOLID principles.
- * Single Responsibility: Each function has one clear purpose.
+ * DEPRECATED: This file is deprecated in favor of @/lib/utils.ts
+ * Please use the `cn()` function from @/lib/utils instead.
+ * 
+ * These utilities are kept for backward compatibility but will be removed in a future version.
  */
 
+export { cn } from '@/lib/utils';
+
 /**
+ * @deprecated Use `cn()` from '@/lib/utils' instead
+ * 
  * Combines multiple class names into a single string, filtering out falsy values.
  * 
  * @param classes - Array of class names or conditional class names
@@ -20,6 +26,8 @@ export function classNames(...classes: (string | false | null | undefined)[]): s
 }
 
 /**
+ * @deprecated Use `cn()` with inline conditionals instead
+ * 
  * Conditionally applies classes based on a condition.
  * 
  * @param condition - Boolean condition
@@ -29,6 +37,7 @@ export function classNames(...classes: (string | false | null | undefined)[]): s
  * 
  * @example
  * conditionalClass(isError, 'text-red-500', 'text-gray-500')
+ * // Better: cn(isError ? 'text-red-500' : 'text-gray-500')
  */
 export function conditionalClass(
   condition: boolean,
@@ -39,6 +48,8 @@ export function conditionalClass(
 }
 
 /**
+ * @deprecated Use `cn()` instead
+ * 
  * Merges CSS module classes with additional classes.
  * 
  * @param moduleClasses - Classes from CSS module
@@ -47,6 +58,7 @@ export function conditionalClass(
  * 
  * @example
  * mergeClasses(styles.button, 'mt-4 hover:bg-blue-600')
+ * // Better: cn(styles.button, 'mt-4 hover:bg-blue-600')
  */
 export function mergeClasses(
   moduleClasses: string,
@@ -56,6 +68,8 @@ export function mergeClasses(
 }
 
 /**
+ * @deprecated Use CVA (class-variance-authority) instead
+ * 
  * Creates a class name from a CSS module with variants.
  * 
  * @param baseClass - Base class from CSS module
@@ -67,6 +81,7 @@ export function mergeClasses(
  *   [styles.primary]: isPrimary,
  *   [styles.disabled]: isDisabled
  * })
+ * // Better: Use CVA for variant management
  */
 export function variantClasses(
   baseClass: string,
@@ -75,11 +90,13 @@ export function variantClasses(
   const variantClassNames = Object.entries(variants)
     .filter(([, condition]) => condition)
     .map(([className]) => className);
-  
+
   return classNames(baseClass, ...variantClassNames);
 }
 
 /**
+ * @deprecated Use CVA (class-variance-authority) instead
+ * 
  * Type-safe class name builder for components with multiple states.
  * 
  * @param classes - Object mapping state keys to class names
@@ -91,6 +108,7 @@ export function variantClasses(
  *   { base: 'btn', primary: 'btn-primary', disabled: 'btn-disabled' },
  *   { base: true, primary: isPrimary, disabled: isDisabled }
  * )
+ * // Better: Use CVA for state management
  */
 export function stateClasses<T extends Record<string, string>>(
   classes: T,

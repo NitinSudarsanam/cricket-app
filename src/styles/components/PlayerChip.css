@@ -1,5 +1,11 @@
-/* PlayerChip Component Styles */
+/**
+ * Player Chip Component Styles
+ * 
+ * Semantic class names for the PlayerChip component.
+ * Provides clean, maintainable styling without verbose Tailwind in TSX.
+ */
 
+/* Base chip styles */
 .chip {
   position: relative;
   border-radius: 0.5rem;
@@ -9,92 +15,97 @@
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
 }
 
-.clickable {
+.chip-clickable {
   cursor: pointer;
 }
 
-.nonClickable {
+.chip-available {
+  cursor: pointer;
+}
+
+.chip-drafted {
+  opacity: 0.5;
   cursor: default;
 }
 
-.drafted {
-  opacity: 0.5;
-}
-
-.disabled {
+.chip-disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-.content {
+/* Content layout */
+.chip-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
 }
 
-.playerInfo {
+.chip-player-info {
   flex: 1;
   min-width: 0;
 }
 
-.playerName {
+.chip-player-name {
   font-weight: 600;
   font-size: 0.875rem;
-  color: rgb(17, 24, 39); /* gray-900 */
+  color: rgb(17, 24, 39);
   overflow-wrap: break-word;
   word-wrap: break-word;
 }
 
-.playerDetails {
+.chip-player-details {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin-top: 0.125rem;
 }
 
-.team {
+.chip-player-team {
   font-size: 0.75rem;
   font-weight: 500;
-  color: rgb(55, 65, 81); /* gray-700 */
+  color: rgb(55, 65, 81);
 }
 
-.separator {
+.chip-player-separator {
   font-size: 0.75rem;
-  color: rgb(107, 114, 128); /* gray-500 */
+  color: rgb(107, 114, 128);
 }
 
-.role {
+.chip-player-role {
   font-size: 0.75rem;
-  color: rgb(75, 85, 99); /* gray-600 */
+  color: rgb(75, 85, 99);
 }
 
-.foreignBadge {
+/* Foreign badge */
+.chip-foreign-badge {
   flex-shrink: 0;
   width: 1.25rem;
   height: 1.25rem;
   border-radius: 9999px;
-  background-color: rgb(219, 234, 254); /* blue-100 */
-  border: 1px solid rgb(147, 197, 253); /* blue-300 */
+  background-color: rgb(219, 234, 254);
+  border: 1px solid rgb(147, 197, 253);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.foreignBadgeText {
+.chip-foreign-badge-text {
   font-size: 0.75rem;
   font-weight: 700;
-  color: rgb(29, 78, 216); /* blue-700 */
+  color: rgb(29, 78, 216);
 }
 
-.draftedStatus {
+/* Drafted status */
+.chip-drafted-status {
   margin-top: 0.25rem;
   font-size: 0.75rem;
   font-weight: 500;
-  color: rgb(107, 114, 128); /* gray-500 */
+  color: rgb(107, 114, 128);
 }
 
-.resizeHandle {
+/* Resize handle */
+.chip-resize-handle {
   position: absolute;
   bottom: 0;
   right: 0;
@@ -108,10 +119,12 @@
   border-radius: 0 0 0.25rem 0;
   background: rgba(0, 0, 0, 0.06);
 }
-.resizeHandle:hover {
+
+.chip-resize-handle:hover {
   background: rgba(0, 0, 0, 0.12);
 }
-.resizeHandle::after {
+
+.chip-resize-handle::after {
   content: '';
   width: 6px;
   height: 6px;

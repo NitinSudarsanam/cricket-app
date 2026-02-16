@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Player, DraftConfig } from '@/types';
 import { PlayerChip } from '@/components/PlayerChip';
+import { Button, Badge, Card } from '@/components/ui';
 
 interface ParticipantRoster {
   participantId: string;
@@ -222,7 +223,7 @@ export function DraftCompletion({
                     onClick={() => setSelectedParticipant(pr.participantId)}
                     className={`w-full text-left px-4 py-3 rounded-md border-2 transition-all ${
                       selectedParticipant === pr.participantId
-                        ? 'border-blue-500 bg-emerald-50'
+                        ? 'border-emerald-500 bg-emerald-50'
                         : 'border-slate-200 hover:border-slate-300 bg-white'
                     }`}
                   >
@@ -235,11 +236,9 @@ export function DraftCompletion({
                           Position {pr.position + 1}
                         </p>
                       </div>
-                      {pr.allRolesMet ? (
-                        <span className="text-green-600 text-xl">✓</span>
-                      ) : (
-                        <span className="text-red-600 text-xl">✗</span>
-                      )}
+                      <Badge variant={pr.allRolesMet ? 'success' : 'danger'}>
+                        {pr.allRolesMet ? 'OK' : 'Check'}
+                      </Badge>
                     </div>
                   </button>
                 ))}
@@ -255,7 +254,7 @@ export function DraftCompletion({
                   </h2>
 
                   {/* Role validation */}
-                  <div className="bg-gray-50 rounded-md p-4 mb-4">
+                  <Card padded className="bg-slate-50 mb-4">
                     <h3 className="text-sm font-medium text-slate-700 mb-2">
                       Role Requirements
                     </h3>
@@ -286,10 +285,10 @@ export function DraftCompletion({
                         </div>
                       ))}
                     </div>
-                  </div>
+                  </Card>
 
                   {/* Team distribution */}
-                  <div className="bg-gray-50 rounded-md p-4 mb-4">
+                  <Card padded className="bg-slate-50 mb-4">
                     <h3 className="text-sm font-medium text-slate-700 mb-2">
                       Team Distribution
                     </h3>
@@ -310,7 +309,7 @@ export function DraftCompletion({
                           </div>
                         ))}
                     </div>
-                  </div>
+                  </Card>
 
                   {/* Roster players */}
                   <div>
@@ -343,34 +342,23 @@ export function DraftCompletion({
                 Export Format:
               </label>
               <div className="flex gap-2">
-                <button
+                <Button
                   onClick={() => setExportFormat('json')}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    exportFormat === 'json'
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-white text-slate-700 border border-slate-300 hover:bg-gray-50'
-                  }`}
+                  variant={exportFormat === 'json' ? 'success' : 'outline'}
                 >
                   JSON
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={() => setExportFormat('csv')}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    exportFormat === 'csv'
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-white text-slate-700 border border-slate-300 hover:bg-gray-50'
-                  }`}
+                  variant={exportFormat === 'csv' ? 'success' : 'outline'}
                 >
                   CSV
-                </button>
+                </Button>
               </div>
             </div>
-            <button
-              onClick={handleExport}
-              className="px-6 py-2 bg-green-600 text-white rounded-md font-medium hover:bg-green-700 transition-colors"
-            >
+            <Button onClick={handleExport} variant="success">
               📥 Export Results
-            </button>
+            </Button>
           </div>
         </div>
       </div>

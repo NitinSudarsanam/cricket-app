@@ -1,5 +1,8 @@
 'use client';
 
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui';
+
 export interface ErrorStateProps {
   message: string;
   onRetry?: () => void;
@@ -19,7 +22,7 @@ export function ErrorState({
 }: ErrorStateProps) {
   return (
     <div
-      className={`bg-red-50 border border-red-200 rounded-md p-6 text-center ${className}`}
+      className={cn("bg-red-50 border border-red-200 rounded-md p-6 text-center", className)}
       role="alert"
     >
       <div className="flex items-center justify-center w-12 h-12 mx-auto mb-3 bg-red-100 rounded-full">
@@ -41,13 +44,9 @@ export function ErrorState({
       <p className="font-medium text-red-900">{title}</p>
       <p className="text-sm text-red-700 mt-1">{message}</p>
       {onRetry && (
-        <button
-          type="button"
-          onClick={onRetry}
-          className="mt-4 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
-        >
+        <Button type="button" onClick={onRetry} variant="danger" size="sm" className="mt-4">
           Retry
-        </button>
+        </Button>
       )}
     </div>
   );

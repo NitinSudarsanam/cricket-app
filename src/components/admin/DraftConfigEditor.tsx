@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { DraftConfig, MandatoryRoles, EarlyRoundRule } from '@/types';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { useToast } from '@/hooks/useToast';
+import { Button, Alert, Card, StatDisplay } from '@/components/ui';
 
 interface ValidationError {
   field?: string;
@@ -162,25 +163,24 @@ export function DraftConfigEditor() {
 
   if (error) {
     return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-md text-red-700">
+      <Alert variant="danger">
         <p className="font-medium">Error loading configuration</p>
         <p className="text-sm mt-1">{error}</p>
-        <button
-          onClick={fetchConfig}
-          className="mt-3 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
-        >
-          Retry
-        </button>
-      </div>
+        <div className="mt-3">
+          <Button variant="danger" size="sm" onClick={fetchConfig}>
+            Retry
+          </Button>
+        </div>
+      </Alert>
     );
   }
 
   if (!config || !config.mandatoryRoles) {
     return (
-      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-700">
+      <Alert variant="warning">
         <p className="font-medium">No configuration found</p>
         <p className="text-sm mt-1">Please create a draft configuration first.</p>
-      </div>
+      </Alert>
     );
   }
 
@@ -198,55 +198,37 @@ export function DraftConfigEditor() {
           </p>
         </div>
         <div className="flex gap-3 flex-shrink-0">
-          <button
-            onClick={validateConfig}
-            disabled={validating}
-            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors disabled:opacity-50"
-          >
+          <Button onClick={validateConfig} disabled={validating} variant="secondary">
             {validating ? 'Validating...' : 'Validate'}
-          </button>
-          <button
-            onClick={saveConfig}
-            disabled={saving || config.isLocked}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          </Button>
+          <Button onClick={saveConfig} disabled={saving || config.isLocked} variant="primary">
             {saving ? 'Saving...' : 'Save Configuration'}
-          </button>
+          </Button>
         </div>
       </div>
 
-      {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-md text-red-700">
-          {error}
-        </div>
-      )}
-
       {successMessage && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-md text-green-700">
-          {successMessage}
-        </div>
+        <Alert variant="success">{successMessage}</Alert>
       )}
 
       {validationErrors.length > 0 && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-md">
-          <h4 className="font-medium text-red-900 mb-2">Validation Errors:</h4>
-          <ul className="list-disc list-inside space-y-1 text-sm text-red-700">
+        <Alert variant="danger">
+          <h4 className="font-medium mb-2">Validation Errors:</h4>
+          <ul className="list-disc list-inside space-y-1 text-sm">
             {validationErrors.map((err, i) => (
               <li key={i}>{err.message}</li>
             ))}
           </ul>
-        </div>
+        </Alert>
       )}
 
       {config.isLocked && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-800">
-          ⚠️ Configuration is locked because a draft is in progress
-        </div>
+        <Alert variant="warning">⚠️ Configuration is locked because a draft is in progress</Alert>
       )}
 
       {/* Roster Size */}
-      <div className="bg-white p-6 rounded-md border border-slate-200 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900">Roster Settings</h3>
+      <Card padded className="space-y-4">
+        <h3 className="heading-md">Roster Settings</h3>
         
         <div>
           <div className="flex items-center justify-between mb-2">
@@ -303,18 +285,18 @@ export function DraftConfigEditor() {
             />
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Role Requirements */}
-      <div className="bg-white p-6 rounded-md border border-slate-200 space-y-4">
+      <Card padded className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-slate-900">Mandatory Role Requirements</h3>
-          <div className="text-sm">
-            <span className="text-slate-600">Total: </span>
-            <span className={`font-semibold ${mandatoryTotal > config.rosterSize ? 'text-red-600' : 'text-slate-900'}`}>
-              {mandatoryTotal} / {config.rosterSize}
-            </span>
-          </div>
+          <h3 className="heading-md">Mandatory Role Requirements</h3>
+          <StatDisplay
+            label="Total"
+            value={`${mandatoryTotal} / ${config.rosterSize}`}
+            size="md"
+            variant={mandatoryTotal > config.rosterSize ? 'highlight' : 'default'}
+          />
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
@@ -382,7 +364,7 @@ export function DraftConfigEditor() {
         <div className="pt-4 border-t border-slate-200">
           <div className="flex items-center justify-between text-sm">
             <span className="text-slate-600">Free Slots (Flexible picks):</span>
-            <span className={`font-semibold ${freeSlots < 0 ? 'text-red-600' : 'text-green-600'}`}>
+            <span className={`font-semibold ${freeSlots < 0 ? 'text-red-600' : 'text-emerald-600'}`}>
               {freeSlots}
             </span>
           </div>
@@ -392,11 +374,11 @@ export function DraftConfigEditor() {
             </p>
           )}
         </div>
-      </div>
+      </Card>
 
       {/* Early Round Rules */}
-      <div className="bg-white p-6 rounded-md border border-slate-200 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900">Early-Round Rules</h3>
+      <Card padded className="space-y-4">
+        <h3 className="heading-md">Early-Round Rules</h3>
         <p className="text-sm text-slate-600">
           Enforce minimum role requirements within the first N rounds
         </p>
@@ -449,16 +431,16 @@ export function DraftConfigEditor() {
         </div>
 
         {config.earlyRoundRule.rounds > 0 && (
-          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-md text-sm text-emerald-800">
-            ℹ️ Participants must draft at least {config.earlyRoundRule.minBat} Batsmen and{' '}
-            {config.earlyRoundRule.minBowl} Bowlers within the first {config.earlyRoundRule.rounds} rounds
-          </div>
+          <Alert variant="info">
+            Participants must draft at least {config.earlyRoundRule.minBat} Batsmen and{' '}
+            {config.earlyRoundRule.minBowl} Bowlers within the first {config.earlyRoundRule.rounds} rounds.
+          </Alert>
         )}
-      </div>
+      </Card>
 
       {/* Summary */}
-      <div className="bg-slate-50 p-6 rounded-md border border-slate-200">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Configuration Summary</h3>
+      <Card padded className="bg-slate-50">
+        <h3 className="heading-md mb-4">Configuration Summary</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div>
             <span className="text-slate-600">Roster Size:</span>
@@ -486,7 +468,7 @@ export function DraftConfigEditor() {
             Mandatory roles exceed roster size. Reduce required roles or increase roster size.
           </p>
         )}
-      </div>
+      </Card>
     </div>
   );
 }
