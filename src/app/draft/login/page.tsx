@@ -3,6 +3,9 @@ import { prisma } from '@/lib/db';
 import Link from 'next/link';
 import { DraftLoginForm } from './DraftLoginForm';
 
+// Force dynamic rendering - don't try to build this page statically
+export const dynamic = 'force-dynamic';
+
 export default async function DraftLoginPage() {
   const participants = await prisma.participant.findMany({
     orderBy: { name: 'asc' },

@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
 
+// Force dynamic rendering - don't try to build this page statically
+export const dynamic = 'force-dynamic';
+
 export default async function Home() {
   let playerCount: number | null = null;
   try {
