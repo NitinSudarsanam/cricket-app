@@ -135,7 +135,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 
-echo -e "${GREEN}✅ Success${NC}"
+echo -e "${GREEN}Success${NC}"
 ```
 
 ### PowerShell Scripts
@@ -150,7 +150,7 @@ function Write-ColorOutput($ForegroundColor) {
     $host.UI.RawUI.ForegroundColor = $fc
 }
 
-Write-ColorOutput Green "✅ Success"
+Write-ColorOutput Green "Success"
 ```
 
 ### Node.js Scripts
@@ -165,11 +165,11 @@ const colors = {
   red: '\x1b[31m',
 };
 
-console.log(`${colors.green}✅ Success${colors.reset}`);
+console.log(`${colors.green}Success${colors.reset}`);
 
 // Handle errors
 process.on('unhandledRejection', (error) => {
-  console.error(`${colors.red}❌ Error:${colors.reset}`, error);
+  console.error(`${colors.red}Error:${colors.reset}`, error);
   process.exit(1);
 });
 ```

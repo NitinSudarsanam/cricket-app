@@ -168,7 +168,7 @@ export function RosterSidebar({
                       }`}
                     >
                       {count} / {required}
-                      {isSatisfied && ' ✓'}
+                      {isSatisfied && ' (satisfied)'}
                     </span>
                   </div>
                   <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
@@ -230,7 +230,7 @@ export function RosterSidebar({
               <div className="mt-3 pt-3 border-t border-slate-200">
                 <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-md">
                   <p className="text-xs text-red-800 font-medium">
-                    ⚠️ Team cap reached for:
+                    Team cap reached for:
                   </p>
                   <ul className="mt-1 text-xs text-red-700 space-y-0.5">
                     {IPL_TEAMS.filter(team => (teamCount[team] || 0) >= draftConfig.maxPerTeam).map(team => (

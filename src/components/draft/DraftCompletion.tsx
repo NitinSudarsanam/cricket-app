@@ -193,7 +193,7 @@ export function DraftCompletion({
                 className="text-white hover:text-emerald-100 text-2xl p-2 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
                 aria-label="Close"
               >
-                <span aria-hidden>✕</span>
+                <span aria-hidden>×</span>
               </button>
             )}
           </div>
@@ -273,9 +273,9 @@ export function DraftCompletion({
                               {role}
                             </span>
                             {selectedRoster.roleValidation[role] ? (
-                              <span className="text-green-600">✓</span>
+                              <span className="text-green-600">PASS</span>
                             ) : (
-                              <span className="text-red-600">✗</span>
+                              <span className="text-red-600">FAIL</span>
                             )}
                           </div>
                           <p className="text-sm font-bold text-slate-900 mt-1">
@@ -357,7 +357,7 @@ export function DraftCompletion({
               </div>
             </div>
             <Button onClick={handleExport} variant="success">
-              📥 Export Results
+              Export Results
             </Button>
           </div>
         </div>

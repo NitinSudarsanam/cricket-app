@@ -28,16 +28,16 @@ function log(message, color = colors.reset) {
 }
 
 function checkPassed(message) {
-  log(`✅ ${message}`, colors.green);
+  log(`PASS ${message}`, colors.green);
 }
 
 function checkFailed(message) {
-  log(`❌ ${message}`, colors.red);
+  log(`FAIL ${message}`, colors.red);
   hasErrors = true;
 }
 
 function checkWarning(message) {
-  log(`⚠️  ${message}`, colors.yellow);
+  log(`WARN  ${message}`, colors.yellow);
   hasWarnings = true;
 }
 
@@ -50,7 +50,7 @@ log('Production Readiness Check', colors.blue);
 console.log('='.repeat(70) + '\n');
 
 // Check 1: Required files exist
-log('\n📁 Checking required files...', colors.blue);
+log('\nChecking required files...', colors.blue);
 
 const requiredFiles = [
   'package.json',
@@ -70,7 +70,7 @@ requiredFiles.forEach(file => {
 });
 
 // Check 2: Environment variables documented
-log('\n🔐 Checking environment configuration...', colors.blue);
+log('\nChecking environment configuration...', colors.blue);
 
 if (fs.existsSync('.env.example')) {
   const envExample = fs.readFileSync('.env.example', 'utf8');
@@ -97,7 +97,7 @@ if (fs.existsSync('.env.example')) {
 }
 
 // Check 3: .env not committed
-log('\n🔒 Checking security...', colors.blue);
+log('\nChecking security...', colors.blue);
 
 if (fs.existsSync('.gitignore')) {
   const gitignore = fs.readFileSync('.gitignore', 'utf8');
@@ -111,7 +111,7 @@ if (fs.existsSync('.gitignore')) {
 }
 
 // Check 4: Dependencies
-log('\n📦 Checking dependencies...', colors.blue);
+log('\nChecking dependencies...', colors.blue);
 
 try {
   const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
@@ -147,7 +147,7 @@ try {
 }
 
 // Check 5: TypeScript configuration
-log('\n📝 Checking TypeScript configuration...', colors.blue);
+log('\nChecking TypeScript configuration...', colors.blue);
 
 try {
   const tsconfig = JSON.parse(fs.readFileSync('tsconfig.json', 'utf8'));
@@ -166,7 +166,7 @@ try {
 }
 
 // Check 6: Build test
-log('\n🔨 Checking build...', colors.blue);
+log('\nChecking build...', colors.blue);
 
 try {
   checkInfo('Running production build (this may take a minute)...');
@@ -178,7 +178,7 @@ try {
 }
 
 // Check 7: Next.js configuration
-log('\n⚙️  Checking Next.js configuration...', colors.blue);
+log('\nChecking Next.js configuration...', colors.blue);
 
 try {
   const nextConfig = fs.readFileSync('next.config.ts', 'utf8');
@@ -205,7 +205,7 @@ try {
 }
 
 // Check 8: Database schema
-log('\n🗄️  Checking database configuration...', colors.blue);
+log('\nChecking database configuration...', colors.blue);
 
 if (fs.existsSync('prisma/schema.prisma')) {
   checkPassed('Prisma schema exists');
@@ -221,7 +221,7 @@ if (fs.existsSync('prisma/schema.prisma')) {
 }
 
 // Check 9: Documentation
-log('\n📚 Checking documentation...', colors.blue);
+log('\nChecking documentation...', colors.blue);
 
 const docs = [
   'README.md',
@@ -243,15 +243,15 @@ log('Summary', colors.blue);
 console.log('='.repeat(70) + '\n');
 
 if (hasErrors) {
-  log('❌ Production readiness check FAILED', colors.red);
+  log('Production readiness check FAILED', colors.red);
   log('Please fix the errors above before deploying to production.', colors.red);
   process.exit(1);
 } else if (hasWarnings) {
-  log('⚠️  Production readiness check passed with warnings', colors.yellow);
+  log('Production readiness check passed with warnings', colors.yellow);
   log('Consider addressing the warnings above for optimal production deployment.', colors.yellow);
   process.exit(0);
 } else {
-  log('✅ Production readiness check PASSED', colors.green);
+  log('Production readiness check PASSED', colors.green);
   log('Your application is ready for production deployment!', colors.green);
   process.exit(0);
 }

@@ -255,7 +255,7 @@ export function DraftResultsView() {
             <option value="csv">CSV</option>
           </select>
           <Button onClick={handleExport} variant="primary">
-            📥 Export
+            Export
           </Button>
         </div>
       </div>
@@ -337,9 +337,9 @@ export function DraftResultsView() {
                           {role}
                         </span>
                         {selectedRoster.roleValidation[role] ? (
-                          <span className="text-green-600">✓</span>
+                          <span className="text-green-600">PASS</span>
                         ) : (
-                          <span className="text-red-600">✗</span>
+                          <span className="text-red-600">FAIL</span>
                         )}
                       </div>
                       <p className="text-sm font-bold text-slate-900 mt-1">

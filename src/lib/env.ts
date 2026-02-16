@@ -120,9 +120,9 @@ export const publicEnv = {
 if (typeof window === 'undefined') {
   try {
     validateEnv();
-    console.log('✅ Environment variables validated successfully');
+    console.log('Environment variables validated successfully');
   } catch (error) {
-    console.error('❌ Environment validation failed:', error);
+    console.error('Environment validation failed:', error);
     // In development, we can continue with warnings
     // In production, this should fail the build
     if (process.env.NODE_ENV === 'production') {

@@ -45,7 +45,7 @@ jobs:
         with:
           recreate: true
           message: |
-            ## 📊 Test Coverage Report
+            ## Test Coverage Report
             
             Coverage thresholds:
             - Lines: 70%

@@ -67,7 +67,7 @@ console.assert(isPlayer({ ...validPlayer, team: 'INVALID' }) === false, 'Invalid
 console.assert(isPlayer({ ...validPlayer, role: 'INVALID' }) === false, 'Invalid role should fail');
 console.assert(isPlayer({ ...validPlayer, isForeign: 'yes' }) === false, 'Invalid isForeign should fail');
 
-console.log('✓ Type Guards passed');
+console.log('Type Guards passed');
 
 // ============================================================================
 // Validation Tests
@@ -98,7 +98,7 @@ const invalidRequest = { ...validRequest, team: 'INVALID' };
 const validationResult4 = validateCreatePlayerRequest(invalidRequest);
 console.assert(validationResult4.valid === false, 'Invalid team should fail validation');
 
-console.log('✓ Validation passed');
+console.log('Validation passed');
 
 // ============================================================================
 // DraftConfig Tests
@@ -150,7 +150,7 @@ const invalidConfig: DraftConfig = {
 const invalidConsistency = validateConfigConsistency(invalidConfig);
 console.assert(invalidConsistency.valid === false, 'Invalid config should fail consistency check');
 
-console.log('✓ DraftConfig tests passed');
+console.log('DraftConfig tests passed');
 
 // ============================================================================
 // Utility Function Tests
@@ -184,13 +184,13 @@ const calculatedRoleCount = calculateRoleCounts(players);
 console.assert(calculatedRoleCount['Bat'] === 2, 'Bat should have 2 players');
 console.assert(calculatedRoleCount['Bowl'] === 1, 'Bowl should have 1 player');
 
-console.log('✓ Utility Functions passed');
+console.log('Utility Functions passed');
 
 // ============================================================================
 // Summary
 // ============================================================================
 
-console.log('\n✅ All model tests passed successfully!');
+console.log('\nAll model tests passed successfully!');
 console.log('Data models and TypeScript interfaces are working correctly.');
   });
 });

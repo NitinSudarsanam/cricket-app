@@ -33,9 +33,9 @@ async function main() {
   // First, check if we can connect
   try {
     await prisma.$connect();
-    console.log('✅ Database connected successfully');
+    console.log('Database connected successfully');
   } catch (error) {
-    console.error('❌ Failed to connect to database:', error);
+    console.error('Failed to connect to database:', error);
     throw error;
   }
 
@@ -60,7 +60,7 @@ async function main() {
     },
   });
 
-  console.log('✅ Created default draft config:', draftConfig.id);
+  console.log('Created default draft config:', draftConfig.id);
 
   // IPL-style rosters for all 10 teams (Bat, Bowl, AR, WK)
   const samplePlayers = [
@@ -217,14 +217,14 @@ async function main() {
     
     if (existing) {
       updatedCount++;
-      console.log(`  ↻ Updated: ${player.name} (${player.team})`);
+      console.log(`  Updated: ${player.name} (${player.team})`);
     } else {
       createdCount++;
-      console.log(`  ✅ Created: ${player.name} (${player.team})`);
+      console.log(`  Created: ${player.name} (${player.team})`);
     }
   }
 
-  console.log(`\n✅ Seeded ${samplePlayers.length} sample players`);
+  console.log(`\nSeeded ${samplePlayers.length} sample players`);
   console.log(`   - Created: ${createdCount}`);
   console.log(`   - Updated: ${updatedCount}`);
 
@@ -250,9 +250,9 @@ async function main() {
         name: r.name,
       },
     });
-    console.log(`  ✅ Scoring rule: ${r.outcome} = ${r.points}`);
+    console.log(`  Scoring rule: ${r.outcome} = ${r.points}`);
   }
-  console.log('✅ Default scoring rules ensured');
+  console.log('Default scoring rules ensured');
 
   // -------------------------------------------------------------------------
   // Fantasy season sample data (league, season, teams, matches, draft)
@@ -281,7 +281,7 @@ async function main() {
       slug: 'ipl',
     },
   });
-  console.log('  ✅ League:', league.name);
+  console.log('  League:', league.name);
 
   const season = await prisma.season.upsert({
     where: { externalId: 'seed-2024' },
@@ -294,7 +294,7 @@ async function main() {
       endDate: new Date('2024-05-26'),
     },
   });
-  console.log('  ✅ Season:', season.name);
+  console.log('  Season:', season.name);
 
   const teamIdsByCode: Record<string, string> = {};
   for (const code of IPL_TEAMS) {
@@ -310,7 +310,7 @@ async function main() {
     });
     teamIdsByCode[code] = team.id;
   }
-  console.log('  ✅ Teams:', IPL_TEAMS.length);
+  console.log('  Teams:', IPL_TEAMS.length);
 
   const matchPairs: [string, string, string][] = [
     ['CSK', 'MI', 'CSK'],
@@ -369,7 +369,7 @@ async function main() {
       matchResultIds.push(mr.id);
     }
   }
-  console.log('  ✅ Matches:', matchPairs.length);
+  console.log('  Matches:', matchPairs.length);
 
   const { processMatchResult } = await import('@/services/ranking/ranking-engine');
   const { updatePlayerScoresFromTeamScores } = await import('@/services/ranking/player-ranking-service');
@@ -377,10 +377,10 @@ async function main() {
   for (const mrId of matchResultIds) {
     await processMatchResult(mrId);
   }
-  console.log('  ✅ TeamScore updated from MatchResults');
+  console.log('  TeamScore updated from MatchResults');
 
   await updatePlayerScoresFromTeamScores(season.id);
-  console.log('  ✅ PlayerScore updated from TeamScore');
+  console.log('  PlayerScore updated from TeamScore');
 
   const participantData = [
     { id: 'seed-p1', name: 'Alice', email: 'alice@example.com' },
@@ -401,7 +401,7 @@ async function main() {
     });
     participantIds.push(participant.id);
   }
-  console.log('  ✅ Participants:', participantIds.length);
+  console.log('  Participants:', participantIds.length);
 
   await prisma.pick.deleteMany({ where: { draftStateId: 'seed-draft' } });
   await prisma.draftOrder.deleteMany({ where: { draftStateId: 'seed-draft' } });
@@ -458,7 +458,7 @@ async function main() {
       },
     });
   }
-  console.log('  ✅ Draft (completed) with 32 picks');
+  console.log('  Draft (completed) with 32 picks');
 
   // Verify the data
   const totalPlayers = await prisma.player.count();
@@ -470,14 +470,14 @@ async function main() {
   const totalMatches = await prisma.match.count();
   const totalPicks = await prisma.pick.count();
 
-  console.log(`\n📊 Database Summary:`);
+  console.log(`\nDatabase Summary:`);
   console.log(`   - Total Players: ${totalPlayers}`);
   console.log(`   - Total Configs: ${totalConfigs}`);
   console.log(`   - Total Scoring Rules: ${totalScoringRules}`);
   console.log(`   - Leagues: ${totalLeagues}, Seasons: ${totalSeasons}, Teams: ${totalTeams}`);
   console.log(`   - Matches: ${totalMatches}, Picks: ${totalPicks}`);
 
-  console.log('\n🎉 Seed completed successfully!');
+  console.log('\nSeed completed successfully!');
 }
 
 main()

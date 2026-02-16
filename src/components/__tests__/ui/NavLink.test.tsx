@@ -39,7 +39,7 @@ describe('NavLink', () => {
   });
 
   it('should render icon when provided', () => {
-    const icon = <span data-testid="icon">🔗</span>;
+    const icon = <span data-testid="icon">LINK</span>;
     render(<NavLink href="/test" icon={icon}>Link with Icon</NavLink>);
     expect(screen.getByTestId('icon')).toBeInTheDocument();
   });

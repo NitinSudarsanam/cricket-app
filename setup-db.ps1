@@ -11,11 +11,11 @@ Write-Host "Step 1: Generating Prisma Client..." -ForegroundColor Yellow
 npm run db:generate
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "❌ Failed to generate Prisma client" -ForegroundColor Red
+    Write-Host "Failed to generate Prisma client" -ForegroundColor Red
     exit 1
 }
 
-Write-Host "✅ Prisma client generated successfully" -ForegroundColor Green
+Write-Host "Prisma client generated successfully" -ForegroundColor Green
 Write-Host ""
 
 # Step 2: Push Schema to Database
@@ -23,7 +23,7 @@ Write-Host "Step 2: Creating database tables..." -ForegroundColor Yellow
 npm run db:push
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "❌ Failed to create database tables" -ForegroundColor Red
+    Write-Host "Failed to create database tables" -ForegroundColor Red
     Write-Host ""
     Write-Host "Possible issues:" -ForegroundColor Yellow
     Write-Host "  1. Database connection failed - check your DATABASE_URL in .env" -ForegroundColor White
@@ -34,7 +34,7 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-Write-Host "✅ Database tables created successfully" -ForegroundColor Green
+Write-Host "Database tables created successfully" -ForegroundColor Green
 Write-Host ""
 
 # Step 3: Ask about seeding
@@ -46,17 +46,17 @@ if ($seed -eq "y" -or $seed -eq "Y") {
     npm run db:seed
     
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "⚠️  Seeding failed, but tables are created" -ForegroundColor Yellow
+        Write-Host "Seeding failed, but tables are created" -ForegroundColor Yellow
     } else {
-        Write-Host "✅ Sample data added successfully" -ForegroundColor Green
+        Write-Host "Sample data added successfully" -ForegroundColor Green
     }
 } else {
-    Write-Host "⏭️  Skipping sample data" -ForegroundColor Cyan
+    Write-Host "Skipping sample data" -ForegroundColor Cyan
 }
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "✅ Database Setup Complete!" -ForegroundColor Green
+Write-Host "Database Setup Complete!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow

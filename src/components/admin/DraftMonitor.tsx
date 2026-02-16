@@ -292,7 +292,7 @@ export function DraftMonitor() {
         <div className="flex gap-3 flex-shrink-0">
           {draftState?.status === 'completed' && (
             <a href="/admin/results" className="btn-success inline-flex items-center">
-              📊 View Results
+              View Results
             </a>
           )}
           {!isDraftActive && Array.isArray(participants) && participants.length > 0 && (
@@ -301,13 +301,13 @@ export function DraftMonitor() {
               disabled={actionLoading === 'start'}
               variant="success"
             >
-              {actionLoading === 'start' ? 'Starting...' : '🚀 Start Draft'}
+              {actionLoading === 'start' ? 'Starting...' : 'Start Draft'}
             </Button>
           )}
           {isDraftActive && draftState && (
             <React.Fragment key="draft-active-buttons">
               <a href="/draft" className="btn-success inline-flex items-center">
-                👁️ View Draft
+                View Draft
               </a>
               {draftState.status === 'in_progress' && (
                 <Button

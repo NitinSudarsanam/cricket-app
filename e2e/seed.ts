@@ -9,7 +9,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function seedE2E() {
-  console.log('🌱 Seeding E2E test data...');
+  console.log('Seeding E2E test data...');
 
   // Clean up existing test data
   await prisma.pick.deleteMany({});
@@ -67,7 +67,7 @@ async function seedE2E() {
     }),
   ]);
 
-  console.log('✅ E2E seed completed');
+  console.log('E2E seed completed');
   console.log(`   - Draft Config: ${draftConfig.id}`);
   console.log(`   - Players: ${players.length}`);
   console.log(`   - Participants: ${participants.length}`);
@@ -80,7 +80,7 @@ async function seedE2E() {
 
 seedE2E()
   .catch((e) => {
-    console.error('❌ E2E seed failed:', e);
+    console.error('E2E seed failed:', e);
     process.exit(1);
   })
   .finally(async () => {

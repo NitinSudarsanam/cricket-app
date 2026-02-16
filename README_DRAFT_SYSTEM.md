@@ -1,12 +1,12 @@
 # Fantasy Cricket Draft System - Complete Guide
 
-## 🎉 System Status: FULLY FUNCTIONAL
+## System Status: FULLY FUNCTIONAL
 
 The fantasy cricket draft system is now complete and working! All major issues have been resolved.
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Start the Development Server
 ```bash
@@ -23,7 +23,7 @@ Navigate to: **http://localhost:3000/admin**
 
 ### 4. Start a Draft
 1. Go to **Monitor Draft** page
-2. Click "🚀 Start Draft"
+2. Click "Start Draft"
 3. Select participants
 4. Choose draft order (Snake recommended)
 5. Click "Start Draft"
@@ -37,35 +37,35 @@ Navigate to: **http://localhost:3000/admin**
 
 ---
 
-## 📋 Features
+## Features
 
 ### Admin Features
-- ✅ Player management (add, edit, delete, import)
-- ✅ Draft configuration with validation
-- ✅ Participant management
-- ✅ Draft monitoring with live updates
-- ✅ Reset and pause draft controls
+- Player management (add, edit, delete, import)
+- Draft configuration with validation
+- Participant management
+- Draft monitoring with live updates
+- Reset and pause draft controls
 
 ### Draft Features
-- ✅ Snake draft order (reverses each round)
-- ✅ Linear draft order (same order each round)
-- ✅ Real-time turn detection
-- ✅ Automatic validation of picks
-- ✅ Role requirements enforcement (Batsmen, Bowlers, etc.)
-- ✅ Team cap enforcement
-- ✅ Early-round rules
-- ✅ Participant switcher for testing
+- Snake draft order (reverses each round)
+- Linear draft order (same order each round)
+- Real-time turn detection
+- Automatic validation of picks
+- Role requirements enforcement (Batsmen, Bowlers, etc.)
+- Team cap enforcement
+- Early-round rules
+- Participant switcher for testing
 
 ### UI Features
-- ✅ Color-coded team columns
-- ✅ Responsive design (desktop, tablet, mobile)
-- ✅ Empty states with helpful CTAs
-- ✅ Error messages and validation feedback
-- ✅ Success notifications
+- Color-coded team columns
+- Responsive design (desktop, tablet, mobile)
+- Empty states with helpful CTAs
+- Error messages and validation feedback
+- Success notifications
 
 ---
 
-## 🎯 How It Works
+## How It Works
 
 ### Draft Order
 
@@ -95,7 +95,7 @@ Every pick is validated against:
 
 ---
 
-## 🔧 Configuration
+## Configuration
 
 ### Draft Rules (Configurable)
 - **Roster Size**: 8 players
@@ -114,7 +114,7 @@ Every pick is validated against:
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Can't Start Draft
 **Issue**: "Start Draft" button not showing  
@@ -122,7 +122,7 @@ Every pick is validated against:
 
 ### Can't Make Picks
 **Issue**: "It is not your turn" error  
-**Solution**: Click the participant button with 🎯 emoji (indicates whose turn it is)
+**Solution**: Click the participant button with a target icon (indicates whose turn it is)
 
 ### Players Not Disappearing
 **Issue**: Picked players still visible  
@@ -138,7 +138,7 @@ Every pick is validated against:
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 cricket/
@@ -163,7 +163,7 @@ cricket/
 
 ---
 
-## 🎓 Key Fixes Applied
+## Key Fixes Applied
 
 ### 1. Null Safety Refactor
 - Added comprehensive null checks throughout
@@ -192,7 +192,7 @@ cricket/
 
 ---
 
-## 🚦 Testing Checklist
+## Testing Checklist
 
 - [x] Add participants
 - [x] Start draft
@@ -206,7 +206,7 @@ cricket/
 
 ---
 
-## 🔮 Future Enhancements
+## Future Enhancements
 
 - Add user authentication (replace participant switcher)
 - Add real-time sync without page reloads
@@ -219,7 +219,7 @@ cricket/
 
 ---
 
-## 📞 Support
+## Support
 
 If you encounter issues:
 1. Check browser console for errors
@@ -230,7 +230,7 @@ If you encounter issues:
 
 ---
 
-## ✨ Credits
+## Credits
 
 Built with:
 - Next.js 15

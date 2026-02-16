@@ -223,7 +223,7 @@ export function DraftConfigEditor() {
       )}
 
       {config.isLocked && (
-        <Alert variant="warning">⚠️ Configuration is locked because a draft is in progress</Alert>
+        <Alert variant="warning">Configuration is locked because a draft is in progress</Alert>
       )}
 
       {/* Roster Size */}
@@ -370,7 +370,7 @@ export function DraftConfigEditor() {
           </div>
           {freeSlots < 0 && (
             <p className="text-xs text-red-600 mt-1">
-              ⚠️ Mandatory roles exceed roster size
+              Mandatory roles exceed roster size
             </p>
           )}
         </div>

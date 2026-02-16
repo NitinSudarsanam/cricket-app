@@ -2,7 +2,7 @@
 
 A full-featured fantasy cricket draft application with real-time updates, customizable rules, and an intuitive admin interface.
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
 # Install dependencies
@@ -24,7 +24,7 @@ npm run dev
 
 Visit **http://localhost:3000/admin** to get started!
 
-## 📋 Features
+## Features
 
 - **Snake & Linear Draft Orders** - Flexible draft configurations
 - **Real-time Turn Detection** - Know exactly whose turn it is
@@ -33,12 +33,12 @@ Visit **http://localhost:3000/admin** to get started!
 - **Responsive Design** - Works on desktop, tablet, and mobile
 - **Color-coded Teams** - Easy visual identification of IPL teams
 
-## 📖 Documentation
+## Documentation
 
 - **[Complete Guide](./README_DRAFT_SYSTEM.md)** - Full system documentation
 - **[Database Setup](./SETUP_DATABASE.md)** - Database configuration guide
 
-## 🏏 Score tracking and rankings
+## Score tracking and rankings
 
 The app can ingest match data from the Sportmonks Cricket API and maintain team/player leaderboards.
 
@@ -78,7 +78,7 @@ Players in the draft pool come from Sportmonks **squad** data (teams’ squads f
 - Seasons: `GET /api/seasons?leagueId=...`.  
 - Sync (server-only): the Sync page uses a server action; for cron/scripts use `POST /api/sync/cricket-data` with `CRON_SECRET` or `ADMIN_SECRET`.
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Framework**: Next.js 15 with App Router
 - **Language**: TypeScript
@@ -87,7 +87,7 @@ Players in the draft pool come from Sportmonks **squad** data (teams’ squads f
 - **Styling**: Tailwind CSS
 - **Real-time**: Pusher (optional)
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 cricket/
@@ -102,7 +102,7 @@ cricket/
 └── public/               # Static assets
 ```
 
-## 🎯 Usage
+## Usage
 
 ### 1. Add Participants
 Navigate to **Admin → Participants** and add at least 2 participants.
@@ -120,7 +120,7 @@ Click **Monitor Draft → Start Draft**, select participants and draft order.
 ### 4. Make Picks
 Use the participant switcher to test different users making picks.
 
-## 🔧 Configuration
+## Configuration
 
 Edit `.env` file:
 
@@ -130,11 +130,11 @@ DIRECT_URL="postgresql://..."
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
 
-## 📝 License
+## License
 
 MIT
 
-## 🤝 Contributing
+## Contributing
 
 Contributions welcome! Please open an issue or submit a pull request.
 
