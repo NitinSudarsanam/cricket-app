@@ -1,59 +1,59 @@
 /**
- * E2E Tests for Draft Completion
+ * E2E Tests for Draft UI Elements
+ *
+ * Tests the various UI sections of the draft interface.
+ * Requires an in-progress draft state seeded by e2e/seed.ts.
+ * Participant session is provided via storageState from auth.setup.ts.
+ *
+ * Note: The draft page hydration can be slow, so generous timeouts are used.
  */
 
 import { test, expect } from '@playwright/test';
 
-test.describe('Draft Completion', () => {
-  test('should show completion message when draft ends', async ({ page }) => {
-    // This test assumes a draft can be completed
-    // In a real scenario, you'd need to simulate completing all picks
-    
-    await page.goto('/join');
-    await page.fill('input[name="name"]', 'Completion Viewer');
-    await page.click('button[type="submit"]');
-    
-    // Check for completion indicators
-    const completionMessage = page.locator('text=/completed|finished|draft complete/i');
-    
-    // If draft is completed, should see message
-    if (await completionMessage.isVisible({ timeout: 1000 }).catch(() => false)) {
-      await expect(completionMessage).toBeVisible();
-    }
+const HYDRATION_TIMEOUT = 30_000;
+
+test.describe('Draft UI Elements', () => {
+  test.beforeEach(async ({ page }) => {
+    // Navigate directly to /draft — session cookie is already set via storageState
+    await page.goto('/draft');
+    await page.waitForLoadState('networkidle');
   });
 
-  test('should display final rosters', async ({ page }) => {
-    await page.goto('/join');
-    await page.fill('input[name="name"]', 'Roster Viewer');
-    await page.click('button[type="submit"]');
-    
-    // Should see roster or team display
+  test('should show draft interface when draft is in progress', async ({ page }) => {
+    // Should see at least one team section in the draft board
     await expect(
-      page.locator('[data-testid="roster"], .roster, text=/roster|team/i')
-    ).toBeVisible({ timeout: 2000 });
+      page.locator('text=/CSK|MI|RCB/').first(),
+    ).toBeVisible({ timeout: HYDRATION_TIMEOUT });
   });
 
-  test('should allow viewing all participants rosters', async ({ page }) => {
-    await page.goto('/join');
-    await page.fill('input[name="name"]', 'All Rosters Viewer');
-    await page.click('button[type="submit"]');
-    
-    // Should see option to view all rosters
-    const allRostersButton = page.locator('button:has-text("All Rosters"), a:has-text("All Rosters")');
-    if (await allRostersButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await allRostersButton.click();
-      await expect(page).toHaveURL(/\/rosters|\/teams/);
-    }
-  });
-
-  test('should show draft summary statistics', async ({ page }) => {
-    await page.goto('/join');
-    await page.fill('input[name="name"]', 'Stats Viewer');
-    await page.click('button[type="submit"]');
-    
-    // Should see statistics or summary
+  test('should display team sections in draft board', async ({ page }) => {
+    // DraftBoard renders sections for each IPL team
     await expect(
-      page.locator('text=/statistics|summary|total picks/i')
-    ).toBeVisible({ timeout: 2000 });
+      page.locator('text=CSK').first(),
+    ).toBeVisible({ timeout: HYDRATION_TIMEOUT });
+
+    // Check multiple teams are visible
+    await expect(page.locator('text=MI').first()).toBeVisible();
+    await expect(page.locator('text=RCB').first()).toBeVisible();
+    await expect(page.locator('text=KKR').first()).toBeVisible();
+  });
+
+  test('should show roster sidebar on desktop', async ({ page }) => {
+    // RosterSidebar renders "My Roster" heading and team/role distributions
+    // Visible on desktop (hidden lg:block, viewport is 1280px)
+    await expect(
+      page.locator('text=My Roster').first(),
+    ).toBeVisible({ timeout: HYDRATION_TIMEOUT });
+  });
+
+  test('should show pick count or history', async ({ page }) => {
+    // Pick History section shows "Pick History" heading and "No picks yet"
+    await expect(
+      page.locator('text=Pick History'),
+    ).toBeVisible({ timeout: HYDRATION_TIMEOUT });
+
+    await expect(
+      page.locator('text=No picks yet'),
+    ).toBeVisible();
   });
 });

@@ -1,37 +1,42 @@
 /**
- * E2E Tests for Admin Functionality
+ * E2E Tests for Admin Dashboard
+ *
+ * Tests admin navigation through the sidebar and dashboard content.
+ * Admin session is provided via storageState from auth.setup.ts.
  */
 
 import { test, expect } from '@playwright/test';
 
 test.describe('Admin Dashboard', () => {
   test.beforeEach(async ({ page }) => {
-    // Login as admin
+    // Navigate directly to /admin — session cookie is already set via storageState
     await page.goto('/admin');
-    const adminSecret = process.env.ADMIN_SECRET || 'test-admin-secret-min-32-chars-long';
-    await page.fill('input[type="password"]', adminSecret);
-    await page.click('button:has-text("Login")');
-    await expect(page).toHaveURL(/\/admin/);
+    await page.waitForLoadState('networkidle');
   });
 
   test('should display admin dashboard', async ({ page }) => {
-    await expect(page.locator('h1, h2')).toContainText(/admin|dashboard/i);
+    // The AdminLayout header has "Fantasy Cricket Draft · Admin"
+    // The dashboard page has <h2>Admin Dashboard</h2>
+    await expect(
+      page.locator('h1, h2').filter({ hasText: /admin/i }).first(),
+    ).toBeVisible();
   });
 
   test('should navigate to player management', async ({ page }) => {
-    await page.click('a:has-text("Players"), button:has-text("Players")');
+    // Sidebar NavLink with label "Players" links to /admin/players
+    await page.locator('nav a', { hasText: 'Players' }).first().click();
     await expect(page).toHaveURL(/\/admin\/players/);
   });
 
   test('should navigate to draft configuration', async ({ page }) => {
-    await page.click('a:has-text("Draft Config"), button:has-text("Draft Config")');
-    await expect(page).toHaveURL(/\/admin\/draft-config/);
+    // Sidebar NavLink with label "Draft Config" links to /admin/config
+    await page.locator('nav a', { hasText: 'Draft Config' }).first().click();
+    await expect(page).toHaveURL(/\/admin\/config/);
   });
 
-  test('should display draft state management', async ({ page }) => {
-    // Should see draft state controls
-    await expect(
-      page.locator('button:has-text("Start"), button:has-text("Pause"), button:has-text("Reset")')
-    ).toHaveCount({ min: 1 });
+  test('should navigate to monitor page', async ({ page }) => {
+    // Sidebar NavLink with label "Monitor Draft" links to /admin/monitor
+    await page.locator('nav a', { hasText: 'Monitor Draft' }).first().click();
+    await expect(page).toHaveURL(/\/admin\/monitor/);
   });
 });

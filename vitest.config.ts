@@ -24,6 +24,7 @@ export default defineConfig({
         '**/*.config.{ts,js}',
         'prisma/',
         'e2e/',
+        '.next/',
       ],
       thresholds: {
         lines: 70,

@@ -1,18 +1,31 @@
 /**
  * E2E Test Seed Script
- * 
- * Sets up test data for E2E tests
+ *
+ * Sets up test data for E2E tests including:
+ * - Draft configuration
+ * - Players across IPL teams and roles
+ * - Participants
+ * - An in-progress draft state with draft orders
  */
 
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
+import 'dotenv/config';
 
-const prisma = new PrismaClient();
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 async function seedE2E() {
   console.log('Seeding E2E test data...');
 
-  // Clean up existing test data
+  // Clean up existing data in dependency order
   await prisma.pick.deleteMany({});
+  await prisma.draftOrder.deleteMany({});
   await prisma.draftState.deleteMany({});
   await prisma.participant.deleteMany({});
   await prisma.player.deleteMany({});
@@ -23,7 +36,7 @@ async function seedE2E() {
     data: {
       rosterSize: 11,
       totalRounds: 5,
-      minPerTeam: 1,
+      minPerTeam: 0,
       maxPerTeam: 3,
       mandatoryBat: 3,
       mandatoryBowl: 3,
@@ -32,12 +45,12 @@ async function seedE2E() {
       earlyRounds: 3,
       earlyMinBat: 2,
       earlyMinBowl: 2,
-      isLocked: false,
+      isLocked: true,
     },
   });
 
-  // Create test players
-  const teams = ['CSK', 'MI', 'RCB', 'KKR', 'RR'];
+  // Create test players across teams and roles
+  const teams = ['CSK', 'MI', 'RCB', 'KKR', 'RR', 'GT', 'LSG', 'SRH', 'PBKS', 'DC'];
   const roles = ['Bat', 'Bowl', 'AR', 'WK'];
   const players = [];
 
@@ -48,7 +61,7 @@ async function seedE2E() {
       name: `E2E Player ${i + 1}`,
       team,
       role,
-      isForeign: i % 3 === 0,
+      isForeign: i % 5 === 0,
     });
   }
 
@@ -67,15 +80,39 @@ async function seedE2E() {
     }),
   ]);
 
+  // Create an in-progress draft state so draft-flow tests have data
+  const draftState = await prisma.draftState.create({
+    data: {
+      status: 'in_progress',
+      currentRound: 1,
+      currentPickIndex: 0,
+      draftOrderType: 'snake',
+      startedAt: new Date(),
+      draftConfigId: draftConfig.id,
+    },
+  });
+
+  // Create draft orders for each participant
+  await Promise.all(
+    participants.map((p, index) =>
+      prisma.draftOrder.create({
+        data: {
+          draftStateId: draftState.id,
+          participantId: p.id,
+          position: index,
+        },
+      }),
+    ),
+  );
+
   console.log('E2E seed completed');
   console.log(`   - Draft Config: ${draftConfig.id}`);
   console.log(`   - Players: ${players.length}`);
   console.log(`   - Participants: ${participants.length}`);
+  console.log(`   - Draft State: ${draftState.id} (in_progress)`);
+  console.log(`   - Draft Orders: ${participants.length}`);
 
-  return {
-    draftConfig,
-    participants,
-  };
+  return { draftConfig, participants, draftState };
 }
 
 seedE2E()
