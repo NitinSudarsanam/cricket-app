@@ -1,46 +1,46 @@
 # Fantasy Cricket Draft
 
-A full-stack fantasy cricket draft platform for IPL seasons. Run a snake or linear draft with live turn detection, enforce roster rules (team caps, role minimums, early-round requirements), and track results against real match data synced from the Sportmonks Cricket API.
+Full-stack fantasy cricket draft platform for IPL seasons. Runs snake or linear drafts with live turn detection, enforces roster rules (team caps, role minimums, early-round requirements), and tracks results against real match data from the Sportmonks Cricket API.
 
-Built with Next.js 16 (App Router), TypeScript, Prisma, PostgreSQL, and Pusher.
+Built on Next.js 16 (App Router), TypeScript, Prisma, PostgreSQL, and Pusher.
 
 ---
 
-## Table of Contents
+## Table of contents
 
-- [Highlights](#highlights)
+- [What it does](#what-it-does)
 - [Screenshots](#screenshots)
 - [Architecture](#architecture)
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-- [Environment Variables](#environment-variables)
+- [Tech stack](#tech-stack)
+- [Getting started](#getting-started)
+- [Environment variables](#environment-variables)
 - [Scripts](#scripts)
-- [Usage Walkthrough](#usage-walkthrough)
-- [Live Score Ingestion](#live-score-ingestion-sportmonks)
-- [API Reference](#api-reference)
+- [Usage walkthrough](#usage-walkthrough)
+- [Live score ingestion](#live-score-ingestion-sportmonks)
+- [API reference](#api-reference)
 - [Testing](#testing)
 - [Deployment](#deployment)
-- [Project Structure](#project-structure)
+- [Project structure](#project-structure)
 - [License](#license)
 
 ---
 
-## Highlights
+## What it does
 
-- **Configurable draft engine** — snake or linear order, roster size, per-IPL-team caps, role minimums (Bat / Bowl / AR / WK), and early-round constraints, all validated server-side.
-- **Real-time updates** — Pusher-backed presence and pick broadcasts keep every participant in sync without manual refreshes. Gracefully falls back to polling when Pusher keys are absent.
-- **Admin dashboard** — manage players, participants, draft configuration, sync jobs, and leaderboards from `/admin`.
-- **Live score ingestion** — Sportmonks Cricket API integration pulls leagues, seasons, squads, fixtures, and match results; configurable scoring rules feed team and player leaderboards.
-- **Two leaderboards** — team standings (win / tie / no-result / loss points) and fantasy player rankings aggregated across each participant's drafted squad.
-- **Session-aware auth** — separate admin and participant sessions with HMAC-signed cookies, rate limiting on sensitive routes, and a security event logger.
-- **Deeply tested** — Vitest unit + integration tests across the rule engine, state manager, API routes, and stores, plus Playwright end-to-end coverage of the full draft flow.
-- **Production-ready deploys** — Vercel configuration, cron entry for periodic sync, serverless-friendly Prisma adapter, pre-deploy readiness script.
+- Configurable draft engine: snake or linear order, roster size, per-IPL-team caps, role minimums (Bat/Bowl/AR/WK), and early-round constraints. All validated server-side.
+- Real-time presence and picks over Pusher. If you don't set Pusher keys, the UI polls instead.
+- Admin dashboard at `/admin` for players, participants, draft config, sync jobs, and leaderboards.
+- Sportmonks Cricket API integration: leagues, seasons, squads, fixtures, match results. Scoring rules feed team and player leaderboards.
+- Two leaderboards: team standings (win/tie/no-result/loss points) and fantasy player rankings across each participant's drafted squad.
+- Admin and participant sessions use HMAC-signed cookies. Sensitive routes are rate-limited. A security event logger records auth failures.
+- Tests: Vitest for units and integration across the rule engine, state manager, API routes, and stores. Playwright covers the draft flow end-to-end.
+- Vercel-ready. Cron entry for periodic sync, serverless Prisma adapter, pre-deploy readiness script.
 
 ---
 
 ## Screenshots
 
-> Add screenshots of the admin dashboard, draft board, and leaderboard here.
+> TODO: add admin dashboard, draft board, leaderboard screenshots.
 
 ---
 
@@ -71,18 +71,18 @@ Built with Next.js 16 (App Router), TypeScript, Prisma, PostgreSQL, and Pusher.
 
 **Data model (Prisma):** `Player`, `Participant`, `DraftConfig`, `DraftState`, `DraftOrder`, `Pick`, `League`, `Season`, `Team`, `Match`, `MatchResult`, `ScoringRule`, `TeamScore`, `PlayerScore`, `LeaderboardSnapshot`.
 
-**Key modules:**
+**Main modules:**
 
 - `src/lib/rule-engine.ts` — pure validator for draft picks and configs.
 - `src/lib/draft-state-manager.ts` — turn resolution, snake ordering, completion detection.
-- `src/services/ingestion/` — Sportmonks squad / fixture / result ingestion.
+- `src/services/ingestion/` — Sportmonks squad, fixture, and result ingestion.
 - `src/services/scoring/` — scoring rule resolution.
 - `src/services/leaderboard/` — team and player leaderboard aggregation.
 - `src/services/ranking/` — fantasy player ranking by drafted roster.
 
 ---
 
-## Tech Stack
+## Tech stack
 
 | Layer          | Choice                                              |
 | -------------- | --------------------------------------------------- |
@@ -100,14 +100,14 @@ Built with Next.js 16 (App Router), TypeScript, Prisma, PostgreSQL, and Pusher.
 
 ---
 
-## Getting Started
+## Getting started
 
 ### Prerequisites
 
 - Node.js 20+
 - PostgreSQL 14+ (local, Docker, or Supabase)
-- A Sportmonks Cricket API token (optional, only needed for live data)
-- A Pusher Channels app (optional, only needed for real-time UI)
+- A Sportmonks Cricket API token (only if you want live data)
+- A Pusher Channels app (only if you want real-time UI)
 
 ### Install
 
@@ -121,7 +121,7 @@ npm install
 
 ```bash
 cp .env.example .env
-# edit .env — see the Environment Variables section below
+# edit .env — see Environment variables below
 ```
 
 ### Database
@@ -131,7 +131,7 @@ npx prisma db push   # apply schema
 npx prisma db seed   # seed default scoring rules and sample data
 ```
 
-A helper script is included for a local Postgres bootstrap: `./setup-db.ps1` (Windows) or `setup-db.bat`.
+Helper script for a local Postgres bootstrap: `./setup-db.ps1` (Windows) or `setup-db.bat`.
 
 ### Run
 
@@ -141,15 +141,15 @@ npm run dev
 
 Open:
 
-- **http://localhost:3000** — landing page
-- **http://localhost:3000/admin** — admin dashboard
-- **http://localhost:3000/draft** — participant draft UI
+- http://localhost:3000 — landing page
+- http://localhost:3000/admin — admin dashboard
+- http://localhost:3000/draft — participant draft UI
 
 ---
 
-## Environment Variables
+## Environment variables
 
-See `.env.example` for the full list. Essentials:
+Full list in `.env.example`. What you actually need:
 
 | Variable                        | Purpose                                                                   | Required                    |
 | ------------------------------- | ------------------------------------------------------------------------- | --------------------------- |
@@ -165,7 +165,7 @@ See `.env.example` for the full list. Essentials:
 | `CRON_SECRET`                   | Bearer secret required by `/api/sync/cricket-data` when set               | optional (scheduled sync)   |
 | `REQUIRE_SYNC_BEFORE_DRAFT`     | If `true`, block draft start until leagues/seasons exist                  | optional                    |
 
-The app runs without Pusher or Sportmonks — real-time and live data degrade gracefully.
+App runs without Pusher or Sportmonks. Real-time drops to polling, and live data falls back to whatever is already in the database.
 
 ---
 
@@ -196,46 +196,46 @@ The app runs without Pusher or Sportmonks — real-time and live data degrade gr
 
 ---
 
-## Usage Walkthrough
+## Usage walkthrough
 
-1. **Add participants** — `Admin → Participants`. Minimum 2.
-2. **Configure the draft** — `Admin → Configuration`. Set roster size, total rounds, per-team cap, mandatory roles, early-round rules. Config can be locked once a draft starts.
-3. **Load players** — either import manually (`Admin → Players`) or pull a season's squads from Sportmonks (`Admin → Sync`, then "Load season from Sportmonks"). Syncing populates leagues, seasons, teams, and the draft pool in one go.
-4. **Start the draft** — `Admin → Monitor Draft → Start Draft`. Choose participants and order type (snake or linear).
-5. **Make picks** — each participant logs in at `/draft/login` with their email. The rule engine validates every pick: team cap, role minimums, early-round mins, duplicate prevention.
-6. **Track results** — once fixtures are synced and completed, team and fantasy-player leaderboards update automatically from match results and scoring rules.
+1. **Add participants** at `Admin → Participants`. Minimum 2.
+2. **Configure the draft** at `Admin → Configuration`. Set roster size, total rounds, per-team cap, mandatory roles, early-round rules. Config locks once a draft starts.
+3. **Load players.** Either import manually (`Admin → Players`) or pull a season's squads from Sportmonks (`Admin → Sync`, then "Load season from Sportmonks"). Syncing populates leagues, seasons, teams, and the draft pool in one pass.
+4. **Start the draft** at `Admin → Monitor Draft → Start Draft`. Pick participants and order type (snake or linear).
+5. **Make picks.** Participants log in at `/draft/login` with their email. The rule engine validates every pick: team cap, role minimums, early-round mins, no duplicates.
+6. **Track results.** Once fixtures are synced and played, team and fantasy-player leaderboards update from match results and scoring rules.
 
-### Draft Rules
+### Draft rules
 
-- **Snake order:** direction reverses each round — round 1 A→B→C, round 2 C→B→A, round 3 A→B→C, etc.
-- **Linear order:** same order every round.
-- **Team cap:** maximum picks allowed from a single IPL team.
-- **Role minimums:** mandatory count per role (Bat / Bowl / AR / WK) enforced by the end of the draft.
-- **Early-round rules:** in the first N rounds, require minimum counts of specified roles (e.g., ≥2 Bat and ≥2 Bowl in the first 4 rounds).
+- Snake order: direction reverses each round. Round 1 A→B→C, round 2 C→B→A, round 3 A→B→C.
+- Linear order: same order every round.
+- Team cap: max picks from a single IPL team.
+- Role minimums: required count per role (Bat/Bowl/AR/WK) by the end of the draft.
+- Early-round rules: in the first N rounds, require minimum counts of specified roles (e.g. ≥2 Bat and ≥2 Bowl in the first 4 rounds).
 
 ---
 
-## Live Score Ingestion (Sportmonks)
+## Live score ingestion (Sportmonks)
 
-Scoring data comes from the Sportmonks Cricket API. Your Sportmonks plan must include Cricket — if you see a 404, your token is likely for another product.
+Scoring data comes from the Sportmonks Cricket API. Your plan needs Cricket included. A 404 usually means the token is for a different product.
 
 ### Sync flow
 
 1. Set `SPORTMONKS_API_TOKEN` in `.env`.
 2. Open `Admin → Sync`.
-3. If leagues/seasons are empty, run **Run full sync (no filter)** once to pull them.
-4. Select a league and season, then **Load season from Sportmonks**. This upserts teams, squad players (the draft pool), and fixtures.
-5. Scoring rules default to `win=3`, `tie=1`, `no-result=1`, `loss=0` (configurable via the `ScoringRule` table).
+3. If leagues/seasons are empty, hit **Run full sync (no filter)** once to pull them.
+4. Pick a league and season, then **Load season from Sportmonks**. This upserts teams, squad players (the draft pool), and fixtures.
+5. Default scoring rules: `win=3`, `tie=1`, `no-result=1`, `loss=0`. Editable via the `ScoringRule` table.
 
 ### Scheduled sync
 
-`vercel.json` includes a cron entry hitting `POST /api/sync/cricket-data` every 15 minutes. The route requires `Authorization: Bearer <CRON_SECRET>` (or `x-cron-secret` header). Use `CRON_SECRET` or fall back to `ADMIN_SECRET`.
+`vercel.json` has a cron hitting `POST /api/sync/cricket-data` every 15 minutes. The route needs `Authorization: Bearer <CRON_SECRET>` (or the `x-cron-secret` header). Uses `CRON_SECRET`, falls back to `ADMIN_SECRET`.
 
 ---
 
-## API Reference
+## API reference
 
-Selected endpoints — see `src/app/api/` for full list.
+Main endpoints. Full list under `src/app/api/`.
 
 ### Draft
 
@@ -265,7 +265,7 @@ Selected endpoints — see `src/app/api/` for full list.
 - `GET /api/leaderboard/players?seasonId=...`
 - `GET /api/leaderboard/fantasy?seasonId=...`
 
-### Sync & Health
+### Sync & health
 
 - `POST /api/sync/cricket-data` — trigger ingestion (requires `CRON_SECRET` or `ADMIN_SECRET`)
 - `GET /api/sportmonks/check` — token / plan check
@@ -289,27 +289,27 @@ npm run test:e2e         # Playwright (auto-starts dev server)
 npm run test:all         # both
 ```
 
-- Unit/integration tests live next to source under `__tests__/` directories.
+- Unit and integration tests live beside source under `__tests__/` directories.
 - Mock helpers: `src/__tests__/helpers/` (Prisma, Pusher, Next request, factories).
-- E2E specs: `e2e/` — seeds a disposable dataset via `e2e/seed.ts` and exercises admin and draft flows.
-- CI: GitHub Actions in `.github/workflows/` runs the test suite and uploads coverage on each push.
+- E2E specs: `e2e/`. Seeds a disposable dataset via `e2e/seed.ts` and runs admin and draft flows.
+- CI: GitHub Actions workflows under `.github/workflows/` run the suite and upload coverage on push.
 
 ---
 
 ## Deployment
 
-Designed for Vercel:
+Targets Vercel.
 
-1. Import the repository in Vercel.
-2. Set environment variables in the project settings (see above).
-3. Point `DATABASE_URL` at a pooled connection (Supabase port 6543) and `DIRECT_URL` at the direct connection (5432) so migrations work.
-4. Deploy. The `postinstall` hook runs `prisma generate` automatically.
+1. Import the repo in Vercel.
+2. Set env vars in project settings (see above).
+3. Point `DATABASE_URL` at the pooled connection (Supabase port 6543) and `DIRECT_URL` at the direct one (5432) so migrations work.
+4. Deploy. The `postinstall` hook runs `prisma generate`.
 5. `vercel.json` wires up the `/api/sync/cricket-data` cron (every 15 minutes).
-6. Run `npm run check:prod` locally before release to catch missing env vars, weak secrets, or dev-only defaults.
+6. Run `npm run check:prod` locally before shipping to catch missing env vars, weak secrets, or dev defaults.
 
 ---
 
-## Project Structure
+## Project structure
 
 ```
 cricket-app/
@@ -342,4 +342,4 @@ MIT
 
 ## Contributing
 
-Issues and pull requests welcome. For substantial changes, please open an issue first to discuss the approach.
+Issues and PRs welcome. For bigger changes, open an issue first so we can talk through the approach.
