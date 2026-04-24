@@ -42,6 +42,12 @@ next-env.d.ts
 
 /src/generated/prisma
 
+# local database files
+*.db
+*.db-journal
+*.sqlite
+*.sqlite-journal
+
 # Playwright
 /e2e/.auth/
 /test-results/
