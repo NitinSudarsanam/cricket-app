@@ -212,32 +212,11 @@ export async function advanceToNextPick(
 
   let { currentRound, currentPickIndex } = currentState;
 
-  // Determine if we're in a snake round (even rounds go in reverse)
-  const isSnakeRound = orderType === 'snake' && currentRound % 2 === 0;
-
-  // Advance the pick index
-  if (isSnakeRound) {
-    currentPickIndex--;
-    
-    // If we've reached the beginning, move to next round
-    if (currentPickIndex < 0) {
-      currentRound++;
-      currentPickIndex = 0; // Next round starts at beginning (odd round)
-    }
-  } else {
-    currentPickIndex++;
-    
-    // If we've reached the end, move to next round
-    if (currentPickIndex >= participantCount) {
-      currentRound++;
-      
-      // If next round is a snake round, start at the end
-      if (orderType === 'snake' && currentRound % 2 === 0) {
-        currentPickIndex = participantCount - 1;
-      } else {
-        currentPickIndex = 0;
-      }
-    }
+  // Advance the pick index (always increment; snake reversal is handled by getCurrentParticipantId)
+  currentPickIndex++;
+  if (currentPickIndex >= participantCount) {
+    currentRound++;
+    currentPickIndex = 0;
   }
 
   // Check if draft is complete

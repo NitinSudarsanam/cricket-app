@@ -39,6 +39,25 @@ async function main() {
     throw error;
   }
 
+  // Wipe all existing data (child tables first to respect FK constraints)
+  console.log('Clearing all existing data...');
+  await prisma.pick.deleteMany({});
+  await prisma.draftOrder.deleteMany({});
+  await prisma.draftState.deleteMany({});
+  await prisma.playerScore.deleteMany({});
+  await prisma.leaderboardSnapshot.deleteMany({});
+  await prisma.teamScore.deleteMany({});
+  await prisma.matchResult.deleteMany({});
+  await prisma.match.deleteMany({});
+  await prisma.scoringRule.deleteMany({});
+  await prisma.team.deleteMany({});
+  await prisma.season.deleteMany({});
+  await prisma.league.deleteMany({});
+  await prisma.participant.deleteMany({});
+  await prisma.player.deleteMany({});
+  await prisma.draftConfig.deleteMany({});
+  console.log('All existing data cleared.');
+
   // Create default draft configuration
   console.log('Creating draft configuration...');
   const draftConfig = await prisma.draftConfig.upsert({

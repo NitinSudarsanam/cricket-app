@@ -86,6 +86,100 @@ describe('getCurrentParticipantId', () => {
   });
 });
 
+describe('snake order end-to-end sequence', () => {
+  it('should produce correct A,B,C,D → D,C,B,A → A,B,C,D pattern across 3 rounds', () => {
+    // Simulate advance + getCurrentParticipantId across rounds without Prisma.
+    // We manually replicate the simplified advance logic (always increment, wrap).
+    const participantOrder = ['A', 'B', 'C', 'D'];
+    let round = 1;
+    let pickIndex = 0;
+    const sequence: string[] = [];
+
+    for (let pick = 0; pick < 12; pick++) {
+      // Get current participant using the real function
+      const state = createDraftState({
+        currentRound: round,
+        currentPickIndex: pickIndex,
+        participantOrder,
+        draftOrderType: 'snake',
+      });
+      sequence.push(getCurrentParticipantId(state, 'snake'));
+
+      // Advance (same logic as the simplified advanceToNextPick)
+      pickIndex++;
+      if (pickIndex >= participantOrder.length) {
+        round++;
+        pickIndex = 0;
+      }
+    }
+
+    // Round 1 (odd): A, B, C, D
+    // Round 2 (even/reversed): D, C, B, A
+    // Round 3 (odd): A, B, C, D
+    expect(sequence).toEqual([
+      'A', 'B', 'C', 'D',
+      'D', 'C', 'B', 'A',
+      'A', 'B', 'C', 'D',
+    ]);
+  });
+
+  it('should produce linear order when orderType is linear', () => {
+    const participantOrder = ['A', 'B', 'C'];
+    let round = 1;
+    let pickIndex = 0;
+    const sequence: string[] = [];
+
+    for (let pick = 0; pick < 9; pick++) {
+      const state = createDraftState({
+        currentRound: round,
+        currentPickIndex: pickIndex,
+        participantOrder,
+        draftOrderType: 'linear',
+      });
+      sequence.push(getCurrentParticipantId(state, 'linear'));
+
+      pickIndex++;
+      if (pickIndex >= participantOrder.length) {
+        round++;
+        pickIndex = 0;
+      }
+    }
+
+    // Linear: same order every round
+    expect(sequence).toEqual([
+      'A', 'B', 'C',
+      'A', 'B', 'C',
+      'A', 'B', 'C',
+    ]);
+  });
+
+  it('should handle 2-participant snake correctly', () => {
+    const participantOrder = ['X', 'Y'];
+    let round = 1;
+    let pickIndex = 0;
+    const sequence: string[] = [];
+
+    for (let pick = 0; pick < 8; pick++) {
+      const state = createDraftState({
+        currentRound: round,
+        currentPickIndex: pickIndex,
+        participantOrder,
+        draftOrderType: 'snake',
+      });
+      sequence.push(getCurrentParticipantId(state, 'snake'));
+
+      pickIndex++;
+      if (pickIndex >= participantOrder.length) {
+        round++;
+        pickIndex = 0;
+      }
+    }
+
+    // Round 1: X, Y | Round 2: Y, X | Round 3: X, Y | Round 4: Y, X
+    expect(sequence).toEqual(['X', 'Y', 'Y', 'X', 'X', 'Y', 'Y', 'X']);
+  });
+});
+
 describe('calculatePickNumber', () => {
   it('should calculate pick number for first round, first pick', () => {
     const result = calculatePickNumber(1, 0, 4);

@@ -18,10 +18,8 @@ const MAX_IMPORT_BODY_SIZE = 512 * 1024; // 500KB
  * Check if a route requires admin authentication
  */
 function requiresAdminAuth(pathname: string): boolean {
-  // Admin pages
-  if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
-    return true;
-  }
+  // Admin pages are protected by the route group layout (server-side redirect).
+  // Middleware only protects admin API routes.
 
   // Admin API routes
   const adminApiRoutes = [

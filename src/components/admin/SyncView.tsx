@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { runSyncFromSportmonks, checkSportmonksApi, type SportmonksCheckResult } from '@/app/admin/sync/actions';
+import { runSyncFromSportmonks, checkSportmonksApi, type SportmonksCheckResult } from '@/app/admin/(dashboard)/sync/actions';
 import { ErrorState } from '@/components/ErrorState';
 import { Skeleton } from '@/components/Skeleton';
 import { Button } from '@/components/ui';

@@ -243,22 +243,12 @@ export async function POST(request: NextRequest) {
           timestamp: new Date(),
         },
       });
+      // Advance pick index (always increment; snake reversal handled by getCurrentParticipantId)
       let nextRound = locked.currentRound;
-      let nextIndex = locked.currentPickIndex;
-      const isSnakeRound = orderType === 'snake' && nextRound % 2 === 0;
-      if (isSnakeRound) {
-        nextIndex--;
-        if (nextIndex < 0) {
-          nextRound++;
-          nextIndex = 0;
-        }
-      } else {
-        nextIndex++;
-        if (nextIndex >= participantOrder.length) {
-          nextRound++;
-          nextIndex =
-            orderType === 'snake' && nextRound % 2 === 0 ? participantOrder.length - 1 : 0;
-        }
+      let nextIndex = locked.currentPickIndex + 1;
+      if (nextIndex >= participantOrder.length) {
+        nextRound++;
+        nextIndex = 0;
       }
       const isComplete = nextRound > draftConfig.totalRounds;
       await tx.draftState.update({

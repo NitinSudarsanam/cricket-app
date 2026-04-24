@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Player, IPLTeam, IPL_TEAMS, PlayerRole } from '@/types';
+import { Player, IPLTeam, IPL_TEAMS } from '@/types';
 import { PlayerChip } from '@/components/PlayerChip';
 import { TEAM_COLORS } from '@/config/team-colors';
 
@@ -12,7 +12,8 @@ export interface DraftBoardProps {
   onPlayerSelect?: (player: Player) => void;
   disabled?: boolean;
   currentParticipantId?: string;
-  validRolesForPick?: Set<PlayerRole> | null;
+  /** Set of player IDs that are eligible for the current pick. If null, no filtering is applied. */
+  eligiblePlayerIds?: Set<string> | null;
   allowDrag?: boolean;
 }
 
@@ -37,7 +38,7 @@ export function DraftBoard({
   onPlayerSelect,
   disabled = false,
   currentParticipantId,
-  validRolesForPick = null,
+  eligiblePlayerIds = null,
   allowDrag = false,
 }: DraftBoardProps) {
   const [cardSizes, setCardSizes] = useState<Record<string, { w: number; h: number }>>({});
@@ -57,7 +58,7 @@ export function DraftBoard({
   }, []);
 
   const isChipDisabled = (player: Player) =>
-    disabled || (validRolesForPick != null && !validRolesForPick.has(player.role));
+    disabled || (eligiblePlayerIds != null && !eligiblePlayerIds.has(player.id));
 
   // Group players by team
   const playersByTeam = availablePlayers.reduce((acc, player) => {

@@ -114,16 +114,17 @@ describe('DraftBoard', () => {
     }
   });
 
-  it('should disable chips for invalid roles when validRolesForPick is provided', async () => {
+  it('should disable chips for ineligible players when eligiblePlayerIds is provided', async () => {
     const players = [
       createPlayers(1, { role: 'Bat', team: 'CSK' })[0],
       createPlayers(1, { role: 'Bowl', team: 'CSK' })[0],
     ];
-    
+
+    // Only the first player is eligible
     render(
       <DraftBoard
         availablePlayers={players}
-        validRolesForPick={new Set(['Bat'])}
+        eligiblePlayerIds={new Set([players[0].id])}
       />
     );
     
@@ -137,19 +138,17 @@ describe('DraftBoard', () => {
     const bowlChips = screen.queryAllByTestId(`player-chip-${players[1].id}`);
     
     if (batChips.length > 0 && bowlChips.length > 0) {
-      // Check first chip of each (desktop or mobile view)
       expect(batChips[0]).toHaveAttribute('data-disabled', 'false');
       expect(bowlChips[0]).toHaveAttribute('data-disabled', 'true');
     } else {
-      // Component renders with role filtering - test passes
       expect(true).toBe(true);
     }
   });
 
-  it('should enable all chips when validRolesForPick is null', async () => {
+  it('should enable all chips when eligiblePlayerIds is null', async () => {
     const players = createPlayers(2, { team: 'CSK' });
     
-    render(<DraftBoard availablePlayers={players} validRolesForPick={null} />);
+    render(<DraftBoard availablePlayers={players} eligiblePlayerIds={null} />);
     
     // Wait for component to render
     await waitFor(() => {
@@ -160,12 +159,10 @@ describe('DraftBoard', () => {
     players.forEach(player => {
       const chips = screen.queryAllByTestId(`player-chip-${player.id}`);
       if (chips.length > 0) {
-        // Check first chip (desktop or mobile view)
         expect(chips[0]).toHaveAttribute('data-disabled', 'false');
       }
     });
     
-    // Test passes if component renders
     expect(true).toBe(true);
   });
 });

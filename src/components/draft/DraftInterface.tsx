@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { Player, DraftConfig, DraftState } from '@/types';
-import { getValidRolesForNextPick } from '@/lib/rule-engine';
+import { getEligiblePlayers } from '@/lib/rule-engine';
 import { DraftBoard } from './DraftBoard';
 import { DraftTopBar } from './DraftTopBar';
 import { RosterSidebar } from './RosterSidebar';
@@ -187,10 +187,11 @@ export function DraftInterface({
   // Check if draft is active
   const isDraftActive = draftState?.status === 'in_progress';
 
-  // When it's my turn, which roles are valid for the next pick (mandatory-only when freeSlots === 0)
-  const validRolesForPick =
-    isMyTurn && isDraftActive && draftConfig && currentRoster.length < (draftConfig.rosterSize ?? 0)
-      ? getValidRolesForNextPick(currentRoster, draftConfig)
+  // Compute which players are eligible for the next pick (all constraints considered)
+  const allDraftedPlayerIds = draftState ? draftState.picks.map(p => p.playerId) : [];
+  const eligiblePlayerIds =
+    isMyTurn && isDraftActive && draftConfig && draftState && currentRoster.length < (draftConfig.rosterSize ?? 0)
+      ? getEligiblePlayers(availablePlayers, currentRoster, draftState.currentRound, draftConfig, allDraftedPlayerIds)
       : null;
 
   // Handle player selection
@@ -375,7 +376,7 @@ export function DraftInterface({
               onPlayerSelect={handlePlayerSelect}
               disabled={!isMyTurn || !isDraftActive || isPickingPlayer}
               currentParticipantId={currentParticipantId}
-              validRolesForPick={validRolesForPick}
+              eligiblePlayerIds={eligiblePlayerIds}
               allowDrag={isMyTurn && isDraftActive && !isPickingPlayer}
             />
           </div>

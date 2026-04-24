@@ -413,6 +413,100 @@ export function validateMandatoryRolePick(
 }
 
 /**
+ * Returns the set of player IDs that are valid picks given the current draft state.
+ *
+ * This is the single source of truth for the UI to grey out ineligible players.
+ * It checks ALL constraints simultaneously for each available player:
+ *   1. Already drafted
+ *   2. Team cap (maxPerTeam)
+ *   3. Early-round rules (must pick Bat/Bowl when deadline approaches)
+ *   4. Mandatory role look-ahead (can't pick a role if it would make it
+ *      mathematically impossible to fill all mandatory slots with remaining picks)
+ *   5. Mandatory-only (when freeSlots === 0, only roles with open mandatory slots)
+ */
+export function getEligiblePlayers(
+  availablePlayers: Player[],
+  roster: Player[],
+  currentRound: number,
+  config: DraftConfig,
+  draftedPlayerIds: string[],
+): Set<string> {
+  const eligible = new Set<string>();
+  const draftedSet = new Set(draftedPlayerIds);
+
+  // Pre-compute roster counts
+  const teamCounts: Record<string, number> = {};
+  const roleCounts: Record<string, number> = { Bat: 0, Bowl: 0, AR: 0, WK: 0 };
+  for (const p of roster) {
+    teamCounts[p.team] = (teamCounts[p.team] ?? 0) + 1;
+    roleCounts[p.role] = (roleCounts[p.role] ?? 0) + 1;
+  }
+
+  // How many picks remain AFTER this next pick
+  const picksAfterThis = config.rosterSize - roster.length - 1;
+
+  // Early-round calculations
+  const inEarlyRounds = currentRound <= config.earlyRoundRule.rounds;
+  const earlyRoundsRemaining = inEarlyRounds
+    ? config.earlyRoundRule.rounds - currentRound + 1
+    : 0;
+  const batNeeded = Math.max(0, config.earlyRoundRule.minBat - roleCounts['Bat']);
+  const bowlNeeded = Math.max(0, config.earlyRoundRule.minBowl - roleCounts['Bowl']);
+
+  // Mandatory role needs
+  const mandatoryNeeds: Record<string, number> = {};
+  for (const role of PLAYER_ROLES) {
+    mandatoryNeeds[role] = Math.max(0, config.mandatoryRoles[role] - roleCounts[role]);
+  }
+  const totalMandatoryNeeded =
+    mandatoryNeeds['Bat'] + mandatoryNeeds['Bowl'] +
+    mandatoryNeeds['AR'] + mandatoryNeeds['WK'];
+
+  for (const player of availablePlayers) {
+    // 1. Already drafted
+    if (draftedSet.has(player.id)) continue;
+
+    // 2. Team cap
+    if ((teamCounts[player.team] ?? 0) >= config.maxPerTeam) continue;
+
+    // 3. Early-round constraints
+    if (inEarlyRounds) {
+      // After hypothetically picking this player, would we still be able to meet
+      // early-round minimums in the remaining early rounds?
+      const batAfter = roleCounts['Bat'] + (player.role === 'Bat' ? 1 : 0);
+      const bowlAfter = roleCounts['Bowl'] + (player.role === 'Bowl' ? 1 : 0);
+      const batStillNeeded = Math.max(0, config.earlyRoundRule.minBat - batAfter);
+      const bowlStillNeeded = Math.max(0, config.earlyRoundRule.minBowl - bowlAfter);
+      const earlyPicksAfter = earlyRoundsRemaining - 1; // rounds left after this pick
+
+      // If the combined bat+bowl still needed exceeds the early picks remaining, invalid
+      if (batStillNeeded + bowlStillNeeded > earlyPicksAfter) continue;
+    }
+
+    // 4. Mandatory role look-ahead
+    // After picking this player, compute how many mandatory slots remain unfilled.
+    // If there aren't enough remaining picks to fill them all, this pick is invalid.
+    const roleAfter = roleCounts[player.role] + 1;
+    const mandatoryAfter =
+      Math.max(0, config.mandatoryRoles['Bat'] - (player.role === 'Bat' ? roleAfter : roleCounts['Bat'])) +
+      Math.max(0, config.mandatoryRoles['Bowl'] - (player.role === 'Bowl' ? roleAfter : roleCounts['Bowl'])) +
+      Math.max(0, config.mandatoryRoles['AR'] - (player.role === 'AR' ? roleAfter : roleCounts['AR'])) +
+      Math.max(0, config.mandatoryRoles['WK'] - (player.role === 'WK' ? roleAfter : roleCounts['WK']));
+
+    if (mandatoryAfter > picksAfterThis) continue;
+
+    // 5. Mandatory-only (when freeSlots === 0, only open mandatory roles)
+    if (config.freeSlots === 0) {
+      if (roleCounts[player.role] >= config.mandatoryRoles[player.role]) continue;
+    }
+
+    eligible.add(player.id);
+  }
+
+  return eligible;
+}
+
+/**
  * Comprehensive pick validation orchestrator that runs all pick checks
  * 
  * Requirements: 5.2, 5.3, 5.4, 5.5

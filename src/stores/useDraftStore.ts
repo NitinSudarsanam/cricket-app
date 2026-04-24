@@ -127,38 +127,14 @@ export const useDraftStore = create<DraftStore>((set, get) => ({
       },
     ];
 
-    // Calculate next pick index respecting draft order type (snake vs linear)
+    // Advance pick index (always increment; snake reversal is handled by getCurrentParticipant)
     const totalParticipants = draftState.participantOrder.length;
-    const orderType = draftState.draftOrderType ?? 'snake';
-    let nextPickIndex = draftState.currentPickIndex;
+    let nextPickIndex = draftState.currentPickIndex + 1;
     let nextRound = draftState.currentRound;
 
-    // Determine if we're in a snake round (even rounds go in reverse)
-    const isSnakeRound = orderType === 'snake' && nextRound % 2 === 0;
-
-    // Advance the pick index
-    if (isSnakeRound) {
-      nextPickIndex--;
-      
-      // If we've reached the beginning, move to next round
-      if (nextPickIndex < 0) {
-        nextRound++;
-        nextPickIndex = 0; // Next round starts at beginning (odd round)
-      }
-    } else {
-      nextPickIndex++;
-      
-      // If we've reached the end, move to next round
-      if (nextPickIndex >= totalParticipants) {
-        nextRound++;
-        
-        // If next round is a snake round, start at the end
-        if (orderType === 'snake' && nextRound % 2 === 0) {
-          nextPickIndex = totalParticipants - 1;
-        } else {
-          nextPickIndex = 0;
-        }
-      }
+    if (nextPickIndex >= totalParticipants) {
+      nextRound++;
+      nextPickIndex = 0;
     }
 
     set({

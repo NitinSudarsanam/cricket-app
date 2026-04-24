@@ -18,6 +18,7 @@ import {
   validateEarlyRoundPick,
   validateMandatoryRolePick,
   getValidRolesForNextPick,
+  getEligiblePlayers,
   validatePick,
 } from '../rule-engine';
 import type { DraftConfig, Player } from '../../types';
@@ -446,6 +447,137 @@ describe('validateMandatoryRolePick', () => {
     const player = createMockPlayer({ id: 'p2', role: 'AR' });
     const result = validateMandatoryRolePick(player, roster, config);
     assert.strictEqual(result.valid, true);
+  });
+});
+
+// ============================================================================
+// getEligiblePlayers Tests
+// ============================================================================
+
+describe('getEligiblePlayers', () => {
+  it('should exclude already-drafted players', () => {
+    const config = createMockConfig({ maxPerTeam: 10 });
+    const players = [
+      createMockPlayer({ id: 'p1', team: 'CSK', role: 'Bat' }),
+      createMockPlayer({ id: 'p2', team: 'MI', role: 'Bowl' }),
+    ];
+    const eligible = getEligiblePlayers(players, [], 1, config, ['p1']);
+    assert.strictEqual(eligible.has('p1'), false);
+    assert.strictEqual(eligible.has('p2'), true);
+  });
+
+  it('should exclude players whose team is at max cap', () => {
+    const config = createMockConfig({ maxPerTeam: 1 });
+    const roster = [createMockPlayer({ id: 'r1', team: 'CSK', role: 'Bat' })];
+    const players = [
+      createMockPlayer({ id: 'p1', team: 'CSK', role: 'Bowl' }),
+      createMockPlayer({ id: 'p2', team: 'MI', role: 'Bowl' }),
+    ];
+    const eligible = getEligiblePlayers(players, roster, 1, config, []);
+    assert.strictEqual(eligible.has('p1'), false);
+    assert.strictEqual(eligible.has('p2'), true);
+  });
+
+  it('should enforce early-round constraints - disallow pick that makes it impossible to meet bat/bowl minimums', () => {
+    // Config: first 4 rounds need 2 Bat, 2 Bowl
+    const config = createMockConfig({
+      maxPerTeam: 10,
+      earlyRoundRule: { rounds: 4, minBat: 2, minBowl: 2 },
+    });
+    // Round 3 with roster already having 1 Bat + 1 Bowl. 2 early rounds remain.
+    // Still need 1 Bat + 1 Bowl = 2 picks in 2 rounds — exactly fits.
+    // Picking AR would leave 1 round for 1 Bat + 1 Bowl = 2 needed, impossible.
+    // Picking Bat leaves 1 round for 0 Bat + 1 Bowl = 1 needed, OK.
+    // Picking Bowl leaves 1 round for 1 Bat + 0 Bowl = 1 needed, OK.
+    const roster = [
+      createMockPlayer({ id: 'r1', team: 'CSK', role: 'Bat' }),
+      createMockPlayer({ id: 'r2', team: 'MI', role: 'Bowl' }),
+    ];
+    const arPlayer = createMockPlayer({ id: 'ar1', team: 'GT', role: 'AR' });
+    const batPlayer = createMockPlayer({ id: 'bat1', team: 'RR', role: 'Bat' });
+    const bowlPlayer = createMockPlayer({ id: 'bowl1', team: 'RCB', role: 'Bowl' });
+
+    const eligible = getEligiblePlayers([arPlayer, batPlayer, bowlPlayer], roster, 3, config, []);
+    assert.strictEqual(eligible.has('ar1'), false);
+    assert.strictEqual(eligible.has('bat1'), true);
+    assert.strictEqual(eligible.has('bowl1'), true);
+  });
+
+  it('should allow non-bat/bowl picks in early rounds when enough rounds remain', () => {
+    const config = createMockConfig({
+      maxPerTeam: 10,
+      earlyRoundRule: { rounds: 6, minBat: 2, minBowl: 2 },
+      totalRounds: 8,
+    });
+    // Round 1 of 6 early rounds. 6 rounds remain (including this one).
+    // After picking AR: 5 early picks left for 2 Bat + 2 Bowl = 4 needs → 4 <= 5 → OK
+    const arPlayer = createMockPlayer({ id: 'ar1', team: 'CSK', role: 'AR' });
+    const batPlayer = createMockPlayer({ id: 'bat1', team: 'MI', role: 'Bat' });
+    const eligible = getEligiblePlayers([arPlayer, batPlayer], [], 1, config, []);
+    assert.strictEqual(eligible.has('ar1'), true);
+    assert.strictEqual(eligible.has('bat1'), true);
+  });
+
+  it('should enforce mandatory role look-ahead - cannot pick a role if it makes mandatory unfillable', () => {
+    // rosterSize=4, mandatory: Bat=1, Bowl=1, AR=1, WK=1, freeSlots=0
+    const config = createMockConfig({
+      rosterSize: 4,
+      mandatoryRoles: { Bat: 1, Bowl: 1, AR: 1, WK: 1 },
+      freeSlots: 0,
+      maxPerTeam: 10,
+      earlyRoundRule: { rounds: 0, minBat: 0, minBowl: 0 },
+    });
+    // Roster has 2 picks already (Bat, Bowl). 2 picks left (including this one).
+    // After this pick, 1 pick remains. Still need AR=1 and WK=1.
+    // Picking another Bat would mean 1 pick left for 2 mandatory roles => impossible.
+    const roster = [
+      createMockPlayer({ id: 'r1', role: 'Bat', team: 'CSK' }),
+      createMockPlayer({ id: 'r2', role: 'Bowl', team: 'MI' }),
+    ];
+    const players = [
+      createMockPlayer({ id: 'bat2', role: 'Bat', team: 'GT' }),
+      createMockPlayer({ id: 'ar1', role: 'AR', team: 'RR' }),
+      createMockPlayer({ id: 'wk1', role: 'WK', team: 'RCB' }),
+    ];
+    const eligible = getEligiblePlayers(players, roster, 5, config, []);
+    assert.strictEqual(eligible.has('bat2'), false); // picking bat makes it impossible
+    assert.strictEqual(eligible.has('ar1'), true);
+    assert.strictEqual(eligible.has('wk1'), true);
+  });
+
+  it('should enforce mandatory-only when freeSlots === 0', () => {
+    const config = createMockConfig({
+      rosterSize: 6,
+      mandatoryRoles: { Bat: 2, Bowl: 2, AR: 1, WK: 1 },
+      freeSlots: 0,
+      maxPerTeam: 10,
+      earlyRoundRule: { rounds: 0, minBat: 0, minBowl: 0 },
+    });
+    // Bat already filled (2/2), need Bowl=2, AR=1, WK=1
+    const roster = [
+      createMockPlayer({ id: 'r1', role: 'Bat', team: 'CSK' }),
+      createMockPlayer({ id: 'r2', role: 'Bat', team: 'MI' }),
+    ];
+    const players = [
+      createMockPlayer({ id: 'bat3', role: 'Bat', team: 'GT' }),
+      createMockPlayer({ id: 'bowl1', role: 'Bowl', team: 'RR' }),
+    ];
+    const eligible = getEligiblePlayers(players, roster, 5, config, []);
+    assert.strictEqual(eligible.has('bat3'), false); // Bat filled, freeSlots=0
+    assert.strictEqual(eligible.has('bowl1'), true);
+  });
+
+  it('should return all undrafted players when no constraints are binding', () => {
+    const config = createMockConfig({
+      rosterSize: 8,
+      maxPerTeam: 10,
+      mandatoryRoles: { Bat: 0, Bowl: 0, AR: 0, WK: 0 },
+      freeSlots: 8,
+      earlyRoundRule: { rounds: 0, minBat: 0, minBowl: 0 },
+    });
+    const players = createMockPlayers(5);
+    const eligible = getEligiblePlayers(players, [], 1, config, []);
+    assert.strictEqual(eligible.size, 5);
   });
 });
 
