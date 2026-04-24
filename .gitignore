@@ -53,3 +53,19 @@ next-env.d.ts
 /e2e/.auth/
 /test-results/
 /playwright-report/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# logs
+*.log
+logs/
