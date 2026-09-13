@@ -1,25 +1,24 @@
 /**
  * Client-side Pusher configuration
- * Used for subscribing to real-time events in React components
+ * Used for subscribing to real-time events in React components.
+ * Degrades gracefully when public Pusher env vars are missing so the UI can poll.
  */
 
 'use client';
 
 import PusherClient from 'pusher-js';
 
-// Validate environment variables
-if (!process.env.NEXT_PUBLIC_PUSHER_KEY) {
-  throw new Error('NEXT_PUBLIC_PUSHER_KEY is not defined in environment variables');
-}
-
-if (!process.env.NEXT_PUBLIC_PUSHER_CLUSTER) {
-  throw new Error('NEXT_PUBLIC_PUSHER_CLUSTER is not defined in environment variables');
-}
-
-// Initialize Pusher client instance (singleton)
 let pusherClientInstance: PusherClient | null = null;
 
-export function getPusherClient(): PusherClient {
+export function isPusherClientConfigured(): boolean {
+  return Boolean(process.env.NEXT_PUBLIC_PUSHER_KEY && process.env.NEXT_PUBLIC_PUSHER_CLUSTER);
+}
+
+export function getPusherClient(): PusherClient | null {
+  if (!isPusherClientConfigured()) {
+    return null;
+  }
+
   if (!pusherClientInstance) {
     pusherClientInstance = new PusherClient(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
       cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
@@ -30,10 +29,12 @@ export function getPusherClient(): PusherClient {
   return pusherClientInstance;
 }
 
-// Channel names (must match server-side)
 export const DRAFT_CHANNEL = 'draft-channel';
 
-// Event names (must match server-side)
+export function getDraftChannel(draftStateId?: string | null): string {
+  return draftStateId ? `${DRAFT_CHANNEL}-${draftStateId}` : DRAFT_CHANNEL;
+}
+
 export const EVENTS = {
   PICK_MADE: 'draft:pick_made',
   ROUND_COMPLETE: 'draft:round_complete',

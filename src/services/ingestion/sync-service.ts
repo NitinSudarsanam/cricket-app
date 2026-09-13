@@ -12,8 +12,9 @@ import {
   mapApiTeamToTeam,
 } from '@/lib/sportmonks/mappers';
 import { processMatchResult } from '@/services/ranking/ranking-engine';
-import { updatePlayerScoresFromTeamScores } from '@/services/ranking/player-ranking-service';
+import { refreshPlayerScores } from '@/services/ranking/player-ranking-service';
 import { syncSquadToPlayers } from '@/services/ingestion/squad-to-player';
+import { syncScorecardForMatch } from '@/services/ingestion/player-match-stats';
 
 const FINISHED_STATUSES = ['FT', 'finished', 'AOT', 'AWD', 'ABD'];
 
@@ -24,6 +25,7 @@ export interface SyncResult {
   playersUpserted: number;
   matchesUpserted: number;
   matchResultsProcessed: number;
+  playerStatsUpserted: number;
   errors: string[];
 }
 
@@ -303,6 +305,13 @@ export async function processFinishedMatches(seasonId?: string): Promise<{ proce
 
       await processMatchResult(matchResult.id);
       processed++;
+      try {
+        await syncScorecardForMatch(match.id);
+      } catch (scorecardError) {
+        errors.push(
+          `Match ${match.externalId} scorecard: ${scorecardError instanceof Error ? scorecardError.message : String(scorecardError)}`
+        );
+      }
     } catch (e) {
       errors.push(`Match ${match.externalId}: ${e instanceof Error ? e.message : String(e)}`);
     }
@@ -350,6 +359,7 @@ export async function runFullSync(options?: {
     playersUpserted: 0,
     matchesUpserted: 0,
     matchResultsProcessed: 0,
+    playerStatsUpserted: 0,
     errors: [],
   };
 
@@ -393,8 +403,22 @@ export async function runFullSync(options?: {
   result.errors.push(...e4);
 
   for (const s of seasonsToSync) {
+    const finished = await prisma.match.findMany({
+      where: { seasonId: s.id, status: { in: FINISHED_STATUSES } },
+      select: { id: true },
+    });
+    for (const match of finished) {
+      const scorecard = await syncScorecardForMatch(match.id);
+      result.playerStatsUpserted += scorecard.statsUpserted;
+      if (scorecard.error) {
+        result.errors.push(`Scorecard ${match.id}: ${scorecard.error}`);
+      }
+    }
+  }
+
+  for (const s of seasonsToSync) {
     try {
-      await updatePlayerScoresFromTeamScores(s.id);
+      await refreshPlayerScores(s.id);
     } catch (e) {
       result.errors.push(`Player scores (season ${s.id}): ${e instanceof Error ? e.message : String(e)}`);
     }

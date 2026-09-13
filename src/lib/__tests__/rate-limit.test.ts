@@ -115,6 +115,19 @@ describe('checkRateLimit', () => {
     expect(result.allowed).toBe(false);
   });
 
+  it('should apply auto-pick limit correctly', () => {
+    const identifier = 'test-ip-auto-pick';
+    const pathname = '/api/draft/auto-pick';
+
+    for (let i = 0; i < 120; i++) {
+      const result = checkRateLimit(identifier, pathname);
+      expect(result.allowed).toBe(true);
+    }
+
+    const result = checkRateLimit(identifier, pathname);
+    expect(result.allowed).toBe(false);
+  });
+
   it('should apply draft pick limit correctly', () => {
     const identifier = 'test-ip-draft';
     const pathname = '/api/draft/pick'; // 30 requests per minute

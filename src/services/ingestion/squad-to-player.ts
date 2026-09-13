@@ -5,7 +5,7 @@
 
 import { prisma } from '@/lib/db';
 import type { PlayerRole } from '@/types';
-import { sportmonksTeamCodeToIPL } from '@/lib/sportmonks/team-code-map';
+import { resolveTeamCode } from '@/lib/sportmonks/team-code-map';
 import type { SportmonksSquadPlayer, SportmonksTeamWithSquad } from '@/lib/sportmonks/types';
 
 /** India country_id in Sportmonks (for IPL domestic). Set via env DOMESTIC_COUNTRY_ID if needed. */
@@ -50,7 +50,7 @@ export interface SyncSquadResult {
 
 /**
  * For each team in teamsWithSquad, map squad players to Player and upsert by externalId.
- * Skips teams that do not map to an IPL code. Skips players with no valid name.
+ * Uses the IPL code when known, otherwise the Sportmonks short code / name abbreviation.
  */
 export async function syncSquadToPlayers(
   teamsWithSquad: SportmonksTeamWithSquad[]
@@ -60,8 +60,8 @@ export async function syncSquadToPlayers(
   let playersSkipped = 0;
 
   for (const team of teamsWithSquad) {
-    const iplCode = sportmonksTeamCodeToIPL(team.short_code, team.name);
-    if (!iplCode) {
+    const teamCode = resolveTeamCode(team.short_code ?? team.code, team.name);
+    if (!teamCode) {
       playersSkipped += team.squad?.length ?? 0;
       continue;
     }
@@ -74,22 +74,41 @@ export async function syncSquadToPlayers(
         const foreign = isForeign(apiPlayer.country_id);
         const externalId = String(apiPlayer.id);
 
-        await prisma.player.upsert({
+        const existingByExternal = await prisma.player.findUnique({
           where: { externalId },
-          create: {
-            externalId,
-            name,
-            team: iplCode,
-            role,
-            isForeign: foreign,
-          },
-          update: {
-            name,
-            team: iplCode,
-            role,
-            isForeign: foreign,
-          },
         });
+        const existingByNameTeam =
+          existingByExternal ??
+          (await prisma.player.findFirst({
+            where: {
+              name,
+              team: teamCode,
+              OR: [{ externalId: null }, { externalId: { startsWith: 'seed:' } }],
+            },
+          }));
+
+        if (existingByNameTeam) {
+          await prisma.player.update({
+            where: { id: existingByNameTeam.id },
+            data: {
+              externalId,
+              name,
+              team: teamCode,
+              role,
+              isForeign: foreign,
+            },
+          });
+        } else {
+          await prisma.player.create({
+            data: {
+              externalId,
+              name,
+              team: teamCode,
+              role,
+              isForeign: foreign,
+            },
+          });
+        }
         playersUpserted++;
       } catch (e) {
         errors.push(`Player ${apiPlayer.id} (${team.name}): ${e instanceof Error ? e.message : String(e)}`);

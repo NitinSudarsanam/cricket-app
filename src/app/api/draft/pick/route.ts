@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { handleDatabaseError } from '@/lib/db';
-import { prismaDraftConfigToDraftConfig } from '@/lib/model-mappers';
+import { prismaDraftConfigToDraftConfig, prismaPlayerToPlayer } from '@/lib/model-mappers';
 import { validatePick } from '@/lib/rule-engine';
 import {
   getActiveDraftState,
-  getDraftState,
   getCurrentParticipantId,
-  calculatePickNumber,
   DraftOrderType
 } from '@/lib/draft-state-manager';
-import { Player } from '@/types';
-import { broadcastEvent, EVENTS } from '@/lib/pusher-server';
+import { commitPick } from '@/lib/draft-pick-service';
+import { DEFAULT_PICK_TIMEOUT_SECONDS, isTurnExpired } from '@/lib/draft-clock';
 import { getParticipantSession } from '@/lib/session';
 
 /**
@@ -107,6 +105,16 @@ export async function POST(request: NextRequest) {
     }
 
     const draftConfig = prismaDraftConfigToDraftConfig(prismaDraftConfig);
+    const timeout = draftConfig.pickTimeoutSeconds ?? DEFAULT_PICK_TIMEOUT_SECONDS;
+    if (isTurnExpired(draftState.turnStartedAt, timeout, new Date(), draftState.startedAt)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Pick clock has expired. The server will auto-pick for this turn.',
+        },
+        { status: 409 }
+      );
+    }
 
     // Use persisted draft order type from when draft was started
     const draftOrder: DraftOrderType = (draftState.draftOrderType === 'linear' ? 'linear' : 'snake');
@@ -146,16 +154,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const player: Player = {
-      id: prismaPlayer.id,
-      name: prismaPlayer.name,
-      team: prismaPlayer.team as any,
-      role: prismaPlayer.role as any,
-      isForeign: prismaPlayer.isForeign,
-      metadata: prismaPlayer.metadata as Record<string, any> | undefined,
-      createdAt: prismaPlayer.createdAt,
-      updatedAt: prismaPlayer.updatedAt
-    };
+    const player = prismaPlayerToPlayer(prismaPlayer);
 
     // Get participant's current roster
     const participantPicks = await prisma.pick.findMany({
@@ -168,16 +167,7 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    const roster: Player[] = participantPicks.map(pick => ({
-      id: pick.player.id,
-      name: pick.player.name,
-      team: pick.player.team as any,
-      role: pick.player.role as any,
-      isForeign: pick.player.isForeign,
-      metadata: pick.player.metadata as Record<string, any> | undefined,
-      createdAt: pick.player.createdAt,
-      updatedAt: pick.player.updatedAt
-    }));
+    const roster = participantPicks.map((pick) => prismaPlayerToPlayer(pick.player));
 
     // Get all drafted player IDs
     const draftedPlayerIds = draftState.picks.map(pick => pick.playerId);
@@ -202,134 +192,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate pick number
-    const pickNumber = calculatePickNumber(
-      draftState.currentRound,
-      draftState.currentPickIndex,
-      draftState.participantOrder.length
-    );
-
-    // Run pick + advance in a transaction with row-level lock to prevent race conditions
-    await prisma.$transaction(async (tx) => {
-      await tx.$executeRaw`SELECT 1 FROM "DraftState" WHERE id = ${draftState.id} FOR UPDATE`;
-      const locked = await tx.draftState.findUnique({
-        where: { id: draftState.id },
-        include: {
-          draftOrders: { orderBy: { position: 'asc' } },
-          picks: true,
-        },
-      });
-      if (!locked) throw new Error('Draft state not found');
-      const orderType = locked.draftOrderType === 'linear' ? 'linear' : 'snake';
-      const participantOrder = locked.draftOrders.map((o) => o.participantId);
-      const currentForTurn =
-        orderType === 'snake' && locked.currentRound % 2 === 0
-          ? participantOrder[participantOrder.length - 1 - locked.currentPickIndex]
-          : participantOrder[locked.currentPickIndex];
-      if (currentForTurn !== participantId) {
-        throw new Error('CONFLICT: It is not your turn (another pick may have been made)');
-      }
-      const alreadyPicked = locked.picks.some((p) => p.playerId === playerId);
-      if (alreadyPicked) {
-        throw new Error('CONFLICT: Player already drafted');
-      }
-      await tx.pick.create({
-        data: {
-          draftStateId: draftState.id,
-          participantId,
-          playerId,
-          round: draftState.currentRound,
-          pickNumber,
-          timestamp: new Date(),
-        },
-      });
-      // Advance pick index (always increment; snake reversal handled by getCurrentParticipantId)
-      let nextRound = locked.currentRound;
-      let nextIndex = locked.currentPickIndex + 1;
-      if (nextIndex >= participantOrder.length) {
-        nextRound++;
-        nextIndex = 0;
-      }
-      const isComplete = nextRound > draftConfig.totalRounds;
-      await tx.draftState.update({
-        where: { id: draftState.id },
-        data: {
-          currentRound: isComplete ? draftConfig.totalRounds : nextRound,
-          currentPickIndex: isComplete ? participantOrder.length - 1 : nextIndex,
-          status: isComplete ? 'completed' : locked.status,
-          completedAt: isComplete ? new Date() : null,
-        },
-      });
-    });
-
-    // Fetch updated state by ID (not getActiveDraftState, which only finds 'in_progress'/'paused')
-    // This ensures we can return the draft state even if it just transitioned to 'completed'
-    const updatedState = await getDraftState(draftState.id);
-    if (!updatedState) {
-      return NextResponse.json(
-        { success: false, error: 'Failed to load draft state after pick' },
-        { status: 500 }
-      );
-    }
-
-    // Get participant name for response
-    const participant = await prisma.participant.findUnique({
-      where: { id: participantId }
-    });
-
-    const pickData = {
+    const committed = await commitPick({
+      draftState,
+      draftConfig,
       participantId,
-      participantName: participant?.name,
-      playerId,
-      playerName: player.name,
-      playerTeam: player.team,
-      playerRole: player.role,
-      round: draftState.currentRound,
-      pickNumber,
-      timestamp: new Date()
-    };
-
-    // Broadcast pick_made event to all clients
-    await broadcastEvent(EVENTS.PICK_MADE, {
-      pick: pickData,
-      draftState: updatedState
+      player,
     });
-
-    // Check if round is complete (all participants have picked in this round)
-    const previousRound = draftState.currentRound;
-    const isRoundComplete = updatedState.currentRound > previousRound;
-
-    if (isRoundComplete) {
-      await broadcastEvent(EVENTS.ROUND_COMPLETE, {
-        completedRound: previousRound,
-        draftState: updatedState
-      });
-    }
-
-    // Check if draft is complete
-    if (updatedState.status === 'completed') {
-      await broadcastEvent(EVENTS.DRAFT_COMPLETE, {
-        draftState: updatedState,
-        completedAt: new Date()
-      });
-    }
 
     return NextResponse.json(
       {
         success: true,
         data: {
-          draftState: updatedState,
-          pick: pickData,
-          message: `${participant?.name} selected ${player.name} (${player.team} - ${player.role})`
+          draftState: committed.draftState,
+          pick: committed.pick,
+          message: `${committed.pick.participantName} selected ${player.name} (${player.team} - ${player.role})`
         }
       },
       { status: 200 }
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : '';
-    if (message.startsWith('CONFLICT:')) {
+    if (message.startsWith('CONFLICT:') || message.includes('P2002')) {
       return NextResponse.json(
-        { success: false, error: message.replace('CONFLICT: ', '') },
+        {
+          success: false,
+          error: message.startsWith('CONFLICT:')
+            ? message.replace('CONFLICT: ', '')
+            : 'Pick already recorded',
+        },
         { status: 409 }
       );
     }

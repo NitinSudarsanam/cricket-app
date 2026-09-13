@@ -90,6 +90,7 @@ export function prismaDraftConfigToDraftConfig(prismaConfig: PrismaDraftConfig):
     freeSlots,
     earlyRoundRule,
     isLocked: prismaConfig.isLocked,
+    pickTimeoutSeconds: prismaConfig.pickTimeoutSeconds ?? 60,
     createdAt: prismaConfig.createdAt,
     updatedAt: prismaConfig.updatedAt,
   };
@@ -112,6 +113,7 @@ export function draftConfigToPrismaDraftConfig(
     earlyMinBat: config.earlyRoundRule.minBat,
     earlyMinBowl: config.earlyRoundRule.minBowl,
     isLocked: config.isLocked || false,
+    pickTimeoutSeconds: config.pickTimeoutSeconds ?? 60,
   };
 }
 
@@ -151,9 +153,11 @@ export function prismaDraftStateToDraftState(
     currentPickIndex: prismaState.currentPickIndex,
     picks: pickRecords,
     participantOrder,
+    draftOrderType: prismaState.draftOrderType === 'linear' ? 'linear' : 'snake',
     status: prismaState.status as DraftStatus,
     startedAt: prismaState.startedAt || undefined,
     completedAt: prismaState.completedAt || undefined,
+    turnStartedAt: prismaState.turnStartedAt ?? null,
     draftConfigId: prismaState.draftConfigId,
     createdAt: prismaState.createdAt,
     updatedAt: prismaState.updatedAt,

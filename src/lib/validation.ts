@@ -22,6 +22,7 @@ import {
 
 import {
   isIPLTeam,
+  isTeamCode,
   isPlayerRole,
   isPlayer,
   isDraftConfig,
@@ -46,8 +47,8 @@ export function validatePlayer(player: unknown): ValidationResult {
     errors.push('Player name is required and must be a non-empty string');
   }
 
-  if (!isIPLTeam(p.team)) {
-    errors.push(`Player team must be one of: ${IPL_TEAMS.join(', ')}`);
+  if (!isTeamCode(p.team)) {
+    errors.push('Player team must be a 2-8 character team code');
   }
 
   if (!isPlayerRole(p.role)) {
@@ -84,8 +85,8 @@ export function validateCreatePlayerRequest(request: unknown): ValidationResult 
     errors.push('Name must not exceed 100 characters');
   }
 
-  if (!isIPLTeam(req.team)) {
-    errors.push(`Team must be one of: ${IPL_TEAMS.join(', ')}`);
+  if (!isTeamCode(req.team)) {
+    errors.push('Team must be a 2-8 character team code');
   }
 
   if (!isPlayerRole(req.role)) {
@@ -122,8 +123,8 @@ export function validateUpdatePlayerRequest(request: unknown): ValidationResult 
     errors.push('Name must not exceed 100 characters');
   }
 
-  if (req.team !== undefined && !isIPLTeam(req.team)) {
-    errors.push(`Team must be one of: ${IPL_TEAMS.join(', ')}`);
+  if (req.team !== undefined && !isTeamCode(req.team)) {
+    errors.push('Team must be a 2-8 character team code');
   }
 
   if (req.role !== undefined && !isPlayerRole(req.role)) {
@@ -254,6 +255,16 @@ export function validateUpdateDraftConfigRequest(request: unknown): ValidationRe
   if (req.maxPerTeam !== undefined) {
     if (typeof req.maxPerTeam !== 'number' || req.maxPerTeam < 0) {
       errors.push('Max per team must be a non-negative number');
+    }
+  }
+
+  if (req.pickTimeoutSeconds !== undefined) {
+    if (
+      typeof req.pickTimeoutSeconds !== 'number' ||
+      req.pickTimeoutSeconds < 10 ||
+      req.pickTimeoutSeconds > 600
+    ) {
+      errors.push('Pick timeout must be a number between 10 and 600 seconds');
     }
   }
 

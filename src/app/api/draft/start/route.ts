@@ -199,11 +199,15 @@ export async function POST(request: NextRequest) {
     });
 
     // Broadcast state update to all clients
-    await broadcastEvent(EVENTS.STATE_UPDATE, {
-      draftState,
-      draftConfig,
-      message: 'Draft started successfully'
-    });
+    await broadcastEvent(
+      EVENTS.STATE_UPDATE,
+      {
+        draftState,
+        draftConfig,
+        message: 'Draft started successfully'
+      },
+      draftState.id
+    );
 
     return NextResponse.json(
       {

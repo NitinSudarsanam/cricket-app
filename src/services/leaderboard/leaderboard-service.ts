@@ -24,6 +24,7 @@ export interface PlayerLeaderboardItem {
   team: string;
   points: number;
   source: string;
+  breakdown?: Record<string, number> | null;
 }
 
 export interface LeaderboardOptions {
@@ -103,16 +104,31 @@ export async function getPlayerLeaderboard(
       ? { player: { name: 'asc' as const } }
       : { points: orderByPoints as 'asc' | 'desc' };
 
-  const [items, total] = await Promise.all([
-    prisma.playerScore.findMany({
-      where,
-      include: { player: true },
-      orderBy,
-      take: limit,
-      skip: offset,
-    }),
-    prisma.playerScore.count({ where }),
-  ]);
+  const rows = await prisma.playerScore.findMany({
+    where,
+    include: { player: true },
+  });
+
+  const preferred = new Map<string, (typeof rows)[number]>();
+  for (const row of rows) {
+    if (row.source !== 'fantasy') continue;
+    const existing = preferred.get(row.playerId);
+    if (!existing || row.points > existing.points) {
+      preferred.set(row.playerId, row);
+    }
+  }
+
+  let items = Array.from(preferred.values());
+  if (sort === 'name') {
+    items.sort((a, b) => a.player.name.localeCompare(b.player.name));
+  } else {
+    items.sort((a, b) =>
+      orderByPoints === 'asc' ? a.points - b.points : b.points - a.points
+    );
+  }
+
+  const total = items.length;
+  items = items.slice(offset, offset + limit);
 
   return {
     items: items.map((row) => ({
@@ -121,6 +137,7 @@ export async function getPlayerLeaderboard(
       team: row.player.team,
       points: row.points,
       source: row.source,
+      breakdown: (row.breakdown as Record<string, number> | null) ?? null,
     })),
     total,
   };
@@ -151,6 +168,13 @@ export interface FantasyLeaderboardOptions {
   limit?: number;
   offset?: number;
   sort?: 'points' | 'name';
+}
+
+export function pickScorePoints(
+  scores: Array<{ points: number; source: string }>
+): number {
+  const fantasy = scores.find((score) => score.source === 'fantasy');
+  return fantasy?.points ?? 0;
 }
 
 export async function getFantasyLeaderboard(
@@ -184,8 +208,7 @@ export async function getFantasyLeaderboard(
 
   for (const pick of picks) {
     const participantId = pick.participantId;
-    const playerPoints =
-      pick.player.playerScores.reduce((sum, score) => sum + score.points, 0) || 0;
+    const playerPoints = pickScorePoints(pick.player.playerScores);
 
     if (!participantMap.has(participantId)) {
       participantMap.set(participantId, {

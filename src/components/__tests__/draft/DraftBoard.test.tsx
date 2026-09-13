@@ -24,8 +24,8 @@ vi.mock('@/components/PlayerChip', () => ({
 }));
 
 // Mock TEAM_COLORS - need all teams
-vi.mock('@/config/team-colors', () => ({
-  TEAM_COLORS: {
+vi.mock('@/config/team-colors', () => {
+  const TEAM_COLORS = {
     CSK: { bg: '#FEF3C7', border: '#FCD34D', hover: '#FDE68A' },
     MI: { bg: '#DBEAFE', border: '#60A5FA', hover: '#BFDBFE' },
     GT: { bg: '#E0E7FF', border: '#818CF8', hover: '#C7D2FE' },
@@ -36,8 +36,17 @@ vi.mock('@/config/team-colors', () => ({
     SRH: { bg: '#FED7AA', border: '#FB923C', hover: '#FDE68A' },
     PBKS: { bg: '#FECDD3', border: '#FB7185', hover: '#FBCFE8' },
     DC: { bg: '#D1FAE5', border: '#34D399', hover: '#A7F3D0' },
-  },
-}));
+  };
+  return {
+    TEAM_COLORS,
+    getTeamColors: (team: string) =>
+      TEAM_COLORS[team as keyof typeof TEAM_COLORS] ?? {
+        bg: '#E2E8F0',
+        border: '#94A3B8',
+        hover: '#CBD5E1',
+      },
+  };
+});
 
 describe('DraftBoard', () => {
   beforeEach(() => {

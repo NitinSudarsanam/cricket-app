@@ -67,8 +67,14 @@ export const TEAM_COLORS: Record<IPLTeam, TeamColors> = {
 /**
  * Get team colors for a specific IPL team
  */
-export function getTeamColors(team: IPLTeam): TeamColors {
-  return TEAM_COLORS[team];
+const FALLBACK_COLORS: TeamColors = {
+  bg: '#E2E8F0',
+  border: '#94A3B8',
+  hover: '#CBD5E1',
+};
+
+export function getTeamColors(team: IPLTeam | string): TeamColors {
+  return TEAM_COLORS[team as IPLTeam] ?? FALLBACK_COLORS;
 }
 
 /**

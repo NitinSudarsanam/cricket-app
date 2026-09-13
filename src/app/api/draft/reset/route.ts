@@ -89,10 +89,14 @@ export async function POST(request: NextRequest) {
     });
 
     // Broadcast state update to all clients
-    await broadcastEvent(EVENTS.STATE_UPDATE, {
-      draftState: resetState,
-      message: 'Draft reset successfully'
-    });
+    await broadcastEvent(
+      EVENTS.STATE_UPDATE,
+      {
+        draftState: resetState,
+        message: 'Draft reset successfully'
+      },
+      resetState.id
+    );
 
     return NextResponse.json({
       success: true,

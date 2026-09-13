@@ -29,6 +29,11 @@ export function isIPLTeam(value: unknown): value is IPLTeam {
   return typeof value === 'string' && IPL_TEAMS.includes(value as IPLTeam);
 }
 
+/** IPL franchise or another season short code (2-8 alphanumeric). */
+export function isTeamCode(value: unknown): value is string {
+  return typeof value === 'string' && (/^[A-Z0-9]{2,8}$/.test(value) || isIPLTeam(value));
+}
+
 export function isPlayerRole(value: unknown): value is PlayerRole {
   return typeof value === 'string' && PLAYER_ROLES.includes(value as PlayerRole);
 }
@@ -51,7 +56,7 @@ export function isPlayer(value: unknown): value is Player {
   return (
     typeof obj.id === 'string' &&
     typeof obj.name === 'string' &&
-    isIPLTeam(obj.team) &&
+    isTeamCode(obj.team) &&
     isPlayerRole(obj.role) &&
     typeof obj.isForeign === 'boolean' &&
     (obj.metadata === undefined || 

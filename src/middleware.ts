@@ -63,6 +63,10 @@ function requiresParticipantAuth(pathname: string, method: string): boolean {
     return true;
   }
 
+  if (pathname === '/api/draft/auto-pick' && method === 'POST') {
+    return true;
+  }
+
   return false;
 }
 
@@ -221,8 +225,12 @@ export async function middleware(request: NextRequest) {
     const cookieStore = await cookies();
     const participantCookie = cookieStore.get('participant_session');
     const hasParticipantCookie = !!participantCookie?.value;
+    const adminCookie = cookieStore.get('admin_session');
+    const hasAdminCookie = !!adminCookie?.value;
+    const allowAdminForAutoPick =
+      pathname === '/api/draft/auto-pick' && method === 'POST' && hasAdminCookie;
 
-    if (!hasParticipantCookie) {
+    if (!hasParticipantCookie && !allowAdminForAutoPick) {
       if (pathname.startsWith('/draft')) {
         // Redirect to draft login for browser requests
         return NextResponse.redirect(new URL('/draft/login', request.url));

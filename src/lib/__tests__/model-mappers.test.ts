@@ -130,6 +130,7 @@ describe('prismaDraftConfigToDraftConfig', () => {
       earlyMinBat: 2,
       earlyMinBowl: 2,
       isLocked: false,
+      pickTimeoutSeconds: 60,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -158,12 +159,14 @@ describe('prismaDraftConfigToDraftConfig', () => {
       earlyMinBat: 2,
       earlyMinBowl: 2,
       isLocked: false,
+      pickTimeoutSeconds: 45,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
     const result = prismaDraftConfigToDraftConfig(prismaConfig);
     expect(result.freeSlots).toBe(4); // 10 - (2+2+1+1) = 4
+    expect(result.pickTimeoutSeconds).toBe(45);
   });
 });
 
@@ -228,6 +231,7 @@ describe('prismaDraftStateToDraftState', () => {
       status: 'in_progress',
       startedAt: new Date(),
       completedAt: null,
+      turnStartedAt: null,
       draftConfigId: 'config-1',
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -257,6 +261,7 @@ describe('prismaDraftStateToDraftState', () => {
       status: 'in_progress',
       startedAt: new Date(),
       completedAt: null,
+      turnStartedAt: null,
       draftConfigId: 'config-1',
       createdAt: new Date(),
       updatedAt: new Date(),

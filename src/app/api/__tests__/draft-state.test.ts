@@ -19,11 +19,22 @@ vi.mock('@/lib/db', () => ({
 
 vi.mock('@/lib/draft-state-manager', () => ({
   getActiveDraftState: vi.fn(),
+  getDraftState: vi.fn(),
   getCurrentParticipantId: vi.fn(),
+}));
+
+vi.mock('@/lib/draft-clock', () => ({
+  DEFAULT_PICK_TIMEOUT_SECONDS: 60,
+  secondsRemainingOnClock: vi.fn(() => 60),
+}));
+
+vi.mock('@/lib/draft-pick-service', () => ({
+  applyExpiredAutoPick: vi.fn(),
 }));
 
 import { prisma } from '@/lib/db';
 import { getActiveDraftState } from '@/lib/draft-state-manager';
+import { applyExpiredAutoPick } from '@/lib/draft-pick-service';
 
 describe('GET /api/draft/state', () => {
   beforeEach(() => {
@@ -92,6 +103,7 @@ describe('GET /api/draft/state', () => {
     expect(data.success).toBe(true);
     // Response may have draftState directly or nested in data
     expect(data.draftState || data.data?.draftState || data.data).toBeDefined();
+    expect(applyExpiredAutoPick).not.toHaveBeenCalled();
   });
 
   it('should return specific draft state when ID provided', async () => {
@@ -137,5 +149,6 @@ describe('GET /api/draft/state', () => {
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
     expect(data.draftState || data.data?.draftState || data.data).toBeDefined();
+    expect(applyExpiredAutoPick).not.toHaveBeenCalled();
   });
 });

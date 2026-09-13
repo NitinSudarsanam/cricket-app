@@ -45,6 +45,8 @@ async function main() {
   await prisma.draftOrder.deleteMany({});
   await prisma.draftState.deleteMany({});
   await prisma.playerScore.deleteMany({});
+  await prisma.playerMatchStat.deleteMany({});
+  await prisma.fantasyScoringRule.deleteMany({});
   await prisma.leaderboardSnapshot.deleteMany({});
   await prisma.teamScore.deleteMany({});
   await prisma.matchResult.deleteMany({});
@@ -76,6 +78,7 @@ async function main() {
       earlyRounds: 4,
       earlyMinBat: 2,
       earlyMinBowl: 2,
+      pickTimeoutSeconds: 60,
     },
   });
 
@@ -227,9 +230,10 @@ async function main() {
     
     const result = await prisma.player.upsert({
       where: { id: playerId },
-      update: {},
+      update: { externalId: `seed:${playerId}` },
       create: {
         id: playerId,
+        externalId: `seed:${playerId}`,
         ...player,
       },
     });
@@ -400,6 +404,69 @@ async function main() {
 
   await updatePlayerScoresFromTeamScores(season.id);
   console.log('  PlayerScore updated from TeamScore');
+
+  const { DEFAULT_FANTASY_RULES } = await import('@/services/scoring/fantasy-scoring-engine');
+  const { updatePlayerScoresFromMatchStats } = await import('@/services/ingestion/player-match-stats');
+  for (const [statKey, points] of Object.entries(DEFAULT_FANTASY_RULES)) {
+    await prisma.fantasyScoringRule.upsert({
+      where: { statKey_seasonId: { statKey, seasonId: '' } },
+      update: { points, name: statKey.replace(/_/g, ' ') },
+      create: {
+        statKey,
+        points,
+        name: statKey.replace(/_/g, ' '),
+        seasonId: '',
+      },
+    });
+  }
+
+  const seededMatches = await prisma.match.findMany({
+    where: { seasonId: season.id },
+    orderBy: { startAt: 'asc' },
+  });
+  const playersByTeam = new Map<string, { id: string; role: string }[]>();
+  const allDbPlayers = await prisma.player.findMany({ select: { id: true, team: true, role: true } });
+  for (const player of allDbPlayers) {
+    const list = playersByTeam.get(player.team) ?? [];
+    list.push({ id: player.id, role: player.role });
+    playersByTeam.set(player.team, list);
+  }
+
+  for (let i = 0; i < seededMatches.length; i++) {
+    const [localCode, visitorCode] = matchPairs[i];
+    const localPlayers = playersByTeam.get(localCode) ?? [];
+    const visitorPlayers = playersByTeam.get(visitorCode) ?? [];
+    const samples = [
+      { player: localPlayers.find((p) => p.role === 'Bat'), runs: 62 + i, fours: 6, sixes: 2, didBat: true, dismissed: true },
+      { player: localPlayers.find((p) => p.role === 'Bowl'), wickets: 3, maidens: 1, didBowl: true },
+      { player: visitorPlayers.find((p) => p.role === 'AR'), runs: 28, wickets: 1, fours: 3, didBat: true, didBowl: true, dismissed: true },
+      { player: visitorPlayers.find((p) => p.role === 'WK'), catches: 2, stumpings: i % 2, didBat: true, runs: 12, dismissed: true },
+    ];
+    for (const sample of samples) {
+      if (!sample.player) continue;
+      await prisma.playerMatchStat.upsert({
+        where: { playerId_matchId: { playerId: sample.player.id, matchId: seededMatches[i].id } },
+        create: {
+          playerId: sample.player.id,
+          matchId: seededMatches[i].id,
+          seasonId: season.id,
+          runs: sample.runs ?? 0,
+          fours: sample.fours ?? 0,
+          sixes: sample.sixes ?? 0,
+          wickets: sample.wickets ?? 0,
+          maidens: sample.maidens ?? 0,
+          catches: sample.catches ?? 0,
+          stumpings: sample.stumpings ?? 0,
+          didBat: Boolean(sample.didBat),
+          didBowl: Boolean(sample.didBowl),
+          dismissed: Boolean(sample.dismissed),
+        },
+        update: {},
+      });
+    }
+  }
+  await updatePlayerScoresFromMatchStats(season.id);
+  console.log('  Fantasy PlayerScore updated from match stats');
 
   const participantData = [
     { id: 'seed-p1', name: 'Alice', email: 'alice@example.com' },

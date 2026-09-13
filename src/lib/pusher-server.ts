@@ -12,7 +12,6 @@ const hasPusherEnv =
   !!process.env.PUSHER_SECRET &&
   !!process.env.PUSHER_CLUSTER;
 
-// Initialize Pusher only when all env vars are set; otherwise null
 export const pusherServer: Pusher | null = hasPusherEnv
   ? new Pusher({
       appId: process.env.PUSHER_APP_ID!,
@@ -25,10 +24,12 @@ export const pusherServer: Pusher | null = hasPusherEnv
 
 export const isPusherConfigured = (): boolean => !!pusherServer;
 
-// Channel names
 export const DRAFT_CHANNEL = 'draft-channel';
 
-// Event names
+export function getDraftChannel(draftStateId?: string | null): string {
+  return draftStateId ? `${DRAFT_CHANNEL}-${draftStateId}` : DRAFT_CHANNEL;
+}
+
 export const EVENTS = {
   PICK_MADE: 'draft:pick_made',
   ROUND_COMPLETE: 'draft:round_complete',
@@ -39,12 +40,12 @@ export const EVENTS = {
 } as const;
 
 /**
- * Broadcast an event to all connected clients.
- * No-ops when Pusher is not configured (e.g. missing env vars).
+ * Broadcast an event to clients on the draft-specific channel when an id is known.
  */
 export async function broadcastEvent(
   event: string,
-  data: unknown
+  data: unknown,
+  draftStateId?: string | null
 ): Promise<void> {
   if (!pusherServer) {
     if (process.env.NODE_ENV === 'development') {
@@ -53,9 +54,8 @@ export async function broadcastEvent(
     return;
   }
   try {
-    await pusherServer.trigger(DRAFT_CHANNEL, event, data);
+    await pusherServer.trigger(getDraftChannel(draftStateId), event, data);
   } catch (error) {
     console.error(`Failed to broadcast event ${event}:`, error);
-    // Don't rethrow - allow the request to succeed even if real-time fails
   }
 }

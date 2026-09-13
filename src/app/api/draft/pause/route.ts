@@ -111,10 +111,14 @@ export async function POST(request: NextRequest) {
       const pausedState = await pauseDraftState(draftStateId);
 
       // Broadcast state update to all clients
-      await broadcastEvent(EVENTS.STATE_UPDATE, {
-        draftState: pausedState,
-        message: 'Draft paused'
-      });
+      await broadcastEvent(
+        EVENTS.STATE_UPDATE,
+        {
+          draftState: pausedState,
+          message: 'Draft paused'
+        },
+        draftStateId
+      );
 
       return NextResponse.json({
         success: true,
@@ -139,10 +143,14 @@ export async function POST(request: NextRequest) {
       const resumedState = await resumeDraftState(draftStateId);
 
       // Broadcast state update to all clients
-      await broadcastEvent(EVENTS.STATE_UPDATE, {
-        draftState: resumedState,
-        message: 'Draft resumed'
-      });
+      await broadcastEvent(
+        EVENTS.STATE_UPDATE,
+        {
+          draftState: resumedState,
+          message: 'Draft resumed'
+        },
+        draftStateId
+      );
 
       return NextResponse.json({
         success: true,

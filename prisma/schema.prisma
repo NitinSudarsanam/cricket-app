@@ -21,8 +21,9 @@ model Player {
   updatedAt  DateTime @updatedAt
 
   // Relations
-  picks        Pick[]
-  playerScores PlayerScore[]
+  picks            Pick[]
+  playerScores     PlayerScore[]
+  playerMatchStats PlayerMatchStat[]
 
   @@index([team])
   @@index([role])
@@ -97,7 +98,8 @@ model Match {
   rawPayload     Json?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
-  matchResult    MatchResult?
+  matchResult      MatchResult?
+  playerMatchStats PlayerMatchStat[]
   @@index([seasonId])
   @@index([status])
   @@index([seasonId, status])
@@ -156,13 +158,63 @@ model PlayerScore {
   id        String   @id @default(cuid())
   playerId  String
   player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  seasonId  String?
+  seasonId  String
   points    Int      @default(0)
   source    String
   breakdown Json?
   updatedAt DateTime @updatedAt
+  @@unique([playerId, seasonId, source])
   @@index([seasonId])
   @@index([playerId, seasonId])
+  @@index([seasonId, source])
+}
+
+model PlayerMatchStat {
+  id           String   @id @default(cuid())
+  playerId     String
+  player       Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  matchId      String
+  match        Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  seasonId     String
+  runs         Int      @default(0)
+  ballsFaced   Int      @default(0)
+  fours        Int      @default(0)
+  sixes        Int      @default(0)
+  wickets      Int      @default(0)
+  oversBowled  Float    @default(0)
+  maidens      Int      @default(0)
+  bowlingRuns  Int      @default(0)
+  catches      Int      @default(0)
+  stumpings    Int      @default(0)
+  runOuts      Int      @default(0)
+  didBat       Boolean  @default(false)
+  didBowl      Boolean  @default(false)
+  dismissed    Boolean  @default(false)
+  rawPayload   Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([playerId, matchId])
+  @@index([matchId])
+  @@index([seasonId])
+  @@index([playerId, seasonId])
+}
+
+model FantasyScoringRule {
+  id            String    @id @default(cuid())
+  statKey       String
+  points        Int
+  name          String?
+  leagueId      String?
+  seasonId      String?
+  effectiveFrom DateTime?
+  effectiveTo   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([statKey, seasonId])
+  @@index([seasonId])
+  @@index([statKey])
 }
 
 model LeaderboardSnapshot {
@@ -194,9 +246,10 @@ model DraftConfig {
   earlyMinBat   Int      @default(2)
   earlyMinBowl  Int      @default(2)
   
-  isLocked      Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  isLocked            Boolean  @default(false)
+  pickTimeoutSeconds  Int      @default(60)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   // Relations
   draftStates   DraftState[]
@@ -222,6 +275,7 @@ model DraftState {
   status            String   @default("not_started") // not_started, in_progress, paused, completed
   startedAt         DateTime?
   completedAt       DateTime?
+  turnStartedAt     DateTime?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -269,6 +323,7 @@ model Pick {
   player        Player      @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@unique([draftStateId, playerId]) // Each player can only be picked once per draft
+  @@unique([draftStateId, pickNumber])
   @@index([draftStateId])
   @@index([participantId])
   @@index([round])

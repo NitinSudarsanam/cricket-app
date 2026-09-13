@@ -55,8 +55,11 @@ export function validateRosterFeasibility(config: DraftConfig): ValidationResult
  * 
  * Requirements: 3.2
  */
-export function validateTeamConstraints(config: DraftConfig): ValidationResult {
-  const teamCount = IPL_TEAMS.length; // 10 IPL teams
+export function validateTeamConstraints(
+  config: DraftConfig,
+  teamCodes: readonly string[] = IPL_TEAMS
+): ValidationResult {
+  const teamCount = teamCodes.length > 0 ? teamCodes.length : IPL_TEAMS.length;
 
   // Check that min <= max first (most basic constraint)
   if (config.minPerTeam > config.maxPerTeam) {
@@ -206,7 +209,8 @@ export function validateDraftConfiguration(
     if (rosterCheck.errors) errors.push(...rosterCheck.errors);
   }
 
-  const teamCheck = validateTeamConstraints(config);
+  const teamCodes = Array.from(new Set(players.map((player) => player.team).filter(Boolean)));
+  const teamCheck = validateTeamConstraints(config, teamCodes.length > 0 ? teamCodes : IPL_TEAMS);
   if (!teamCheck.valid) {
     if (teamCheck.error) errors.push(teamCheck.error);
     if (teamCheck.errors) errors.push(...teamCheck.errors);
