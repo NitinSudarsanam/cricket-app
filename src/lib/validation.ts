@@ -22,6 +22,7 @@ import {
 
 import {
   isIPLTeam,
+  isTeamCode,
   isPlayerRole,
   isPlayer,
   isDraftConfig,
@@ -46,8 +47,8 @@ export function validatePlayer(player: unknown): ValidationResult {
     errors.push('Player name is required and must be a non-empty string');
   }
 
-  if (!isIPLTeam(p.team)) {
-    errors.push(`Player team must be one of: ${IPL_TEAMS.join(', ')}`);
+  if (!isTeamCode(p.team)) {
+    errors.push('Player team must be a 2-6 character team code');
   }
 
   if (!isPlayerRole(p.role)) {
@@ -84,8 +85,8 @@ export function validateCreatePlayerRequest(request: unknown): ValidationResult 
     errors.push('Name must not exceed 100 characters');
   }
 
-  if (!isIPLTeam(req.team)) {
-    errors.push(`Team must be one of: ${IPL_TEAMS.join(', ')}`);
+  if (!isTeamCode(req.team)) {
+    errors.push('Team must be a 2-6 character team code');
   }
 
   if (!isPlayerRole(req.role)) {
@@ -122,8 +123,8 @@ export function validateUpdatePlayerRequest(request: unknown): ValidationResult 
     errors.push('Name must not exceed 100 characters');
   }
 
-  if (req.team !== undefined && !isIPLTeam(req.team)) {
-    errors.push(`Team must be one of: ${IPL_TEAMS.join(', ')}`);
+  if (req.team !== undefined && !isTeamCode(req.team)) {
+    errors.push('Team must be a 2-6 character team code');
   }
 
   if (req.role !== undefined && !isPlayerRole(req.role)) {

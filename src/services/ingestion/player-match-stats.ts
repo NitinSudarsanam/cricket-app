@@ -94,12 +94,12 @@ export function extractPlayerStatsFromFixture(fixture: SportmonksFixture): Extra
     row.dismissed = row.dismissed || isDismissed(line);
 
     const catcherId = line.catch_stump_player_id != null ? String(line.catch_stump_player_id) : null;
+    const dismissal = (line.dismissal ?? '').toLowerCase();
     if (catcherId) {
       const fielder = ensure(catcherId);
-      const dismissal = (line.dismissal ?? '').toLowerCase();
       if (dismissal.includes('stump')) {
         fielder.stumpings += 1;
-      } else {
+      } else if (dismissal.includes('caught') || dismissal.includes('catch')) {
         fielder.catches += 1;
       }
     }
@@ -132,8 +132,9 @@ export async function loadFantasyRules(seasonId?: string | null): Promise<Fantas
     orderBy: { createdAt: 'asc' },
   });
   const overrides: Record<string, number> = {};
-  for (const row of rows) {
-    if (seasonId && row.seasonId && row.seasonId !== seasonId) continue;
+  const globals = rows.filter((row) => !row.seasonId);
+  const seasonal = rows.filter((row) => seasonId && row.seasonId === seasonId);
+  for (const row of [...globals, ...seasonal]) {
     overrides[row.statKey] = row.points;
   }
   return mergeFantasyRules(overrides);
@@ -236,25 +237,19 @@ export async function updatePlayerScoresFromMatchStats(seasonId: string): Promis
   let updated = 0;
   for (const [playerId, playerStats] of byPlayer) {
     const { points, breakdown } = aggregateFantasyPoints(playerStats, rules);
-    const existing = await prisma.playerScore.findFirst({
-      where: { playerId, seasonId, source: 'fantasy' },
+    await prisma.playerScore.upsert({
+      where: {
+        playerId_seasonId_source: { playerId, seasonId, source: 'fantasy' },
+      },
+      create: {
+        playerId,
+        seasonId,
+        points,
+        source: 'fantasy',
+        breakdown,
+      },
+      update: { points, breakdown },
     });
-    if (existing) {
-      await prisma.playerScore.update({
-        where: { id: existing.id },
-        data: { points, breakdown },
-      });
-    } else {
-      await prisma.playerScore.create({
-        data: {
-          playerId,
-          seasonId,
-          points,
-          source: 'fantasy',
-          breakdown,
-        },
-      });
-    }
     updated++;
   }
   return updated;

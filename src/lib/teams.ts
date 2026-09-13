@@ -27,7 +27,7 @@ export function uniqueTeamCodes(
 ): string[] {
   const seen = new Set<string>();
   const ordered: string[] = [];
-  for (const code of [...IPL_TEAMS, ...extras, ...players.map((p) => p.team ?? '')]) {
+  for (const code of [...extras, ...players.map((p) => p.team ?? '')]) {
     const normalized = normalizeTeamCode(code);
     if (!normalized || seen.has(normalized)) continue;
     seen.add(normalized);
@@ -37,9 +37,13 @@ export function uniqueTeamCodes(
 }
 
 export function teamsForBoard(players: Array<{ team?: string | null }>): string[] {
-  const fromPlayers = uniqueTeamCodes(players, []);
-  const extras = fromPlayers.filter((code) => !IPL_TEAMS.includes(code as IPLTeam));
-  return [...IPL_TEAMS, ...extras];
+  const fromPlayers = uniqueTeamCodes(players);
+  if (fromPlayers.length === 0) return [...IPL_TEAMS];
+  const allIpl = fromPlayers.every((code) => IPL_TEAMS.includes(code as IPLTeam));
+  if (allIpl) {
+    return uniqueTeamCodes(players, IPL_TEAMS);
+  }
+  return fromPlayers;
 }
 
 export function resolveTeamColors(team: string): TeamColors {

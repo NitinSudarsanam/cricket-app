@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { handleDatabaseError } from '@/lib/db';
 import { getCurrentParticipantId, DraftOrderType } from '@/lib/draft-state-manager';
-import { applyExpiredAutoPick, DEFAULT_PICK_TIMEOUT_SECONDS, secondsRemainingOnClock } from '@/lib/draft-pick-service';
+import { DEFAULT_PICK_TIMEOUT_SECONDS, secondsRemainingOnClock } from '@/lib/draft-clock';
 
 /**
  * GET /api/draft/state
@@ -21,12 +21,6 @@ export async function GET(request: NextRequest) {
     const includeDetails = searchParams.get('includeDetails') === 'true';
 
     let draftState;
-
-    try {
-      await applyExpiredAutoPick({ draftStateId: draftStateId ?? undefined });
-    } catch (error) {
-      console.error('Auto-pick on state fetch failed:', error);
-    }
 
     if (draftStateId) {
       // Fetch specific draft state

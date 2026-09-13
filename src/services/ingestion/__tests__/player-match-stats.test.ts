@@ -56,4 +56,25 @@ describe('extractPlayerStatsFromFixture', () => {
     expect(bowler).toMatchObject({ wickets: 3, maidens: 1, didBowl: true });
     expect(fielder).toMatchObject({ catches: 1 });
   });
+
+  it('does not treat a run-out as a catch', () => {
+    const fixture = {
+      id: 2,
+      starting_at: '2024-03-23T14:00:00.000Z',
+      batting: [
+        {
+          player_id: 40,
+          score: 8,
+          ball: 10,
+          dismissal: 'run out',
+          catch_stump_player_id: 50,
+          runout_by_id: 60,
+        },
+      ],
+    } as SportmonksFixture;
+
+    const stats = extractPlayerStatsFromFixture(fixture);
+    expect(stats.find((s) => s.externalPlayerId === '50')?.catches).toBe(0);
+    expect(stats.find((s) => s.externalPlayerId === '60')?.runOuts).toBe(1);
+  });
 });

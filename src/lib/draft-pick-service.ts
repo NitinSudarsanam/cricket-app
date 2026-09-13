@@ -41,6 +41,7 @@ export async function commitPick(options: {
   participantId: string;
   player: Player;
   autoPick?: boolean;
+  skipClockCheck?: boolean;
 }): Promise<CommitPickResult> {
   const { draftState, draftConfig, participantId, player } = options;
   const autoPick = Boolean(options.autoPick);
@@ -60,6 +61,15 @@ export async function commitPick(options: {
       },
     });
     if (!locked) throw new Error('Draft state not found');
+    if (locked.status !== 'in_progress') {
+      throw new Error('CONFLICT: Draft is not in progress');
+    }
+    if (autoPick && !options.skipClockCheck) {
+      const timeout = draftConfig.pickTimeoutSeconds ?? DEFAULT_PICK_TIMEOUT_SECONDS;
+      if (!isTurnExpired(locked.turnStartedAt, timeout)) {
+        throw new Error('CONFLICT: Pick clock has not expired');
+      }
+    }
     const orderType = locked.draftOrderType === 'linear' ? 'linear' : 'snake';
     const participantOrder = locked.draftOrders.map((o) => o.participantId);
     const currentForTurn =
@@ -95,7 +105,7 @@ export async function commitPick(options: {
       data: {
         currentRound: isComplete ? draftConfig.totalRounds : nextRound,
         currentPickIndex: isComplete ? participantOrder.length - 1 : nextIndex,
-        status: isComplete ? 'completed' : locked.status,
+        status: isComplete ? 'completed' : 'in_progress',
         completedAt: isComplete ? new Date() : null,
         turnStartedAt: isComplete ? null : new Date(),
       },
@@ -172,6 +182,10 @@ export async function chooseAutoPickPlayer(
   draftConfig: DraftConfig,
   participantId: string
 ): Promise<Player | null> {
+  const latestSeason = await prisma.season.findFirst({
+    orderBy: [{ startDate: 'desc' }, { createdAt: 'desc' }],
+    select: { id: true },
+  });
   const [allPlayers, participantPicks, scores] = await Promise.all([
     prisma.player.findMany(),
     prisma.pick.findMany({
@@ -179,7 +193,10 @@ export async function chooseAutoPickPlayer(
       include: { player: true },
     }),
     prisma.playerScore.findMany({
-      where: { source: 'fantasy' },
+      where: {
+        source: 'fantasy',
+        ...(latestSeason ? { seasonId: latestSeason.id } : { seasonId: '__none__' }),
+      },
       select: { playerId: true, points: true },
     }),
   ]);
@@ -202,15 +219,18 @@ export async function chooseAutoPickPlayer(
     scoreByPlayer.set(score.playerId, Math.max(scoreByPlayer.get(score.playerId) ?? 0, score.points));
   }
 
-  const eligible = available
-    .filter((player) => eligibleIds.has(player.id))
-    .sort((a, b) => {
-      const scoreDiff = (scoreByPlayer.get(b.id) ?? 0) - (scoreByPlayer.get(a.id) ?? 0);
-      if (scoreDiff !== 0) return scoreDiff;
-      return a.name.localeCompare(b.name);
-    });
+  const byScoreThenName = (a: Player, b: Player) => {
+    const scoreDiff = (scoreByPlayer.get(b.id) ?? 0) - (scoreByPlayer.get(a.id) ?? 0);
+    if (scoreDiff !== 0) return scoreDiff;
+    return a.name.localeCompare(b.name);
+  };
 
-  return eligible[0] ?? null;
+  const eligible = available.filter((player) => eligibleIds.has(player.id)).sort(byScoreThenName);
+  if (eligible[0]) return eligible[0];
+
+  // If constraints leave nobody eligible, still advance the clock with the best leftover player.
+  const leftovers = [...available].sort(byScoreThenName);
+  return leftovers[0] ?? null;
 }
 
 export async function applyExpiredAutoPick(options?: {
@@ -246,5 +266,6 @@ export async function applyExpiredAutoPick(options?: {
     participantId,
     player,
     autoPick: true,
+    skipClockCheck: Boolean(options?.force),
   });
 }

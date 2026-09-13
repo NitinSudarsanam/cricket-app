@@ -191,14 +191,27 @@ export function useDraftSync(options: UseDraftSyncOptions = {}) {
     if (state.connectionState === 'connected') return;
     const inProgress = draftStatusRef.current === 'in_progress' || draftStatusRef.current === 'paused';
     if (!inProgress && draftStatusRef.current) return;
-    const interval = window.setInterval(() => {
+    const interval = window.setInterval(async () => {
       const status = draftStatusRef.current;
+      if (status === 'in_progress') {
+        try {
+          await fetch('/api/draft/auto-pick', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              draftStateId: state.draftState?.id ?? initialDraftState?.id,
+            }),
+          });
+        } catch {
+          // Keep polling state even if auto-pick is a no-op or fails.
+        }
+      }
       if (status === 'in_progress' || status === 'paused' || !status) {
         refreshDraftState();
       }
     }, 5000);
     return () => window.clearInterval(interval);
-  }, [enabled, state.connectionState, refreshDraftState]);
+  }, [enabled, state.connectionState, refreshDraftState, state.draftState?.id, initialDraftState?.id]);
 
   // Update presence when participant connects/disconnects
   useEffect(() => {

@@ -29,24 +29,18 @@ export async function updatePlayerScoresFromTeamScores(seasonId: string): Promis
     });
 
     for (const p of players) {
-      const existing = await prisma.playerScore.findFirst({
-        where: { playerId: p.id, seasonId, source: 'team_only' },
+      await prisma.playerScore.upsert({
+        where: {
+          playerId_seasonId_source: { playerId: p.id, seasonId, source: 'team_only' },
+        },
+        create: {
+          playerId: p.id,
+          seasonId,
+          points: ts.points,
+          source: 'team_only',
+        },
+        update: { points: ts.points },
       });
-      if (existing) {
-        await prisma.playerScore.update({
-          where: { id: existing.id },
-          data: { points: ts.points },
-        });
-      } else {
-        await prisma.playerScore.create({
-          data: {
-            playerId: p.id,
-            seasonId,
-            points: ts.points,
-            source: 'team_only',
-          },
-        });
-      }
       updated++;
     }
   }

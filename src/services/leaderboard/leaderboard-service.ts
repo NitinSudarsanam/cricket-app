@@ -111,12 +111,9 @@ export async function getPlayerLeaderboard(
 
   const preferred = new Map<string, (typeof rows)[number]>();
   for (const row of rows) {
+    if (row.source !== 'fantasy') continue;
     const existing = preferred.get(row.playerId);
-    if (!existing) {
-      preferred.set(row.playerId, row);
-      continue;
-    }
-    if (row.source === 'fantasy' && existing.source !== 'fantasy') {
+    if (!existing || row.points > existing.points) {
       preferred.set(row.playerId, row);
     }
   }
@@ -173,13 +170,11 @@ export interface FantasyLeaderboardOptions {
   sort?: 'points' | 'name';
 }
 
-function pickScorePoints(
+export function pickScorePoints(
   scores: Array<{ points: number; source: string }>
 ): number {
-  if (scores.length === 0) return 0;
   const fantasy = scores.find((score) => score.source === 'fantasy');
-  if (fantasy) return fantasy.points;
-  return scores.reduce((sum, score) => sum + score.points, 0);
+  return fantasy?.points ?? 0;
 }
 
 export async function getFantasyLeaderboard(

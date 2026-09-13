@@ -158,11 +158,12 @@ model PlayerScore {
   id        String   @id @default(cuid())
   playerId  String
   player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  seasonId  String?
+  seasonId  String
   points    Int      @default(0)
   source    String
   breakdown Json?
   updatedAt DateTime @updatedAt
+  @@unique([playerId, seasonId, source])
   @@index([seasonId])
   @@index([playerId, seasonId])
   @@index([seasonId, source])
@@ -211,6 +212,7 @@ model FantasyScoringRule {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  @@unique([statKey, seasonId])
   @@index([seasonId])
   @@index([statKey])
 }
