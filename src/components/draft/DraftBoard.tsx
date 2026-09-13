@@ -1,66 +1,28 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
 import { Player } from '@/types';
 import { PlayerChip } from '@/components/PlayerChip';
 import { resolveTeamColors, teamsForBoard } from '@/lib/teams';
-
-const CARD_SIZES_STORAGE_KEY = 'draft-player-card-sizes';
 
 export interface DraftBoardProps {
   availablePlayers: Player[];
   onPlayerSelect?: (player: Player) => void;
   disabled?: boolean;
-  currentParticipantId?: string;
   /** Set of player IDs that are eligible for the current pick. If null, no filtering is applied. */
   eligiblePlayerIds?: Set<string> | null;
   allowDrag?: boolean;
-}
-
-function loadCardSizes(): Record<string, { w: number; h: number }> {
-  if (typeof window === 'undefined') return {};
-  try {
-    const raw = window.localStorage.getItem(CARD_SIZES_STORAGE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as Record<string, { w?: number; h?: number }>;
-    const result: Record<string, { w: number; h: number }> = {};
-    for (const [id, v] of Object.entries(parsed)) {
-      if (typeof v?.w === 'number' && typeof v?.h === 'number') result[id] = { w: v.w, h: v.h };
-    }
-    return result;
-  } catch {
-    return {};
-  }
 }
 
 export function DraftBoard({
   availablePlayers,
   onPlayerSelect,
   disabled = false,
-  currentParticipantId,
   eligiblePlayerIds = null,
   allowDrag = false,
 }: DraftBoardProps) {
-  const [cardSizes, setCardSizes] = useState<Record<string, { w: number; h: number }>>({});
-
-  useEffect(() => {
-    setCardSizes(loadCardSizes());
-  }, []);
-
-  const handleResize = useCallback((playerId: string, width: number, height: number) => {
-    setCardSizes((prev) => {
-      const next = { ...prev, [playerId]: { w: width, h: height } };
-      try {
-        window.localStorage.setItem(CARD_SIZES_STORAGE_KEY, JSON.stringify(next));
-      } catch {}
-      return next;
-    });
-  }, []);
-
   const isChipDisabled = (player: Player) =>
     disabled || (eligiblePlayerIds != null && !eligiblePlayerIds.has(player.id));
 
-  // Group players by team
   const playersByTeam = availablePlayers.reduce((acc, player) => {
     if (!acc[player.team]) {
       acc[player.team] = [];
@@ -73,7 +35,6 @@ export function DraftBoard({
 
   return (
     <div className="w-full h-full overflow-auto">
-      {/* Flexible wrapping grid: all team boxes same size (md and up) */}
       <div
         className="hidden md:grid gap-2 p-4 min-h-full"
         style={{
@@ -115,10 +76,6 @@ export function DraftBoard({
                       status="available"
                       onClick={onPlayerSelect}
                       disabled={isChipDisabled(player)}
-                      resizable
-                      width={undefined}
-                      height={undefined}
-                      onResize={(w, h) => handleResize(player.id, w, h)}
                       draggable={allowDrag}
                     />
                   ))
@@ -129,7 +86,6 @@ export function DraftBoard({
         })}
       </div>
 
-      {/* Mobile: Vertical collapsible columns with swipe support */}
       <div className="md:hidden flex flex-col gap-2 p-3">
         {boardTeams.map((team) => {
           const teamPlayers = playersByTeam[team] || [];
@@ -145,10 +101,10 @@ export function DraftBoard({
                 }}
               >
                 <span className="flex items-center gap-2">
-                  <svg 
-                    className="w-4 h-4 transition-transform group-open:rotate-90" 
-                    fill="none" 
-                    stroke="currentColor" 
+                  <svg
+                    className="w-4 h-4 transition-transform group-open:rotate-90"
+                    fill="none"
+                    stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -173,10 +129,6 @@ export function DraftBoard({
                       status="available"
                       onClick={onPlayerSelect}
                       disabled={isChipDisabled(player)}
-                      resizable
-                      width={undefined}
-                      height={undefined}
-                      onResize={(w, h) => handleResize(player.id, w, h)}
                       draggable={allowDrag}
                     />
                   ))
