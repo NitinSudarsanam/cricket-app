@@ -35,6 +35,7 @@ export function SyncView() {
     playersUpserted: number;
     matchesUpserted: number;
     matchResultsProcessed: number;
+    playerStatsUpserted?: number;
     errors: string[];
   } | null>(null);
   const [apiCheck, setApiCheck] = useState<SportmonksCheckResult | null>(null);
@@ -292,6 +293,7 @@ export function SyncView() {
             <li>Players (draft pool): {result.playersUpserted}</li>
             <li>Matches: {result.matchesUpserted}</li>
             <li>Match results processed: {result.matchResultsProcessed}</li>
+            <li>Player match stats: {result.playerStatsUpserted ?? 0}</li>
           </ul>
           {result.errors.length > 0 && (
             <div className="mt-2">

@@ -1,7 +1,7 @@
 /**
  * React hook for managing real-time draft synchronization
  * Handles WebSocket connection, reconnection, and event listeners
- * 
+ *
  * Requirements: 6.1, 6.2, 6.3, 6.4, 6.5
  */
 
@@ -9,7 +9,7 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import { Channel } from 'pusher-js';
-import { getPusherClient, DRAFT_CHANNEL, EVENTS } from '@/lib/pusher-client';
+import { getDraftChannel, getPusherClient, EVENTS } from '@/lib/pusher-client';
 import { DraftState } from '@/types';
 
 export interface PickMadeEvent {
@@ -23,6 +23,7 @@ export interface PickMadeEvent {
     round: number;
     pickNumber: number;
     timestamp: Date;
+    autoPick?: boolean;
   };
   draftState: DraftState;
 }
@@ -59,80 +60,66 @@ export interface DraftRealtimeCallbacks {
   onConnectionStateChange?: (state: 'connected' | 'disconnected' | 'connecting') => void;
 }
 
-/**
- * Hook for subscribing to real-time draft events
- * 
- * @param callbacks - Event handlers for different draft events
- * @param enabled - Whether the connection should be active (default: true)
- * @returns Object with connection state and utility functions
- */
 export function useDraftRealtime(
   callbacks: DraftRealtimeCallbacks,
-  enabled: boolean = true
+  enabled: boolean = true,
+  draftStateId?: string | null
 ) {
   const channelRef = useRef<Channel | null>(null);
-  const pusherRef = useRef<ReturnType<typeof getPusherClient> | null>(null);
+  const pusherRef = useRef<ReturnType<typeof getPusherClient>>(null);
   const isSubscribedRef = useRef(false);
+  const channelName = getDraftChannel(draftStateId);
 
-  // Stable callback references
   const callbacksRef = useRef(callbacks);
   useEffect(() => {
     callbacksRef.current = callbacks;
   }, [callbacks]);
 
-  // Subscribe to channel and events
   const subscribe = useCallback(() => {
     if (isSubscribedRef.current || !enabled) return;
 
     try {
-      // Get Pusher client instance
-      pusherRef.current = getPusherClient();
+      const client = getPusherClient();
+      if (!client) {
+        callbacksRef.current.onConnectionStateChange?.('disconnected');
+        return;
+      }
 
-      // Subscribe to draft channel
-      channelRef.current = pusherRef.current.subscribe(DRAFT_CHANNEL);
+      pusherRef.current = client;
+      channelRef.current = client.subscribe(channelName);
 
-      // Bind event listeners
       channelRef.current.bind(EVENTS.PICK_MADE, (data: PickMadeEvent) => {
         callbacksRef.current.onPickMade?.(data);
       });
-
       channelRef.current.bind(EVENTS.ROUND_COMPLETE, (data: RoundCompleteEvent) => {
         callbacksRef.current.onRoundComplete?.(data);
       });
-
       channelRef.current.bind(EVENTS.DRAFT_COMPLETE, (data: DraftCompleteEvent) => {
         callbacksRef.current.onDraftComplete?.(data);
       });
-
       channelRef.current.bind(EVENTS.STATE_UPDATE, (data: StateUpdateEvent) => {
         callbacksRef.current.onStateUpdate?.(data);
       });
-
       channelRef.current.bind(EVENTS.PARTICIPANT_ONLINE, (data: ParticipantPresenceEvent) => {
         callbacksRef.current.onParticipantOnline?.(data);
       });
-
       channelRef.current.bind(EVENTS.PARTICIPANT_OFFLINE, (data: ParticipantPresenceEvent) => {
         callbacksRef.current.onParticipantOffline?.(data);
       });
 
-      // Listen to connection state changes
-      pusherRef.current.connection.bind('connected', () => {
+      client.connection.bind('connected', () => {
         callbacksRef.current.onConnectionStateChange?.('connected');
       });
-
-      pusherRef.current.connection.bind('disconnected', () => {
+      client.connection.bind('disconnected', () => {
         callbacksRef.current.onConnectionStateChange?.('disconnected');
       });
-
-      pusherRef.current.connection.bind('connecting', () => {
+      client.connection.bind('connecting', () => {
         callbacksRef.current.onConnectionStateChange?.('connecting');
       });
 
       isSubscribedRef.current = true;
 
-      // Sync initial state: if Pusher is already connected we would have missed the 'connected' event
-      const current = pusherRef.current.connection.state;
+      const current = client.connection.state;
       if (current === 'connected') {
         callbacksRef.current.onConnectionStateChange?.('connected');
       } else if (current === 'connecting' || current === 'unavailable') {
@@ -140,31 +127,25 @@ export function useDraftRealtime(
       }
     } catch (error) {
       console.error('Error subscribing to draft channel:', error);
+      callbacksRef.current.onConnectionStateChange?.('disconnected');
     }
-  }, [enabled]);
+  }, [enabled, channelName]);
 
-  // Unsubscribe from channel
   const unsubscribe = useCallback(() => {
     if (!isSubscribedRef.current) return;
 
     try {
       if (channelRef.current) {
-        // Unbind all event listeners
         channelRef.current.unbind_all();
-        
-        // Unsubscribe from channel
-        pusherRef.current?.unsubscribe(DRAFT_CHANNEL);
-        
+        pusherRef.current?.unsubscribe(channelName);
         channelRef.current = null;
       }
-
       isSubscribedRef.current = false;
     } catch (error) {
       console.error('Error unsubscribing from draft channel:', error);
     }
-  }, []);
+  }, [channelName]);
 
-  // Subscribe on mount, unsubscribe on unmount
   useEffect(() => {
     if (enabled) {
       subscribe();
@@ -175,12 +156,9 @@ export function useDraftRealtime(
     };
   }, [enabled, subscribe, unsubscribe]);
 
-  // Get current connection state
   const getConnectionState = useCallback((): 'connected' | 'disconnected' | 'connecting' => {
     if (!pusherRef.current) return 'disconnected';
-    
     const state = pusherRef.current.connection.state;
-    
     if (state === 'connected') return 'connected';
     if (state === 'connecting' || state === 'unavailable') return 'connecting';
     return 'disconnected';

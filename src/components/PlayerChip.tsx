@@ -2,7 +2,7 @@
 
 import { useRef, useState, useCallback } from 'react';
 import { Player } from '@/types';
-import { getTeamColors, type IPLTeam } from '@/config/team-colors';
+import { resolveTeamColors } from '@/lib/teams';
 import { cn } from '@/lib/utils';
 import { CSSProperties } from 'react';
 
@@ -43,7 +43,7 @@ export function PlayerChip({
   onDragStart,
   className,
 }: PlayerChipProps) {
-  const colors = getTeamColors(player.team as IPLTeam);
+  const colors = resolveTeamColors(player.team);
   const isClickable = onClick && !disabled && status === 'available';
   const [isHovered, setIsHovered] = useState(false);
   const chipRef = useRef<HTMLDivElement>(null);

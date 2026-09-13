@@ -148,6 +148,7 @@ export function DraftInterface({
     error: syncError,
     updateDraftState,
     updateAvailablePlayers,
+    refreshDraftState,
   } = useDraftSync({
     initialDraftState,
     initialPlayers,
@@ -261,10 +262,27 @@ export function DraftInterface({
     [allPlayers, handlePlayerSelect]
   );
 
-  // Handle timer expiration
-  const handleTimerExpire = useCallback(() => {
-    // Could implement auto-pick logic here
-  }, []);
+  const handleTimerExpire = useCallback(async () => {
+    if (!draftState || draftState.status !== 'in_progress') return;
+    try {
+      const response = await fetch('/api/draft/auto-pick', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftStateId: draftState.id }),
+      });
+      const result = await response.json();
+      if (result.success && result.data?.applied && result.data.draftState) {
+        updateDraftState(result.data.draftState);
+        updateAvailablePlayers(result.data.draftState, allPlayers);
+        toast.info(`Auto-picked ${result.data.pick?.playerName ?? 'a player'}`, { duration: 3000 });
+      } else {
+        await refreshDraftState();
+      }
+    } catch (error) {
+      console.error('Auto-pick failed:', error);
+      await refreshDraftState();
+    }
+  }, [draftState, updateDraftState, updateAvailablePlayers, allPlayers, refreshDraftState, toast]);
 
   // Clear error after 5 seconds
   useEffect(() => {

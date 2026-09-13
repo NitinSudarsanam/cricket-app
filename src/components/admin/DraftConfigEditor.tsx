@@ -284,6 +284,21 @@ export function DraftConfigEditor() {
               className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Pick Timer (seconds)
+            </label>
+            <input
+              type="number"
+              min="10"
+              max="600"
+              value={config.pickTimeoutSeconds ?? 60}
+              onChange={(e) => updateConfig({ pickTimeoutSeconds: parseInt(e.target.value) || 60 })}
+              disabled={config.isLocked}
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+          </div>
         </div>
       </Card>
 

@@ -257,6 +257,16 @@ export function validateUpdateDraftConfigRequest(request: unknown): ValidationRe
     }
   }
 
+  if (req.pickTimeoutSeconds !== undefined) {
+    if (
+      typeof req.pickTimeoutSeconds !== 'number' ||
+      req.pickTimeoutSeconds < 10 ||
+      req.pickTimeoutSeconds > 600
+    ) {
+      errors.push('Pick timeout must be a number between 10 and 600 seconds');
+    }
+  }
+
   if (
     req.minPerTeam !== undefined &&
     req.maxPerTeam !== undefined &&

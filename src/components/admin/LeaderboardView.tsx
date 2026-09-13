@@ -368,7 +368,7 @@ export function LeaderboardView() {
                 <Card padded className="p-0 overflow-hidden">
                   {players.length === 0 ? (
                     <p className="p-6 text-sm text-slate-500 text-center">
-                      No player rankings for this season yet. Player points are derived from team standings after sync.
+                      No player rankings for this season yet. Player points come from match batting, bowling, and fielding stats after sync.
                     </p>
                   ) : (
                     <div className="overflow-x-auto">

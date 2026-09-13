@@ -64,6 +64,7 @@ export interface DraftConfig {
   freeSlots: number; // Calculated field
   earlyRoundRule: EarlyRoundRule;
   isLocked?: boolean;
+  pickTimeoutSeconds?: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -105,6 +106,8 @@ export interface DraftState {
   status: DraftStatus;
   startedAt?: Date;
   completedAt?: Date;
+  turnStartedAt?: Date | null;
+  pickTimeoutSeconds?: number;
   draftConfigId?: string;
   createdAt?: Date;
   updatedAt?: Date;
@@ -219,6 +222,7 @@ export interface UpdateDraftConfigRequest {
   maxPerTeam?: number;
   mandatoryRoles?: Partial<MandatoryRoles>;
   earlyRoundRule?: Partial<EarlyRoundRule>;
+  pickTimeoutSeconds?: number;
 }
 
 export interface MakePickRequest {

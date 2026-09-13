@@ -45,6 +45,33 @@ export interface SportmonksTeam {
 }
 
 /** Fixtures endpoint. starting_at required for fixture date; other fields optional. */
+export interface SportmonksBattingLine {
+  player_id?: number;
+  player?: { id?: number; fullname?: string };
+  score?: number | string;
+  ball?: number | string;
+  four_x?: number | string;
+  six_x?: number | string;
+  rate?: number | string;
+  is_notout?: boolean;
+  dismissal?: string;
+  catch_stump_player_id?: number | null;
+  runout_by_id?: number | null;
+  bowling_player_id?: number | null;
+}
+
+export interface SportmonksBowlingLine {
+  player_id?: number;
+  player?: { id?: number; fullname?: string };
+  overs?: number | string;
+  medians?: number | string;
+  runs?: number | string;
+  wickets?: number | string;
+  wide?: number | string;
+  noball?: number | string;
+  rate?: number | string;
+}
+
 export interface SportmonksFixture {
   id: number;
   name?: string;
@@ -62,6 +89,8 @@ export interface SportmonksFixture {
   visitorteam?: SportmonksTeam;
   league?: SportmonksLeague;
   season?: SportmonksSeason;
+  batting?: SportmonksBattingLine[];
+  bowling?: SportmonksBowlingLine[];
 }
 
 export type FixtureStatus = 'NS' | 'LIVE' | 'FT' | 'AOT' | 'AWD' | 'ABD' | 'CANCL' | 'PST' | 'TBD' | string;

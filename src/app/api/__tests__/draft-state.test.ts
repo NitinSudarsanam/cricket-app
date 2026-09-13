@@ -19,7 +19,14 @@ vi.mock('@/lib/db', () => ({
 
 vi.mock('@/lib/draft-state-manager', () => ({
   getActiveDraftState: vi.fn(),
+  getDraftState: vi.fn(),
   getCurrentParticipantId: vi.fn(),
+}));
+
+vi.mock('@/lib/draft-pick-service', () => ({
+  applyExpiredAutoPick: vi.fn().mockResolvedValue(null),
+  DEFAULT_PICK_TIMEOUT_SECONDS: 60,
+  secondsRemainingOnClock: vi.fn(() => 60),
 }));
 
 import { prisma } from '@/lib/db';

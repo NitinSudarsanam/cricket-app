@@ -60,6 +60,8 @@ export default async function DraftPage({
     status: draftStateRow.status as DraftStatus,
     startedAt: draftStateRow.startedAt ?? undefined,
     completedAt: draftStateRow.completedAt ?? undefined,
+    turnStartedAt: draftStateRow.turnStartedAt ?? null,
+    pickTimeoutSeconds: draftStateRow.draftConfig.pickTimeoutSeconds ?? 60,
     draftConfigId: draftStateRow.draftConfigId,
     participantOrder,
     picks: draftStateRow.picks.map((p) => ({
@@ -96,6 +98,7 @@ export default async function DraftPage({
           minBowl: draftConfigRow.earlyMinBowl,
         },
         isLocked: draftConfigRow.isLocked,
+        pickTimeoutSeconds: draftConfigRow.pickTimeoutSeconds ?? 60,
       }
     : null;
 
@@ -145,8 +148,8 @@ export default async function DraftPage({
         participants={participants}
         currentParticipantId={currentParticipantId}
         currentParticipantName={currentParticipantName}
-        showTimer={false}
-        timerSeconds={60}
+        showTimer
+        timerSeconds={draftConfig.pickTimeoutSeconds ?? 60}
       />
     </ErrorBoundary>
   );

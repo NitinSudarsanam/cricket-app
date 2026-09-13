@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Player, IPLTeam, IPL_TEAMS } from '@/types';
+import { Player } from '@/types';
 import { PlayerChip } from '@/components/PlayerChip';
-import { TEAM_COLORS } from '@/config/team-colors';
+import { resolveTeamColors, teamsForBoard } from '@/lib/teams';
 
 const CARD_SIZES_STORAGE_KEY = 'draft-player-card-sizes';
 
@@ -67,7 +67,9 @@ export function DraftBoard({
     }
     acc[player.team].push(player);
     return acc;
-  }, {} as Record<IPLTeam, Player[]>);
+  }, {} as Record<string, Player[]>);
+
+  const boardTeams = teamsForBoard(availablePlayers);
 
   return (
     <div className="w-full h-full overflow-auto">
@@ -79,9 +81,9 @@ export function DraftBoard({
           gridAutoRows: 'minmax(200px, 1fr)',
         }}
       >
-        {IPL_TEAMS.map((team) => {
+        {boardTeams.map((team) => {
           const teamPlayers = playersByTeam[team] || [];
-          const colors = TEAM_COLORS[team];
+          const colors = resolveTeamColors(team);
 
           return (
             <div
@@ -129,9 +131,9 @@ export function DraftBoard({
 
       {/* Mobile: Vertical collapsible columns with swipe support */}
       <div className="md:hidden flex flex-col gap-2 p-3">
-        {IPL_TEAMS.map((team) => {
+        {boardTeams.map((team) => {
           const teamPlayers = playersByTeam[team] || [];
-          const colors = TEAM_COLORS[team];
+          const colors = resolveTeamColors(team);
 
           return (
             <details key={team} className="group" open={teamPlayers.length > 0 && teamPlayers.length <= 5}>

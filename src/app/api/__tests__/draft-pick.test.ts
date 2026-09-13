@@ -53,6 +53,7 @@ vi.mock('@/lib/rule-engine', () => ({
 
 vi.mock('@/lib/model-mappers', () => ({
   prismaDraftConfigToDraftConfig: vi.fn(),
+  prismaPlayerToPlayer: vi.fn((player) => player),
 }));
 
 import { prisma } from '@/lib/db';
@@ -60,7 +61,7 @@ import { getParticipantSession } from '@/lib/session';
 import { getActiveDraftState, getCurrentParticipantId, calculatePickNumber, addPick, advanceToNextPick } from '@/lib/draft-state-manager';
 import { validatePick } from '@/lib/rule-engine';
 import { broadcastEvent, EVENTS } from '@/lib/pusher-server';
-import { prismaDraftConfigToDraftConfig } from '@/lib/model-mappers';
+import { prismaDraftConfigToDraftConfig, prismaPlayerToPlayer } from '@/lib/model-mappers';
 
 describe('POST /api/draft/pick', () => {
   beforeEach(() => {
@@ -204,6 +205,7 @@ describe('POST /api/draft/pick', () => {
       earlyMinBat: draftConfig.earlyRoundRule.minBat,
       earlyMinBowl: draftConfig.earlyRoundRule.minBowl,
       isLocked: false,
+      pickTimeoutSeconds: 60,
       createdAt: new Date(),
       updatedAt: new Date(),
     } as any);
@@ -254,6 +256,7 @@ describe('POST /api/draft/pick', () => {
       earlyMinBat: draftConfig.earlyRoundRule.minBat,
       earlyMinBowl: draftConfig.earlyRoundRule.minBowl,
       isLocked: false,
+      pickTimeoutSeconds: 60,
       createdAt: new Date(),
       updatedAt: new Date(),
     } as any);
@@ -320,6 +323,7 @@ describe('POST /api/draft/pick', () => {
       earlyMinBat: draftConfig.earlyRoundRule.minBat,
       earlyMinBowl: draftConfig.earlyRoundRule.minBowl,
       isLocked: false,
+      pickTimeoutSeconds: 60,
       createdAt: new Date(),
       updatedAt: new Date(),
     } as any);
@@ -367,6 +371,10 @@ describe('POST /api/draft/pick', () => {
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
-    expect(broadcastEvent).toHaveBeenCalledWith(EVENTS.PICK_MADE, expect.any(Object));
+    expect(broadcastEvent).toHaveBeenCalledWith(
+      EVENTS.PICK_MADE,
+      expect.any(Object),
+      draftState.id
+    );
   });
 });

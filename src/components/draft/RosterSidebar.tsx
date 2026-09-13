@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Player, DraftConfig, IPLTeam, PlayerRole, IPL_TEAMS, PLAYER_ROLES } from '@/types';
+import { Player, DraftConfig, PlayerRole, PLAYER_ROLES } from '@/types';
 import { PlayerChip } from '@/components/PlayerChip';
-import { TEAM_COLORS } from '@/config/team-colors';
+import { resolveTeamColors, uniqueTeamCodes } from '@/lib/teams';
 
 export interface RosterSidebarProps {
   roster: Player[];
@@ -48,7 +48,7 @@ export function RosterSidebar({
   const teamCount = roster.reduce((acc, player) => {
     acc[player.team] = (acc[player.team] || 0) + 1;
     return acc;
-  }, {} as Record<IPLTeam, number>);
+  }, {} as Record<string, number>);
 
   // Calculate role counts
   const roleCount = roster.reduce((acc, player) => {
@@ -56,8 +56,8 @@ export function RosterSidebar({
     return acc;
   }, {} as Record<PlayerRole, number>);
 
-  // Calculate remaining slots
   const remainingSlots = draftConfig.rosterSize - roster.length;
+  const displayTeams = uniqueTeamCodes(roster);
 
   return (
     <div className="w-full h-full bg-white border-l border-slate-200 flex flex-col">
@@ -106,12 +106,12 @@ export function RosterSidebar({
           </h3>
           
           <div className="stack-sm">
-            {IPL_TEAMS.map((team) => {
+            {displayTeams.map((team) => {
               const count = teamCount[team] || 0;
               const max = draftConfig.maxPerTeam;
               const percentage = max > 0 ? (count / max) * 100 : 0;
               const isAtLimit = count >= max;
-              const colors = TEAM_COLORS[team];
+              const colors = resolveTeamColors(team);
 
               return (
                 <div key={team} className="space-y-1">
@@ -226,14 +226,14 @@ export function RosterSidebar({
             )}
 
             {/* Warning for teams at limit */}
-            {IPL_TEAMS.some(team => (teamCount[team] || 0) >= draftConfig.maxPerTeam) && (
+            {displayTeams.some(team => (teamCount[team] || 0) >= draftConfig.maxPerTeam) && (
               <div className="mt-3 pt-3 border-t border-slate-200">
                 <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-md">
                   <p className="text-xs text-red-800 font-medium">
                     Team cap reached for:
                   </p>
                   <ul className="mt-1 text-xs text-red-700 space-y-0.5">
-                    {IPL_TEAMS.filter(team => (teamCount[team] || 0) >= draftConfig.maxPerTeam).map(team => (
+                    {displayTeams.filter(team => (teamCount[team] || 0) >= draftConfig.maxPerTeam).map(team => (
                       <li key={team}>• {team}</li>
                     ))}
                   </ul>

@@ -135,7 +135,8 @@ export function useDraftSync(options: UseDraftSyncOptions = {}) {
   // Subscribe to real-time updates
   const { subscribe, unsubscribe, getConnectionState, isSubscribed } = useDraftRealtime(
     realtimeCallbacks,
-    enabled
+    enabled,
+    state.draftState?.id ?? initialDraftState?.id
   );
 
   // Fetch latest draft state (defined before useEffects that call it)
@@ -184,6 +185,21 @@ export function useDraftSync(options: UseDraftSyncOptions = {}) {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [enabled, refreshDraftState]);
 
+  // Poll while Pusher is down so other clients still see picks and auto-picks
+  useEffect(() => {
+    if (!enabled) return;
+    if (state.connectionState === 'connected') return;
+    const inProgress = draftStatusRef.current === 'in_progress' || draftStatusRef.current === 'paused';
+    if (!inProgress && draftStatusRef.current) return;
+    const interval = window.setInterval(() => {
+      const status = draftStatusRef.current;
+      if (status === 'in_progress' || status === 'paused' || !status) {
+        refreshDraftState();
+      }
+    }, 5000);
+    return () => window.clearInterval(interval);
+  }, [enabled, state.connectionState, refreshDraftState]);
+
   // Update presence when participant connects/disconnects
   useEffect(() => {
     if (!enabled || !participantId || !participantName) return;
@@ -199,6 +215,7 @@ export function useDraftSync(options: UseDraftSyncOptions = {}) {
             participantId,
             participantName,
             status,
+            draftStateId: state.draftState?.id ?? initialDraftState?.id,
           }),
         });
       } catch (error) {
@@ -217,7 +234,7 @@ export function useDraftSync(options: UseDraftSyncOptions = {}) {
         updatePresence('offline');
       }
     };
-  }, [enabled, participantId, participantName, isSubscribed]);
+  }, [enabled, participantId, participantName, isSubscribed, state.draftState?.id, initialDraftState?.id]);
 
   return {
     // State

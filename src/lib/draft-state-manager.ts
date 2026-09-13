@@ -37,6 +37,7 @@ export async function initializeDraftState(
       draftOrderType: orderType,
       status: 'in_progress',
       startedAt: new Date(),
+      turnStartedAt: new Date(),
       draftConfigId,
       draftOrders: {
         create: participantIds.map((participantId, index) => ({
@@ -46,6 +47,7 @@ export async function initializeDraftState(
       }
     },
     include: {
+      draftConfig: true,
       draftOrders: {
         include: {
           participant: true
@@ -80,6 +82,7 @@ export async function getDraftState(draftStateId: string): Promise<DraftState | 
   const draftState = await prisma.draftState.findUnique({
     where: { id: draftStateId },
     include: {
+      draftConfig: true,
       draftOrders: {
         include: {
           participant: true
@@ -123,6 +126,7 @@ export async function getActiveDraftState(): Promise<DraftState | null> {
       startedAt: 'desc'
     },
     include: {
+      draftConfig: true,
       draftOrders: {
         include: {
           participant: true
@@ -307,7 +311,8 @@ export async function resetDraftState(draftStateId: string): Promise<DraftState>
       currentPickIndex: 0,
       status: 'not_started',
       startedAt: null,
-      completedAt: null
+      completedAt: null,
+      turnStartedAt: null,
     }
   });
 
@@ -354,7 +359,8 @@ export async function resumeDraftState(draftStateId: string): Promise<DraftState
   await prisma.draftState.update({
     where: { id: draftStateId },
     data: {
-      status: 'in_progress'
+      status: 'in_progress',
+      turnStartedAt: new Date(),
     }
   });
 
@@ -395,6 +401,8 @@ function transformToDraftState(prismaDraftState: any): DraftState {
     status: prismaDraftState.status,
     startedAt: prismaDraftState.startedAt,
     completedAt: prismaDraftState.completedAt,
+    turnStartedAt: prismaDraftState.turnStartedAt ?? null,
+    pickTimeoutSeconds: prismaDraftState.draftConfig?.pickTimeoutSeconds,
     draftConfigId: prismaDraftState.draftConfigId,
     createdAt: prismaDraftState.createdAt,
     updatedAt: prismaDraftState.updatedAt

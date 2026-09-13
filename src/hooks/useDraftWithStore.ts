@@ -169,9 +169,11 @@ export function useDraftWithStore(options: UseDraftWithStoreOptions = {}) {
   };
 
   // Subscribe to real-time updates
+  const draftStateId = useDraftStore((s) => s.draftState?.id);
   const { subscribe, unsubscribe, getConnectionState, isSubscribed } = useDraftRealtime(
     realtimeCallbacks,
-    enabled
+    enabled,
+    draftStateId
   );
 
   // Update presence when participant connects/disconnects

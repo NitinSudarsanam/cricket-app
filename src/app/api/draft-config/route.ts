@@ -136,7 +136,8 @@ export async function PUT(request: NextRequest) {
       mandatoryWK: body.mandatoryRoles?.WK ?? currentConfig.mandatoryWK,
       earlyRounds: body.earlyRoundRule?.rounds ?? currentConfig.earlyRounds,
       earlyMinBat: body.earlyRoundRule?.minBat ?? currentConfig.earlyMinBat,
-      earlyMinBowl: body.earlyRoundRule?.minBowl ?? currentConfig.earlyMinBowl
+      earlyMinBowl: body.earlyRoundRule?.minBowl ?? currentConfig.earlyMinBowl,
+      pickTimeoutSeconds: body.pickTimeoutSeconds ?? currentConfig.pickTimeoutSeconds ?? 60,
     };
 
     // Convert to application model for validation
@@ -160,7 +161,8 @@ export async function PUT(request: NextRequest) {
         minBat: updatedData.earlyMinBat,
         minBowl: updatedData.earlyMinBowl
       },
-      isLocked: currentConfig.isLocked
+      isLocked: currentConfig.isLocked,
+      pickTimeoutSeconds: updatedData.pickTimeoutSeconds,
     };
 
     // Get player pool and participant count for validation

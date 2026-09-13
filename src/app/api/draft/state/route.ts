@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { handleDatabaseError } from '@/lib/db';
-import { getActiveDraftState, getCurrentParticipantId, DraftOrderType } from '@/lib/draft-state-manager';
+import { getCurrentParticipantId, DraftOrderType } from '@/lib/draft-state-manager';
+import { applyExpiredAutoPick, DEFAULT_PICK_TIMEOUT_SECONDS, secondsRemainingOnClock } from '@/lib/draft-pick-service';
 
 /**
  * GET /api/draft/state
@@ -20,6 +21,12 @@ export async function GET(request: NextRequest) {
     const includeDetails = searchParams.get('includeDetails') === 'true';
 
     let draftState;
+
+    try {
+      await applyExpiredAutoPick({ draftStateId: draftStateId ?? undefined });
+    } catch (error) {
+      console.error('Auto-pick on state fetch failed:', error);
+    }
 
     if (draftStateId) {
       // Fetch specific draft state
@@ -175,6 +182,12 @@ export async function GET(request: NextRequest) {
       } : null,
       startedAt: draftState.startedAt,
       completedAt: draftState.completedAt,
+      turnStartedAt: draftState.turnStartedAt,
+      pickTimeoutSeconds: draftState.draftConfig.pickTimeoutSeconds ?? DEFAULT_PICK_TIMEOUT_SECONDS,
+      secondsRemaining: secondsRemainingOnClock(
+        draftState.turnStartedAt,
+        draftState.draftConfig.pickTimeoutSeconds ?? DEFAULT_PICK_TIMEOUT_SECONDS
+      ),
       totalRounds: draftState.draftConfig.totalRounds,
       totalParticipants: participantOrder.length
     };

@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DraftState } from '@/types';
 import { Badge, Alert } from '@/components/ui';
+import { secondsRemainingOnClock } from '@/lib/draft-clock';
 
 export interface DraftTopBarProps {
   draftState: DraftState;
@@ -25,9 +26,12 @@ export function DraftTopBar({
   onTimerExpire,
   connectionState,
 }: DraftTopBarProps) {
-  const [timeRemaining, setTimeRemaining] = useState(timerSeconds);
+  const timeoutSeconds = draftState.pickTimeoutSeconds ?? timerSeconds;
+  const [timeRemaining, setTimeRemaining] = useState(() =>
+    secondsRemainingOnClock(draftState.turnStartedAt, timeoutSeconds)
+  );
+  const expiredForTurnRef = useRef<string | null>(null);
 
-  // Get current participant on the clock (respects snake vs linear draft order)
   const orderType = draftState.draftOrderType ?? 'snake';
   const isSnakeRound = orderType === 'snake' && draftState.currentRound % 2 === 0;
   const currentParticipantId = isSnakeRound
@@ -35,7 +39,6 @@ export function DraftTopBar({
     : draftState.participantOrder[draftState.currentPickIndex];
   const currentParticipant = participants.find(p => p.id === currentParticipantId);
 
-  // Calculate draft progress (total picks for the whole draft)
   const totalPicks =
     typeof totalRounds === 'number' && totalRounds > 0
       ? draftState.participantOrder.length * totalRounds
@@ -43,33 +46,43 @@ export function DraftTopBar({
   const completedPicks = draftState.picks.length;
   const progressPercentage = totalPicks > 0 ? (completedPicks / totalPicks) * 100 : 0;
 
-  // Timer logic
   useEffect(() => {
     if (!showTimer || draftState.status !== 'in_progress') {
       return;
     }
 
-    setTimeRemaining(timerSeconds);
+    const syncFromServer = () => {
+      const remaining = secondsRemainingOnClock(draftState.turnStartedAt, timeoutSeconds);
+      setTimeRemaining(remaining);
+      return remaining;
+    };
+
+    const maybeExpire = (remaining: number) => {
+      const turnKey = `${draftState.id}:${draftState.turnStartedAt ?? ''}:${draftState.picks.length}`;
+      if (remaining > 0) {
+        expiredForTurnRef.current = null;
+        return;
+      }
+      if (expiredForTurnRef.current === turnKey) return;
+      expiredForTurnRef.current = turnKey;
+      onTimerExpire?.();
+    };
+
+    maybeExpire(syncFromServer());
 
     const interval = setInterval(() => {
-      setTimeRemaining((prev) => {
-        if (prev <= 1) {
-          onTimerExpire?.();
-          return timerSeconds;
-        }
-        return prev - 1;
-      });
+      maybeExpire(syncFromServer());
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [showTimer, timerSeconds, draftState.picks.length, draftState.status, onTimerExpire]);
-
-  // Reset timer when a new pick is made
-  useEffect(() => {
-    if (showTimer) {
-      setTimeRemaining(timerSeconds);
-    }
-  }, [draftState.picks.length, showTimer, timerSeconds]);
+  }, [
+    showTimer,
+    timeoutSeconds,
+    draftState.turnStartedAt,
+    draftState.picks.length,
+    draftState.status,
+    onTimerExpire,
+  ]);
 
   return (
     <div className="header-bar">
@@ -121,7 +134,7 @@ export function DraftTopBar({
                   ? 'Connected'
                   : connectionState === 'connecting'
                   ? 'Reconnecting…'
-                  : 'Disconnected'}
+                  : 'Polling'}
               </Badge>
             )}
             <div className="flex-stack gap-2 min-w-[140px] md:min-w-[180px] flex-1">
