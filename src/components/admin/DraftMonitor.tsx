@@ -24,6 +24,7 @@ export function DraftMonitor({
     initialDraftState,
     initialPlayers,
     enabled: true,
+    enableAutoPick: false,
   });
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showStartModal, setShowStartModal] = useState(false);
@@ -133,9 +134,7 @@ export function DraftMonitor({
 
   // Safe checks for draft state
   const isDraftActive = Boolean(
-    draftState && 
-    draftState.status && 
-    draftState.status !== 'not_started'
+    draftState && (draftState.status === 'in_progress' || draftState.status === 'paused')
   );
   
   const currentParticipantIdOnClock = isDraftActive && draftState && Array.isArray(draftState.participantOrder) && draftState.participantOrder.length > 0 && typeof draftState.currentPickIndex === 'number' && draftState.currentPickIndex >= 0

@@ -31,6 +31,7 @@ export interface UseDraftSyncOptions {
   participantId?: string;
   participantName?: string;
   enabled?: boolean;
+  enableAutoPick?: boolean;
   onPickMade?: (pick: PickMadeEvent['pick']) => void;
   onRoundComplete?: (round: number) => void;
   onDraftComplete?: () => void;
@@ -49,6 +50,7 @@ export function useDraftSync(options: UseDraftSyncOptions = {}) {
     participantId,
     participantName,
     enabled = true,
+    enableAutoPick = true,
     onPickMade,
     onRoundComplete,
     onDraftComplete,
@@ -160,6 +162,10 @@ export function useDraftSync(options: UseDraftSyncOptions = {}) {
   const refreshDraftState = useCallback(async () => {
     try {
       const response = await fetch('/api/draft/state');
+
+      if (response.status === 404) {
+        return;
+      }
       
       if (!response.ok) {
         throw new Error('Failed to fetch draft state');
@@ -214,7 +220,7 @@ export function useDraftSync(options: UseDraftSyncOptions = {}) {
     if (!inProgress && draftStatusRef.current) return;
     const interval = window.setInterval(async () => {
       const status = draftStatusRef.current;
-      if (status === 'in_progress') {
+      if (enableAutoPick && status === 'in_progress') {
         try {
           await fetch('/api/draft/auto-pick', {
             method: 'POST',
@@ -233,7 +239,7 @@ export function useDraftSync(options: UseDraftSyncOptions = {}) {
       }
     }, 5000);
     return () => window.clearInterval(interval);
-  }, [enabled, refreshDraftState, state.draftState?.id, initialDraftState?.id]);
+  }, [enabled, enableAutoPick, refreshDraftState, state.draftState?.id, initialDraftState?.id]);
 
   // Update presence when participant connects/disconnects
   useEffect(() => {

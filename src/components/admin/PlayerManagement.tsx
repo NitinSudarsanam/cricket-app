@@ -25,9 +25,9 @@ interface PlayerManagementProps {
   initialPlayers?: Player[];
 }
 
-export function PlayerManagement({ initialPlayers = [] }: PlayerManagementProps) {
-  const [players, setPlayers] = useState<Player[]>(initialPlayers);
-  const [loading, setLoading] = useState(initialPlayers.length === 0);
+export function PlayerManagement({ initialPlayers }: PlayerManagementProps) {
+  const [players, setPlayers] = useState<Player[]>(initialPlayers ?? []);
+  const [loading, setLoading] = useState(initialPlayers === undefined);
   const [error, setError] = useState<string | null>(null);
   const toast = useToast();
   
@@ -58,10 +58,10 @@ export function PlayerManagement({ initialPlayers = [] }: PlayerManagementProps)
   });
 
   useEffect(() => {
-    if (initialPlayers.length === 0) {
+    if (initialPlayers === undefined) {
       fetchPlayers();
     }
-  }, [initialPlayers.length]);
+  }, [initialPlayers]);
 
   const fetchPlayers = async () => {
     try {
