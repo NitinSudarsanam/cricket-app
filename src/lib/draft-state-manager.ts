@@ -13,8 +13,10 @@
 
 import { prisma } from './db';
 import { DraftState, PickRecord } from '@/types';
+import { type DraftOrderType } from './draft-order';
 
-export type DraftOrderType = 'linear' | 'snake';
+export type { DraftOrderType } from './draft-order';
+export { getCurrentParticipantId } from './draft-order';
 
 /**
  * Initialize a new draft state with participant order
@@ -248,32 +250,6 @@ export async function advanceToNextPick(
   }
 
   return updatedState;
-}
-
-/**
- * Get the participant ID for the current pick
- * 
- * @param draftState - The current draft state
- * @param orderType - Type of draft order ('linear' or 'snake')
- * @returns The participant ID who should pick next
- */
-export function getCurrentParticipantId(
-  draftState: DraftState,
-  orderType: DraftOrderType = 'snake'
-): string {
-  const { currentRound, currentPickIndex, participantOrder } = draftState;
-
-  // Determine if we're in a snake round (even rounds go in reverse)
-  const isSnakeRound = orderType === 'snake' && currentRound % 2 === 0;
-
-  if (isSnakeRound) {
-    // In snake rounds, reverse the order
-    const reverseIndex = participantOrder.length - 1 - currentPickIndex;
-    return participantOrder[reverseIndex];
-  } else {
-    // In linear rounds, use normal order
-    return participantOrder[currentPickIndex];
-  }
 }
 
 /**

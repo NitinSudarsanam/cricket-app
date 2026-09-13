@@ -1,50 +1,14 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Player, DraftConfig } from '@/types';
 import { PlayerChip } from '@/components/PlayerChip';
 import { Button, Badge, Card } from '@/components/ui';
+import {
+  downloadDraftResults,
+  type DraftResultsSnapshot,
+} from '@/lib/draft-results-export';
 
-interface ParticipantRoster {
-  participantId: string;
-  participantName: string;
-  participantEmail?: string | null;
-  position: number;
-  roster: Player[];
-  teamCount: Record<string, number>;
-  roleCount: {
-    Bat: number;
-    Bowl: number;
-    AR: number;
-    WK: number;
-  };
-  mandatoryRoles: {
-    Bat: number;
-    Bowl: number;
-    AR: number;
-    WK: number;
-  };
-  roleValidation: {
-    Bat: boolean;
-    Bowl: boolean;
-    AR: boolean;
-    WK: boolean;
-  };
-  allRolesMet: boolean;
-}
-
-interface DraftCompletionProps {
-  draftState: {
-    id: string;
-    status: string;
-    startedAt: Date | null;
-    completedAt: Date | null;
-    totalRounds: number;
-  };
-  draftConfig: DraftConfig;
-  participantRosters: ParticipantRoster[];
-  allParticipantsMeetRequirements: boolean;
-  totalPicks: number;
+interface DraftCompletionProps extends DraftResultsSnapshot {
   onClose?: () => void;
 }
 
@@ -97,72 +61,17 @@ export function DraftCompletion({
     pr => pr.participantId === selectedParticipant
   );
 
-  // Export functions
-  const exportAsJSON = () => {
-    const data = {
-      draftState,
-      draftConfig,
-      participantRosters: participantRosters.map(pr => ({
-        ...pr,
-        roster: pr.roster.map(p => ({
-          id: p.id,
-          name: p.name,
-          team: p.team,
-          role: p.role,
-          isForeign: p.isForeign
-        }))
-      }))
-    };
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: 'application/json'
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `draft-results-${draftState.id}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  const exportAsCSV = () => {
-    // Create CSV with all rosters
-    const headers = ['Participant', 'Position', 'Player Name', 'Team', 'Role', 'Is Foreign'];
-    const rows = participantRosters.flatMap(pr =>
-      pr.roster.map(player => [
-        pr.participantName,
-        (pr.position + 1).toString(),
-        player.name,
-        player.team,
-        player.role,
-        player.isForeign ? 'Yes' : 'No'
-      ])
-    );
-
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `draft-results-${draftState.id}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
   const handleExport = () => {
-    if (exportFormat === 'json') {
-      exportAsJSON();
-    } else {
-      exportAsCSV();
-    }
+    downloadDraftResults(
+      {
+        draftState,
+        draftConfig,
+        participantRosters,
+        allParticipantsMeetRequirements,
+        totalPicks,
+      },
+      exportFormat
+    );
   };
 
   return (

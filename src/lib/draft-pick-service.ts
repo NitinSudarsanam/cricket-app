@@ -81,10 +81,14 @@ export async function commitPick(options: {
     }
     const orderType = locked.draftOrderType === 'linear' ? 'linear' : 'snake';
     const participantOrder = locked.draftOrders.map((o) => o.participantId);
-    const currentForTurn =
-      orderType === 'snake' && locked.currentRound % 2 === 0
-        ? participantOrder[participantOrder.length - 1 - locked.currentPickIndex]
-        : participantOrder[locked.currentPickIndex];
+    const currentForTurn = getCurrentParticipantId(
+      {
+        currentRound: locked.currentRound,
+        currentPickIndex: locked.currentPickIndex,
+        participantOrder,
+      },
+      orderType
+    );
     if (currentForTurn !== participantId) {
       throw new Error('CONFLICT: It is not your turn (another pick may have been made)');
     }

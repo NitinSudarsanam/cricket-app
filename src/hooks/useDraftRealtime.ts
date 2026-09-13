@@ -10,7 +10,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { Channel } from 'pusher-js';
 import { getDraftChannel, getPusherClient, EVENTS } from '@/lib/pusher-client';
-import { DraftState } from '@/types';
+import { DraftConfig, DraftState } from '@/types';
 
 export interface PickMadeEvent {
   pick: {
@@ -40,7 +40,7 @@ export interface DraftCompleteEvent {
 
 export interface StateUpdateEvent {
   draftState: DraftState;
-  draftConfig?: any;
+  draftConfig?: DraftConfig;
   message: string;
 }
 

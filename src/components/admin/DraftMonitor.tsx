@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { DraftState, Player, DraftStatus } from '@/types';
+import { getCurrentParticipantId } from '@/lib/draft-order';
 import { Modal } from '@/components/Modal';
 import { Skeleton } from '@/components/Skeleton';
 import { PlayerChip } from '@/components/PlayerChip';
@@ -262,16 +263,8 @@ export function DraftMonitor() {
     draftState.status !== 'not_started'
   );
   
-  // Current participant on the clock (respects snake vs linear draft order)
   const currentParticipantIdOnClock = isDraftActive && draftState && Array.isArray(draftState.participantOrder) && draftState.participantOrder.length > 0 && typeof draftState.currentPickIndex === 'number' && draftState.currentPickIndex >= 0
-    ? (() => {
-        const { currentRound, currentPickIndex, participantOrder, draftOrderType } = draftState;
-        const orderType = draftOrderType === 'linear' ? 'linear' : 'snake';
-        const isSnakeRound = orderType === 'snake' && currentRound % 2 === 0;
-        return isSnakeRound
-          ? participantOrder[participantOrder.length - 1 - currentPickIndex]
-          : participantOrder[currentPickIndex];
-      })()
+    ? getCurrentParticipantId(draftState)
     : null;
 
   const currentParticipant =
