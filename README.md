@@ -91,7 +91,7 @@ Built on Next.js 16 (App Router), TypeScript, Prisma, PostgreSQL, and Pusher.
 | Database       | PostgreSQL (Supabase in production)                 |
 | ORM            | Prisma 7 with `@prisma/adapter-pg`                  |
 | Styling        | Tailwind CSS 4                                      |
-| State          | Zustand                                             |
+| State          | `useDraftSync` (draft) + Zustand (toasts)           |
 | Real-time      | Pusher Channels (optional)                          |
 | External API   | Sportmonks Cricket API v2.0                         |
 | Unit tests     | Vitest + Testing Library + jsdom                    |

@@ -101,7 +101,7 @@ These statements immediately tell the room: this person understands the real eng
 **Goal:** Show you understand distributed state synchronization
 
 **Key points:**
-- Event-driven architecture: pick → broadcast → client store update
+- Event-driven architecture: pick → broadcast → `useDraftSync` update
 - Single channel, typed events: PICK_MADE, ROUND_COMPLETE, DRAFT_COMPLETE, STATE_UPDATE
 - `useDraftSync` as the client draft-state layer (Zustand is toast-only)
 - Graceful degradation: system works without Pusher (polling fallback)
