@@ -12,12 +12,11 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import 'dotenv/config';
-import { getPoolSslOption } from '../src/lib/db-ssl';
+import { getPoolSslOption, isDisposableDatabaseUrl } from '../src/lib/db-ssl';
 
 const connectionString = process.env.DATABASE_URL || '';
 const isDisposableTarget =
-  process.env.E2E_SEED_CONFIRM === '1' ||
-  /localhost|127\.0\.0\.1|cricket_ci/.test(connectionString);
+  process.env.E2E_SEED_CONFIRM === '1' || isDisposableDatabaseUrl(connectionString);
 
 if (!connectionString) {
   throw new Error('DATABASE_URL must be set to seed E2E data');

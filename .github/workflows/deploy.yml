@@ -21,12 +21,6 @@ env:
   ADMIN_SECRET: ci-admin-secret-must-be-at-least-32-ch
   SESSION_SECRET: ci-session-secret-must-be-32-chars-x
   NEXT_PUBLIC_APP_URL: http://localhost:3000
-  PUSHER_APP_ID: ci-app-id
-  PUSHER_KEY: ci-pusher-key
-  PUSHER_SECRET: ci-pusher-secret
-  PUSHER_CLUSTER: mt1
-  NEXT_PUBLIC_PUSHER_KEY: ci-pusher-key
-  NEXT_PUBLIC_PUSHER_CLUSTER: mt1
 
 jobs:
   quality-check:

@@ -2,6 +2,19 @@ export type PoolSslOption =
   | false
   | { rejectUnauthorized: boolean; ca?: string };
 
+export function getConnectionHostname(connectionString: string): string {
+  try {
+    return new URL(connectionString).hostname;
+  } catch {
+    return '';
+  }
+}
+
+export function isDisposableDatabaseUrl(connectionString: string): boolean {
+  const host = getConnectionHostname(connectionString);
+  return host === 'localhost' || host === '127.0.0.1' || host === '::1';
+}
+
 /**
  * Decide whether the pg Pool should request TLS.
  *
@@ -25,15 +38,7 @@ export function getPoolSslOption(options: {
       : { rejectUnauthorized: false };
   }
 
-  let host = '';
-  try {
-    host = new URL(options.connectionString).hostname;
-  } catch {
-    host = '';
-  }
-
-  const isLocal = host === 'localhost' || host === '127.0.0.1' || host === '::1';
-  if (isLocal) {
+  if (isDisposableDatabaseUrl(options.connectionString)) {
     return false;
   }
 
