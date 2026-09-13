@@ -11,8 +11,8 @@
  * - utilities/animations.css - Keyframe animations and animation classes
  * - utilities/helpers.css - Scrollbar, touch, mobile optimizations
  * 
- * Component-specific CSS modules are located in:
- * - components/*.module.css
+ * Component-specific CSS is imported from:
+ * - components/*.css
  */
 
 @import "./globals/base.css";
@@ -21,7 +21,6 @@
 @import "./utilities/animations.css";
 @import "./utilities/helpers.css";
 @import "./components/PlayerChip.css";
-@import "./components/Forms.css";
 @import "./components/LoadingSpinner.css";
 @import "./components/AdminLayout.css";
 @import "./components/DraftBoard.css";

@@ -33,7 +33,7 @@ Built on Next.js 16 (App Router), TypeScript, Prisma, PostgreSQL, and Pusher.
 - Sportmonks Cricket API integration: leagues, seasons, squads, fixtures, match results. Scoring rules feed team and player leaderboards.
 - Two leaderboards: team standings (win/tie/no-result/loss points) and fantasy player rankings across each participant's drafted squad.
 - Admin and participant sessions use HMAC-signed cookies. Sensitive routes are rate-limited. A security event logger records auth failures.
-- Tests: Vitest for units and integration across the rule engine, state manager, API routes, and stores. Playwright covers the draft flow end-to-end.
+- Tests: Vitest for units and integration across the rule engine, state manager, and API routes. Playwright covers the draft flow end-to-end.
 - Vercel-ready. Cron entry for periodic sync, serverless Prisma adapter, pre-deploy readiness script.
 
 ---

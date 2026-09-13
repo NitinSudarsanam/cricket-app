@@ -103,7 +103,7 @@ These statements immediately tell the room: this person understands the real eng
 **Key points:**
 - Event-driven architecture: pick → broadcast → client store update
 - Single channel, typed events: PICK_MADE, ROUND_COMPLETE, DRAFT_COMPLETE, STATE_UPDATE
-- Zustand as the client-side state layer
+- `useDraftSync` as the client draft-state layer (Zustand is toast-only)
 - Graceful degradation: system works without Pusher (polling fallback)
 - Why NOT WebSocket server: serverless constraints
 
@@ -137,7 +137,7 @@ These statements immediately tell the room: this person understands the real eng
 
 **Key points:**
 - Testing trophy approach: more integration tests than unit tests
-- 331 unit/integration tests across 28 test files, 70%+ coverage
+- 321 unit/integration tests across 27 test files, 70%+ coverage
 - E2E: Playwright with auth state reuse (setup project pattern)
 - Mock factories for consistent test data
 - Rule engine tests: comprehensive constraint validation
@@ -214,7 +214,7 @@ Thread these through the entire presentation:
 >
 > *Third, **production security on serverless**. This runs on Next.js with serverless functions, which means no persistent server state for sessions or rate limiting. I had to design authentication and protection layers that work within those constraints.*
 >
-> *The stack is Next.js 16 with the App Router, React 19, PostgreSQL via Prisma 7, Pusher for real-time events, Zustand for client state, and Tailwind for styling. Let me walk you through the architecture."*
+> *The stack is Next.js 16 with the App Router, React 19, PostgreSQL via Prisma 7, Pusher for real-time events, hook-local draft state plus Zustand toasts, and Tailwind for styling. Let me walk you through the architecture."*
 
 ### Architecture Overview (1:30 — 4:30)
 
@@ -228,7 +228,7 @@ Thread these through the entire presentation:
 >
 > *The data layer is PostgreSQL on Supabase, accessed through Prisma 7 with the pg adapter. The schema has 15 models covering draft state, players, participants, picks, scoring, and leaderboards.*
 >
-> *The real-time layer is Pusher — a managed WebSocket service. When a pick is made, the API route writes to the database, then broadcasts the event to all connected clients through Pusher. Clients receive the event and update their Zustand store.*
+> *The real-time layer is Pusher — a managed WebSocket service. When a pick is made, the API route writes to the database, then broadcasts the event to all connected clients through Pusher. Clients receive the event and update local draft state through `useDraftSync`.*
 >
 > *Let me trace a single pick through the system to make this concrete:*
 >
@@ -254,9 +254,9 @@ Thread these through the entire presentation:
 
 > *"For real-time updates, I chose Pusher over building my own WebSocket server. The reason is infrastructure simplicity — this runs on serverless functions that can't hold persistent connections. Pusher gives me managed WebSocket infrastructure with a clean pub/sub API.*
 >
-> *The event model uses a single channel — 'draft-channel' — with typed events. When a pick is made, the server broadcasts PICK_MADE with the pick data and the full updated draft state. Clients receive this through a custom hook that subscribes to the channel and dispatches updates to the Zustand store.*
+> *The event model uses a single channel — 'draft-channel' — with typed events. When a pick is made, the server broadcasts PICK_MADE with the pick data and the full updated draft state. Clients receive this through `useDraftRealtime` / `useDraftSync`, which keep draft state in React state on the draft page.*
 >
-> *The Zustand store is the single source of truth on the client. It holds the draft state, available players, participant rosters, and exposes computed helpers like 'is it my turn?' and 'who's the current participant?'. When a Pusher event arrives, the store updates atomically, and React re-renders.*
+> *That hook state is the source of truth for the live draft UI: current draft state, available players, and connection status. Roster and turn helpers are derived from that state. Zustand is only used for toast notifications.*
 >
 > *I designed the system to degrade gracefully. If Pusher isn't configured — in development or if the service is down — the broadcast calls become no-ops. The app still works; you just need to refresh to see other people's picks. This was a deliberate choice to avoid coupling availability to a third-party service.*
 >
@@ -280,7 +280,7 @@ Thread these through the entire presentation:
 
 > *"I follow the testing trophy approach — prioritizing integration tests over pure unit tests, because the highest-value tests exercise real interactions between components.*
 >
-> *The suite has 331 tests across 28 test files. The rule engine alone has extensive tests: every constraint type — roster feasibility, team caps, early-round rules, mandatory roles, player pool sufficiency — plus the eligible player algorithm with look-ahead validation. I also have integration tests for the full draft flow, the snake order sequence, and edge cases.*
+> *The suite has 321 tests across 27 test files. The rule engine alone has extensive tests: every constraint type — roster feasibility, team caps, early-round rules, mandatory roles, player pool sufficiency — plus the eligible player algorithm with look-ahead validation. I also have integration tests for the full draft flow, the snake order sequence, and edge cases.*
 >
 > *For E2E, I use Playwright with a setup project pattern. Authentication happens once in a setup step, saves the session state to a file, and all subsequent test projects reuse that state. This avoids repeated logins that would trigger rate limiting and makes tests faster.*
 >
@@ -322,7 +322,7 @@ Thread these through the entire presentation:
 
 **Tier 2 — Medium depth (1-2 minutes):**
 
-4. **Real-time event architecture** — Pusher as a side-channel, Zustand as client state, graceful degradation.
+4. **Real-time event architecture** — Pusher as a side-channel, `useDraftSync` as client draft state, graceful degradation.
 
 5. **Authentication design** — HMAC signed cookies, timing-safe comparison, defense-in-depth.
 
@@ -356,7 +356,7 @@ If you're running long, cut the 90-second layer. If you're running short, expand
     │   (pages, layouts)        │
     │                           │
     ├── Client Components ──────┤
-    │   (Zustand + React)   ◄───┘ (WebSocket events)
+    │   (useDraftSync + React) ◄───┘ (WebSocket events)
     │                           
     ├── API Route Handlers ─────┐
     │   (serverless functions)  │──► Pusher broadcast
@@ -380,7 +380,7 @@ Client click
       → UPDATE draft state (advance index)
     → COMMIT
     → Pusher broadcast (PICK_MADE)
-  → All clients update Zustand store
+  → All clients update useDraftSync state
 ```
 
 **Diagram 3: Draft State Machine (show during 4:30-8:00)**
@@ -477,7 +477,7 @@ This closing does three things:
 | Question | Strong Answer Emphasizes |
 |---|---|
 | Why Next.js App Router over Pages Router? | Server Components for data fetching, streaming, layout nesting. Concrete benefits for this app. |
-| Why Zustand over Redux or Context? | Minimal API, no boilerplate, computed selectors, works outside React tree. |
+| Why not a global draft store? | Live draft state is page-local in `useDraftSync`. Zustand is toast-only. |
 | How would you decompose this into microservices? | Draft engine as a service, player data as a service, auth as a service. Explain boundaries. |
 | Why a monolith vs microservices? | Appropriate for the scale. Premature decomposition adds latency and operational cost. |
 
@@ -539,9 +539,9 @@ This closing does three things:
 ### If You Run Out of Time
 
 **Cut in this order:**
-1. Testing Strategy (mention "331 tests, testing trophy approach" in one sentence)
+1. Testing Strategy (mention "321 tests, testing trophy approach" in one sentence)
 2. Security deep-dive (condense to 60 seconds: "HMAC cookies, defense-in-depth, rate limiting")
-3. Real-time deep-dive (condense to 60 seconds: "Pusher for events, Zustand for state, graceful degradation")
+3. Real-time deep-dive (condense to 60 seconds: "Pusher for events, useDraftSync for draft state, graceful degradation")
 
 **Never cut:**
 - The opening problem statement (sets the frame)
