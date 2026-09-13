@@ -193,6 +193,7 @@ describe('useDraftPick', () => {
 
     expect(updateDraftState).not.toHaveBeenCalled();
     expect(toast.success).not.toHaveBeenCalled();
+    expect(refreshDraftState).toHaveBeenCalled();
   });
 
   it('refreshes instead of applying a late auto-pick after reset', async () => {

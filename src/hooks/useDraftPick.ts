@@ -34,10 +34,18 @@ export function useDraftPick({
   const [pickError, setPickError] = useState<string | null>(null);
   const isPickingPlayerRef = useRef(false);
   const lastGenerationRef = useRef(draftGeneration(draftState));
+  const committedGenerationRef = useRef(draftGeneration(draftState));
   const requestIdRef = useRef(0);
   const pickErrorToastIdRef = useRef<string | null>(null);
   const handlePlayerSelectRef = useRef<(player: Player) => Promise<void>>(async () => {});
   const toast = useToast();
+  const generation = draftGeneration(draftState);
+
+  if (generation !== lastGenerationRef.current) {
+    lastGenerationRef.current = generation;
+    requestIdRef.current += 1;
+    isPickingPlayerRef.current = false;
+  }
 
   const dismissPickErrorToast = useCallback(() => {
     if (pickErrorToastIdRef.current) {
@@ -52,14 +60,14 @@ export function useDraftPick({
   }, [dismissPickErrorToast]);
 
   useEffect(() => {
-    const next = draftGeneration(draftState);
-    if (next !== lastGenerationRef.current) {
-      setPickError(null);
-      dismissPickErrorToast();
-      requestIdRef.current += 1;
-      lastGenerationRef.current = next;
+    if (committedGenerationRef.current === generation) {
+      return;
     }
-  }, [draftState?.id, draftState?.status, draftState?.picks.length, dismissPickErrorToast]);
+    committedGenerationRef.current = generation;
+    setPickError(null);
+    setIsPickingPlayer(false);
+    dismissPickErrorToast();
+  }, [generation, dismissPickErrorToast]);
 
   const handlePlayerSelect = useCallback(
     async (player: Player) => {
@@ -80,6 +88,7 @@ export function useDraftPick({
         });
 
         if (requestId !== requestIdRef.current) {
+          await refreshDraftState();
           return;
         }
 
@@ -122,6 +131,7 @@ export function useDraftPick({
       currentParticipantId,
       updateDraftState,
       updateAvailablePlayers,
+      refreshDraftState,
       allPlayers,
       toast.error,
       toast.success,
