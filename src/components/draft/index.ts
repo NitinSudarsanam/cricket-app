@@ -15,3 +15,6 @@ export { PickHistory } from './PickHistory';
 export type { PickHistoryProps } from './PickHistory';
 
 export { DraftCompletion } from './DraftCompletion';
+
+export { DraftSessionBar } from './DraftSessionBar';
+export { DraftMobileRoster } from './DraftMobileRoster';
