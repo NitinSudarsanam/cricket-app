@@ -12,7 +12,7 @@ describe('DraftSessionBar', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }));
     Object.defineProperty(window, 'location', {
-      value: { href: '/draft' },
+      value: { href: '/other' },
       writable: true,
     });
   });

@@ -51,7 +51,11 @@ export function DraftMobileRoster({
 
       {open && (
         <div className="lg:hidden fixed inset-0 z-50 flex items-end">
-          <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose} />
+          <div
+            data-testid="mobile-roster-overlay"
+            className="absolute inset-0 bg-black bg-opacity-50"
+            onClick={onClose}
+          />
           <div
             id="draft-mobile-roster"
             role="dialog"

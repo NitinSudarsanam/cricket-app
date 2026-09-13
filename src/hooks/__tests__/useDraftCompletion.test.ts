@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { useDraftCompletion } from '@/hooks/useDraftCompletion';
 import { createDraftConfig, createDraftState } from '@/__tests__/helpers/mock-factories';
 
@@ -51,22 +51,60 @@ describe('useDraftCompletion', () => {
     expect(result.current.draftResults).toEqual(snapshot);
   });
 
-  it('does not retry when the results request fails', async () => {
+  it('does not retry when the results request fails until retry or draft id changes', async () => {
     vi.mocked(fetch).mockResolvedValue({
       json: async () => ({ success: false, error: 'boom' }),
     } as Response);
 
-    const { result } = renderHook(() =>
-      useDraftCompletion(createDraftState({ id: 'draft-1', status: 'completed' }))
+    const { result, rerender } = renderHook(
+      ({ state }) => useDraftCompletion(state),
+      { initialProps: { state: createDraftState({ id: 'draft-1', status: 'completed' }) } }
     );
 
     await waitFor(() => {
       expect(result.current.fetchFailed).toBe(true);
     });
 
+    rerender({ state: createDraftState({ id: 'draft-1', status: 'completed' }) });
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(fetch).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      result.current.retryResults();
+    });
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledTimes(2);
+    });
+
+    rerender({ state: createDraftState({ id: 'draft-2', status: 'completed' }) });
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledTimes(3);
+    });
     expect(result.current.showCompletionModal).toBe(false);
     expect(result.current.draftResults).toBeNull();
+  });
+
+  it('clears the completion modal when the draft is reset', async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      json: async () => ({ success: true, data: snapshot }),
+    } as Response);
+
+    const { result, rerender } = renderHook(
+      ({ state }) => useDraftCompletion(state),
+      { initialProps: { state: createDraftState({ id: 'draft-1', status: 'completed' }) } }
+    );
+
+    await waitFor(() => {
+      expect(result.current.showCompletionModal).toBe(true);
+    });
+
+    rerender({ state: createDraftState({ id: 'draft-1', status: 'not_started', picks: [] }) });
+
+    expect(result.current.showCompletionModal).toBe(false);
+    expect(result.current.draftResults).toBeNull();
+    expect(result.current.fetchFailed).toBe(false);
   });
 
   it('does not retry after a thrown results fetch', async () => {

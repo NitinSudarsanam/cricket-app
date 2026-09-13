@@ -30,14 +30,17 @@ export function useDraftPick({
   const [pickError, setPickError] = useState<string | null>(null);
   const isPickingPlayerRef = useRef(false);
   const lastPickCountRef = useRef(draftState?.picks.length ?? 0);
+  const requestIdRef = useRef(0);
+  const handlePlayerSelectRef = useRef<(player: Player) => Promise<void>>(async () => {});
   const toast = useToast();
 
   const clearPickError = useCallback(() => setPickError(null), []);
 
   useEffect(() => {
     const next = draftState?.picks.length ?? 0;
-    if (next > lastPickCountRef.current) {
+    if (next !== lastPickCountRef.current) {
       setPickError(null);
+      requestIdRef.current += 1;
     }
     lastPickCountRef.current = next;
   }, [draftState?.picks.length]);
@@ -51,12 +54,17 @@ export function useDraftPick({
       isPickingPlayerRef.current = true;
       setIsPickingPlayer(true);
       setPickError(null);
+      const requestId = ++requestIdRef.current;
 
       try {
         const result = await makePick({
           participantId: currentParticipantId,
           playerId: player.id,
         });
+
+        if (requestId !== requestIdRef.current) {
+          return;
+        }
 
         if (!result.success) {
           const errorMessage =
@@ -67,7 +75,7 @@ export function useDraftPick({
           setPickError(errorMessage);
           toast.error(errorMessage, {
             duration: 5000,
-            onRetry: () => handlePlayerSelect(player),
+            onRetry: () => handlePlayerSelectRef.current(player),
           });
         } else if (result.data?.draftState) {
           updateDraftState(result.data.draftState);
@@ -75,12 +83,15 @@ export function useDraftPick({
           toast.success(`Successfully drafted ${player.name}!`, { duration: 2000 });
         }
       } catch (error) {
+        if (requestId !== requestIdRef.current) {
+          return;
+        }
         console.error('Error making pick:', error);
         const errorMessage = 'Network error. Please check your connection and try again.';
         setPickError(errorMessage);
         toast.error(errorMessage, {
           duration: 7000,
-          onRetry: () => handlePlayerSelect(player),
+          onRetry: () => handlePlayerSelectRef.current(player),
         });
       } finally {
         isPickingPlayerRef.current = false;
@@ -99,6 +110,8 @@ export function useDraftPick({
       toast.success,
     ]
   );
+
+  handlePlayerSelectRef.current = handlePlayerSelect;
 
   const handlePlayerDrop = useCallback(
     (playerId: string) => {

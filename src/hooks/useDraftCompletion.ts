@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { DraftState } from '@/types';
 import type { DraftResultsSnapshot } from '@/lib/draft-results-export';
 
@@ -9,9 +9,14 @@ export function useDraftCompletion(draftState: DraftState | null) {
   const [draftResults, setDraftResults] = useState<DraftResultsSnapshot | null>(null);
   const [loadingResults, setLoadingResults] = useState(false);
   const [fetchFailed, setFetchFailed] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     if (draftState?.status !== 'completed') {
+      setShowCompletionModal(false);
+      setDraftResults(null);
+      setFetchFailed(false);
+      setLoadingResults(false);
       return;
     }
 
@@ -47,13 +52,19 @@ export function useDraftCompletion(draftState: DraftState | null) {
       cancelled = true;
       controller.abort();
     };
-  }, [draftState?.status, draftState?.id]);
+  }, [draftState?.status, draftState?.id, retryCount]);
+
+  const retryResults = useCallback(() => {
+    setFetchFailed(false);
+    setRetryCount((count) => count + 1);
+  }, []);
 
   return {
     showCompletionModal,
     draftResults,
     loadingResults,
     fetchFailed,
+    retryResults,
     closeCompletionModal: () => setShowCompletionModal(false),
   };
 }

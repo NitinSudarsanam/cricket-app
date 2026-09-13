@@ -108,6 +108,89 @@ describe('useDraftPick', () => {
     );
   });
 
+  it('clears a stale pick error when an admin reset rewinds picks', async () => {
+    vi.mocked(makePick).mockResolvedValue({
+      success: false,
+      error: 'Network timeout',
+    } as never);
+
+    const pickedState = createDraftState({
+      id: draftState.id,
+      picks: [{ round: 1, pickNumber: 1, participantId: 'p1', playerId: player.id, timestamp: new Date() }],
+    });
+
+    const { result, rerender } = renderHook(
+      ({ state }) =>
+        useDraftPick({
+          draftState: state,
+          isMyTurn: true,
+          isDraftActive: true,
+          currentParticipantId: 'p1',
+          allPlayers: [player],
+          updateDraftState,
+          updateAvailablePlayers,
+          refreshDraftState,
+        }),
+      { initialProps: { state: pickedState } }
+    );
+
+    await act(async () => {
+      await result.current.handlePlayerSelect(player);
+    });
+    expect(result.current.pickError).toBe('Network timeout');
+
+    rerender({
+      state: createDraftState({ id: draftState.id, picks: [], status: 'not_started' }),
+    });
+
+    expect(result.current.pickError).toBeNull();
+  });
+
+  it('ignores a late pick failure after the board has already advanced', async () => {
+    let resolvePick: (value: unknown) => void = () => undefined;
+    vi.mocked(makePick).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolvePick = resolve;
+        }) as never
+    );
+
+    const { result, rerender } = renderHook(
+      ({ state }) =>
+        useDraftPick({
+          draftState: state,
+          isMyTurn: true,
+          isDraftActive: true,
+          currentParticipantId: 'p1',
+          allPlayers: [player],
+          updateDraftState,
+          updateAvailablePlayers,
+          refreshDraftState,
+        }),
+      { initialProps: { state: draftState } }
+    );
+
+    let pickPromise: Promise<void> = Promise.resolve();
+    act(() => {
+      pickPromise = result.current.handlePlayerSelect(player);
+    });
+
+    rerender({
+      state: createDraftState({
+        id: draftState.id,
+        picks: [{ round: 1, pickNumber: 1, participantId: 'p1', playerId: player.id, timestamp: new Date() }],
+      }),
+    });
+
+    await act(async () => {
+      resolvePick({ success: false, error: 'too late' });
+      await pickPromise;
+    });
+
+    expect(result.current.pickError).toBeNull();
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
   it('clears a stale pick error when pick count advances from sync', async () => {
     vi.mocked(makePick).mockResolvedValue({
       success: false,
@@ -165,6 +248,10 @@ describe('useDraftPick', () => {
   });
 
   it('applies an auto-pick and clears the local pick error', async () => {
+    vi.mocked(makePick).mockResolvedValue({
+      success: false,
+      error: 'Clock expired',
+    } as never);
     const nextState = createDraftState({
       picks: [{ round: 1, pickNumber: 1, participantId: 'p2', playerId: player.id, timestamp: new Date() }],
     });
@@ -176,7 +263,11 @@ describe('useDraftPick', () => {
     } as Response);
 
     const { result } = renderPick();
-    result.current.clearPickError();
+
+    await act(async () => {
+      await result.current.handlePlayerSelect(player);
+    });
+    expect(result.current.pickError).toBe('Clock expired');
 
     await act(async () => {
       await result.current.handleTimerExpire();
@@ -185,6 +276,7 @@ describe('useDraftPick', () => {
     expect(fetch).toHaveBeenCalledWith('/api/draft/auto-pick', expect.objectContaining({ method: 'POST' }));
     expect(updateDraftState).toHaveBeenCalledWith(nextState);
     expect(toast.info).toHaveBeenCalledWith('Auto-picked Kohli', { duration: 3000 });
+    expect(result.current.pickError).toBeNull();
   });
 
   it('refreshes draft state when auto-pick is not applied', async () => {

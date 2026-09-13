@@ -47,7 +47,11 @@ describe('DraftMobileRoster', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
 
     rerender(<DraftMobileRoster {...props} open onClose={onClose} />);
-    await userEvent.keyboard('{Escape}');
+    await userEvent.click(screen.getByTestId('mobile-roster-overlay'));
     expect(onClose).toHaveBeenCalledTimes(2);
+
+    rerender(<DraftMobileRoster {...props} open onClose={onClose} />);
+    await userEvent.keyboard('{Escape}');
+    expect(onClose).toHaveBeenCalledTimes(3);
   });
 });
