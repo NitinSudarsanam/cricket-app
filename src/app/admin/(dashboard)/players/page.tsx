@@ -1,12 +1,8 @@
-import { AdminLayout, PlayerManagement } from '@/components/admin';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { PlayerManagement } from '@/components/admin';
+import { prisma } from '@/lib/db';
+import { prismaPlayerToPlayer } from '@/lib/model-mappers';
 
-export default function PlayersPage() {
-  return (
-    <ErrorBoundary>
-      <AdminLayout>
-        <PlayerManagement />
-      </AdminLayout>
-    </ErrorBoundary>
-  );
+export default async function PlayersPage() {
+  const players = await prisma.player.findMany({ orderBy: { name: 'asc' } });
+  return <PlayerManagement initialPlayers={players.map(prismaPlayerToPlayer)} />;
 }

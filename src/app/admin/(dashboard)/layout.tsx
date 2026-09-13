@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getAdminSession } from '@/lib/admin-session';
+import { AdminLayout } from '@/components/admin';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,5 +21,9 @@ export default async function AdminDashboardLayout({
     redirect('/admin/login');
   }
 
-  return <>{children}</>;
+  return (
+    <AdminLayout>
+      <ErrorBoundary>{children}</ErrorBoundary>
+    </AdminLayout>
+  );
 }

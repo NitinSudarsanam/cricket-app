@@ -21,9 +21,13 @@ interface ImportResult {
   errors: string[];
 }
 
-export function PlayerManagement() {
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [loading, setLoading] = useState(true);
+interface PlayerManagementProps {
+  initialPlayers?: Player[];
+}
+
+export function PlayerManagement({ initialPlayers }: PlayerManagementProps) {
+  const [players, setPlayers] = useState<Player[]>(initialPlayers ?? []);
+  const [loading, setLoading] = useState(initialPlayers === undefined);
   const [error, setError] = useState<string | null>(null);
   const toast = useToast();
   
@@ -54,8 +58,10 @@ export function PlayerManagement() {
   });
 
   useEffect(() => {
-    fetchPlayers();
-  }, []);
+    if (initialPlayers === undefined) {
+      fetchPlayers();
+    }
+  }, [initialPlayers]);
 
   const fetchPlayers = async () => {
     try {

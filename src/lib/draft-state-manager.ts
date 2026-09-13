@@ -157,6 +157,50 @@ export async function getActiveDraftState(): Promise<DraftState | null> {
 }
 
 /**
+ * Monitor/admin snapshot: prefer the live draft, else the newest row by createdAt.
+ * Matches GET /api/draft/state so a reset row with null startedAt cannot hide
+ * an in-progress draft that was started afterwards.
+ */
+export async function getLatestDraftState(): Promise<DraftState | null> {
+  const active = await getActiveDraftState();
+  if (active) {
+    return active;
+  }
+
+  const draftState = await prisma.draftState.findFirst({
+    orderBy: {
+      createdAt: 'desc',
+    },
+    include: {
+      draftConfig: true,
+      draftOrders: {
+        include: {
+          participant: true,
+        },
+        orderBy: {
+          position: 'asc',
+        },
+      },
+      picks: {
+        include: {
+          player: true,
+          participant: true,
+        },
+        orderBy: {
+          pickNumber: 'asc',
+        },
+      },
+    },
+  });
+
+  if (!draftState) {
+    return null;
+  }
+
+  return transformToDraftState(draftState);
+}
+
+/**
  * Add a pick to the draft state
  * 
  * @param draftStateId - The ID of the draft state
