@@ -95,14 +95,9 @@ export async function getPlayerLeaderboard(
   const sort = options.sort ?? 'points';
   const orderByPoints = sort === '-points' ? 'asc' : 'desc';
 
-  const where: { seasonId: string | null } = {
+  const where = {
     seasonId: options.seasonId,
   };
-
-  const orderBy =
-    sort === 'name'
-      ? { player: { name: 'asc' as const } }
-      : { points: orderByPoints as 'asc' | 'desc' };
 
   const rows = await prisma.playerScore.findMany({
     where,

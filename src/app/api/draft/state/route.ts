@@ -143,16 +143,10 @@ export async function GET(request: NextRequest) {
     // Get current participant
     const currentParticipantId = getCurrentParticipantId(
       {
-        id: draftState.id,
         currentRound: draftState.currentRound,
         currentPickIndex: draftState.currentPickIndex,
-        picks: [],
         participantOrder,
         draftOrderType: draftOrder,
-        status: draftState.status as any,
-        startedAt: draftState.startedAt || undefined,
-        completedAt: draftState.completedAt || undefined,
-        draftConfigId: draftState.draftConfigId
       },
       draftOrder
     );

@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
         earlyMinBat: 2,
         earlyMinBowl: 2,
         isLocked: false,
+        pickTimeoutSeconds: 60,
         createdAt: new Date(),
         updatedAt: new Date()
       };

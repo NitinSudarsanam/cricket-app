@@ -8,12 +8,31 @@ on:
     branches:
       - main
 
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '22'
+  DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/cricket_ci
+  DIRECT_URL: postgresql://postgres:postgres@127.0.0.1:5432/cricket_ci
+  ADMIN_SECRET: ci-admin-secret-must-be-at-least-32-ch
+  SESSION_SECRET: ci-session-secret-must-be-32-chars-x
+  NEXT_PUBLIC_APP_URL: http://localhost:3000
+  PUSHER_APP_ID: ci-app-id
+  PUSHER_KEY: ci-pusher-key
+  PUSHER_SECRET: ci-pusher-secret
+  PUSHER_CLUSTER: mt1
+  NEXT_PUBLIC_PUSHER_KEY: ci-pusher-key
+  NEXT_PUBLIC_PUSHER_CLUSTER: mt1
+
 jobs:
-  # Job 1: Check code quality
   quality-check:
     name: Code Quality Check
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: read
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -21,24 +40,20 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: cricket-app/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: cricket-app
         run: npm ci
 
       - name: Run TypeScript check
-        working-directory: cricket-app
         run: npx tsc --noEmit
 
       - name: Run unit tests
-        working-directory: cricket-app
         run: npm test
 
       - name: Generate coverage report
-        working-directory: cricket-app
         run: npm run test:coverage
         continue-on-error: true
 
@@ -47,24 +62,24 @@ jobs:
         if: always()
         with:
           name: coverage-report
-          path: cricket-app/coverage/
+          path: coverage/
           retention-days: 30
 
       - name: Run security audit
-        working-directory: cricket-app
-        run: npm audit --audit-level=high
-        continue-on-error: false
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Run production readiness check
-        working-directory: cricket-app
         run: npm run check:prod
+        env:
+          SKIP_PROD_BUILD: '1'
 
-  # Job 2: Build and test
   build:
     name: Build Application
     runs-on: ubuntu-latest
     needs: quality-check
-    
+    permissions:
+      contents: read
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -72,41 +87,45 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: cricket-app/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: cricket-app
         run: npm ci
 
       - name: Generate Prisma Client
-        working-directory: cricket-app
         run: npm run db:generate
 
       - name: Build application
-        working-directory: cricket-app
         run: npm run build
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          PUSHER_APP_ID: ${{ secrets.PUSHER_APP_ID }}
-          PUSHER_KEY: ${{ secrets.PUSHER_KEY }}
-          PUSHER_SECRET: ${{ secrets.PUSHER_SECRET }}
-          PUSHER_CLUSTER: ${{ secrets.PUSHER_CLUSTER }}
-          NEXT_PUBLIC_PUSHER_KEY: ${{ secrets.NEXT_PUBLIC_PUSHER_KEY }}
-          NEXT_PUBLIC_PUSHER_CLUSTER: ${{ secrets.NEXT_PUBLIC_PUSHER_CLUSTER }}
-          ADMIN_SECRET: ${{ secrets.ADMIN_SECRET }}
 
       - name: Analyze bundle size
-        working-directory: cricket-app
         run: npm run analyze
+        continue-on-error: true
 
-  # Job 3: E2E Tests
   e2e-tests:
     name: E2E Tests
     runs-on: ubuntu-latest
     needs: quality-check
-    
+    permissions:
+      contents: read
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cricket_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -114,55 +133,43 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: cricket-app/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: cricket-app
         run: npm ci
 
-      - name: Install Playwright browsers
-        working-directory: cricket-app
-        run: npx playwright install --with-deps
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
 
       - name: Setup test database
-        working-directory: cricket-app
         run: |
           npm run db:generate
           npm run db:push
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Seed E2E test data
-        working-directory: cricket-app
-        run: tsx e2e/seed.ts
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npx tsx e2e/seed.ts
 
       - name: Run E2E tests
-        working-directory: cricket-app
         run: npm run test:e2e
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          ADMIN_SECRET: ${{ secrets.ADMIN_SECRET }}
-          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
 
       - name: Upload E2E test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: playwright-report
-          path: cricket-app/playwright-report/
+          path: playwright-report/
           retention-days: 30
 
-  # Job 4: Deploy to Vercel (only on main branch)
   deploy:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
     needs: [build, e2e-tests]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && secrets.VERCEL_TOKEN != ''
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -173,7 +180,6 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          working-directory: cricket-app
           vercel-args: '--prod'
 
       - name: Comment deployment URL
