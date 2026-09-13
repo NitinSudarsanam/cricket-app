@@ -86,6 +86,75 @@ describe('useDraftCompletion', () => {
     expect(result.current.draftResults).toBeNull();
   });
 
+  it('clears a successful completion modal when the draft id changes', async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce({
+        json: async () => ({ success: true, data: snapshot }),
+      } as Response)
+      .mockResolvedValueOnce({
+        json: async () => ({ success: false, error: 'missing' }),
+      } as Response);
+
+    const { result, rerender } = renderHook(
+      ({ state }) => useDraftCompletion(state),
+      { initialProps: { state: createDraftState({ id: 'draft-1', status: 'completed' }) } }
+    );
+
+    await waitFor(() => {
+      expect(result.current.showCompletionModal).toBe(true);
+    });
+
+    rerender({ state: createDraftState({ id: 'draft-2', status: 'completed' }) });
+
+    expect(result.current.showCompletionModal).toBe(false);
+    expect(result.current.draftResults).toBeNull();
+
+    await waitFor(() => {
+      expect(result.current.fetchFailed).toBe(true);
+    });
+    expect(result.current.showCompletionModal).toBe(false);
+  });
+
+  it('keeps the retry banner visible while a retry is in flight', async () => {
+    let resolveRetry: (value: unknown) => void = () => undefined;
+    vi.mocked(fetch)
+      .mockResolvedValueOnce({
+        json: async () => ({ success: false, error: 'boom' }),
+      } as Response)
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveRetry = resolve;
+          }) as never
+      );
+
+    const { result } = renderHook(() =>
+      useDraftCompletion(createDraftState({ id: 'draft-1', status: 'completed' }))
+    );
+
+    await waitFor(() => {
+      expect(result.current.fetchFailed).toBe(true);
+    });
+
+    act(() => {
+      result.current.retryResults();
+    });
+
+    await waitFor(() => {
+      expect(result.current.loadingResults).toBe(true);
+    });
+    expect(result.current.fetchFailed).toBe(true);
+
+    await act(async () => {
+      resolveRetry({ json: async () => ({ success: true, data: snapshot }) });
+    });
+
+    await waitFor(() => {
+      expect(result.current.showCompletionModal).toBe(true);
+    });
+    expect(result.current.fetchFailed).toBe(false);
+  });
+
   it('clears the completion modal when the draft is reset', async () => {
     vi.mocked(fetch).mockResolvedValue({
       json: async () => ({ success: true, data: snapshot }),

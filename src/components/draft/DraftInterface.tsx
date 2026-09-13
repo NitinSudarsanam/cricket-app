@@ -92,8 +92,14 @@ export function DraftInterface({
     refreshDraftState,
   });
 
-  const { showCompletionModal, draftResults, fetchFailed, retryResults, closeCompletionModal } =
-    useDraftCompletion(draftState);
+  const {
+    showCompletionModal,
+    draftResults,
+    loadingResults,
+    fetchFailed,
+    retryResults,
+    closeCompletionModal,
+  } = useDraftCompletion(draftState);
 
   const allDraftedPlayerIds = draftState ? draftState.picks.map((p) => p.playerId) : [];
   const eligiblePlayerIds =
@@ -202,8 +208,13 @@ export function DraftInterface({
           <div className="fixed bottom-32 left-1/2 transform -translate-x-1/2 z-50 max-w-md w-full px-4">
             <Alert variant="warning" className="flex items-center justify-between gap-3 shadow-lg">
               <span>Could not load draft results.</span>
-              <button type="button" onClick={retryResults} className="underline font-semibold">
-                Retry
+              <button
+                type="button"
+                onClick={retryResults}
+                disabled={loadingResults}
+                className="underline font-semibold disabled:no-underline disabled:opacity-70"
+              >
+                {loadingResults ? 'Retrying...' : 'Retry'}
               </button>
             </Alert>
           </div>

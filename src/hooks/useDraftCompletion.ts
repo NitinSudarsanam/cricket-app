@@ -23,8 +23,9 @@ export function useDraftCompletion(draftState: DraftState | null) {
     const controller = new AbortController();
     let cancelled = false;
 
+    setDraftResults(null);
+    setShowCompletionModal(false);
     setLoadingResults(true);
-    setFetchFailed(false);
 
     fetch(`/api/draft/results?draftStateId=${draftState.id}`, { signal: controller.signal })
       .then((res) => res.json())
@@ -33,6 +34,7 @@ export function useDraftCompletion(draftState: DraftState | null) {
         if (result.success) {
           setDraftResults(result.data);
           setShowCompletionModal(true);
+          setFetchFailed(false);
         } else {
           setFetchFailed(true);
         }
@@ -55,7 +57,6 @@ export function useDraftCompletion(draftState: DraftState | null) {
   }, [draftState?.status, draftState?.id, retryCount]);
 
   const retryResults = useCallback(() => {
-    setFetchFailed(false);
     setRetryCount((count) => count + 1);
   }, []);
 
