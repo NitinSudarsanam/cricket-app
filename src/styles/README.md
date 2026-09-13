@@ -14,10 +14,12 @@ src/styles/
 │   ├── animations.css          # Keyframe animations (toasts, slides, pulse)
 │   ├── helpers.css             # Scrollbar, touch, mobile optimizations
 │   └── team-colors.css         # IPL team color utility classes
-└── components/                  # Component-specific CSS modules
-    ├── FormInput.module.css
-    ├── LoadingSpinner.module.css
-    └── PlayerChip.module.css
+└── components/                  # Component-specific CSS
+    ├── AdminLayout.css
+    ├── DraftBoard.css
+    ├── DraftMonitor.css
+    ├── LoadingSpinner.css
+    └── PlayerChip.css
 ```
 
 ## File Organization
@@ -123,17 +125,13 @@ import "@/styles/index.css";
 - `.touch-manipulation` - Optimized touch interactions
 - Mobile-specific optimizations (viewport, form inputs, safe area insets)
 
-### Component CSS Modules
+### Component CSS
 
-Component-specific styles using CSS Modules for scoped styling:
-- **`PlayerChip.module.css`** - Player card component styles
-- **`LoadingSpinner.module.css`** - Loading spinner animations
-- **`FormInput.module.css`** - Form input field styles
+Global component styles imported from `src/styles/index.css`:
+- **`PlayerChip.css`** - Player card component styles
+- **`LoadingSpinner.css`** - Loading spinner animations
 
-Import CSS modules in components like this:
-```typescript
-import styles from '@/styles/components/ComponentName.module.css';
-```
+Form layout uses `.form-group` in `utilities/components.css`. There is no CSS Modules layer.
 
 ## Styling Methodology
 
@@ -149,12 +147,7 @@ This application uses a **hybrid styling approach**:
    - Configured via `@theme inline` in `globals/base.css`
    - No separate `tailwind.config.js` file needed
 
-3. **CSS Modules** (Secondary) - For complex, reusable component styles
-   - Scoped styles that won't clash
-   - Used sparingly for components with intricate styling needs
-   - Located in `components/*.module.css`
-
-4. **CSS Custom Properties** - For design tokens
+3. **CSS Custom Properties** - For design tokens
    - Defined in `globals/base.css`
    - Used throughout for consistency (colors, spacing, radius)
    - Enables theme switching if needed
@@ -205,10 +198,9 @@ Add it to the appropriate file in `utilities/`:
 - Helper/misc → `helpers.css`
 - Component pattern → `components.css`
 
-### For a new component with CSS Module:
-1. Create `ComponentName.module.css` in `components/`
-2. Import it: `import styles from '@/styles/components/ComponentName.module.css'`
-3. Use scoped classes: `<div className={styles.container}>`
+### For a new component stylesheet:
+1. Create `ComponentName.css` in `components/`
+2. Import it from `src/styles/index.css`
 
 ### For a new design token:
 Add CSS custom property to `globals/base.css` in the `:root` block.
@@ -217,14 +209,10 @@ Add CSS custom property to `globals/base.css` in the `:root` block.
 
 1. **Prefer semantic utilities** for common patterns (buttons, cards, alerts, badges)
 2. **Use inline Tailwind** for one-off custom layouts and spacing
-3. **Use CSS Modules** only when:
-   - Component has complex, unique styling
-   - Animation timing needs to be coordinated
-   - Styles are easier to maintain separate from JSX
-4. **Use CSS custom properties** for values that might change or theme
-5. **Keep files focused** - each file has a single, clear purpose
-6. **Document complex styles** with comments in CSS files
-7. **Combine semantic classes with Tailwind** when needed:
+3. **Use CSS custom properties** for values that might change or theme
+4. **Keep files focused** - each file has a single, clear purpose
+5. **Document complex styles** with comments in CSS files
+6. **Combine semantic classes with Tailwind** when needed:
    ```tsx
    <div className="card-padded mt-6 lg:col-span-2">
    ```

@@ -110,17 +110,6 @@ export default async function DraftPage({
     );
   }
 
-  const playersMapped = players.map((p) => ({
-    id: p.id,
-    name: p.name,
-    team: p.team,
-    role: p.role,
-    isForeign: p.isForeign,
-    metadata: p.metadata ?? undefined,
-    createdAt: p.createdAt,
-    updatedAt: p.updatedAt,
-  }));
-
   const participants = participantsList.map((p) => ({
     id: p.id,
     name: p.name,

@@ -33,7 +33,7 @@ Built on Next.js 16 (App Router), TypeScript, Prisma, PostgreSQL, and Pusher.
 - Sportmonks Cricket API integration: leagues, seasons, squads, fixtures, match results. Scoring rules feed team and player leaderboards.
 - Two leaderboards: team standings (win/tie/no-result/loss points) and fantasy player rankings across each participant's drafted squad.
 - Admin and participant sessions use HMAC-signed cookies. Sensitive routes are rate-limited. A security event logger records auth failures.
-- Tests: Vitest for units and integration across the rule engine, state manager, API routes, and stores. Playwright covers the draft flow end-to-end.
+- Tests: Vitest for units and integration across the rule engine, state manager, and API routes. Playwright covers the draft flow end-to-end.
 - Vercel-ready. Cron entry for periodic sync, serverless Prisma adapter, pre-deploy readiness script.
 
 ---
@@ -91,7 +91,7 @@ Built on Next.js 16 (App Router), TypeScript, Prisma, PostgreSQL, and Pusher.
 | Database       | PostgreSQL (Supabase in production)                 |
 | ORM            | Prisma 7 with `@prisma/adapter-pg`                  |
 | Styling        | Tailwind CSS 4                                      |
-| State          | Zustand                                             |
+| State          | `useDraftSync` (draft) + Zustand (toasts)           |
 | Real-time      | Pusher Channels (optional)                          |
 | External API   | Sportmonks Cricket API v2.0                         |
 | Unit tests     | Vitest + Testing Library + jsdom                    |
@@ -319,10 +319,10 @@ cricket-app/
 │   │   ├── api/              # REST endpoints (draft, auth, leaderboard, sync, ...)
 │   │   └── draft/            # Participant-facing draft UI
 │   ├── components/           # UI + feature components (admin/, draft/, ui/)
-│   ├── hooks/                # React hooks (draft realtime, toast, store sync)
+│   ├── hooks/                # React hooks (draft realtime, toast)
 │   ├── lib/                  # Core libs: rule engine, state manager, auth, rate limit, sportmonks client
 │   ├── services/             # Domain services: ingestion, scoring, ranking, leaderboard
-│   ├── stores/               # Zustand stores (draft, toast, UI)
+│   ├── stores/               # Zustand stores (toast)
 │   ├── styles/               # Tailwind entry + component CSS
 │   └── middleware.ts         # Route protection
 ├── prisma/
