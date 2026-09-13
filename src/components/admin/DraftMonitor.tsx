@@ -1,137 +1,37 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { DraftState, Player, DraftStatus } from '@/types';
 import { getCurrentParticipantId } from '@/lib/draft-order';
+import { buildParticipantRosters, type ParticipantWithRoster } from '@/lib/participant-rosters';
+import { useDraftSync } from '@/hooks/useDraftSync';
 import { Modal } from '@/components/Modal';
-import { Skeleton } from '@/components/Skeleton';
 import { PlayerChip } from '@/components/PlayerChip';
 import { Button, Badge, Card, StatDisplay } from '@/components/ui';
 
-interface ParticipantWithRoster {
-  id: string;
-  name: string;
-  email?: string;
-  roster: Player[];
-  teamCount: Record<string, number>;
-  roleCount: Record<string, number>;
+export interface DraftMonitorProps {
+  initialDraftState: DraftState | null;
+  initialPlayers: Player[];
+  initialParticipants: Array<{ id: string; name: string; email?: string | null }>;
 }
 
-export function DraftMonitor() {
-  const [draftState, setDraftState] = useState<DraftState | null>(null);
-  const [participants, setParticipants] = useState<ParticipantWithRoster[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export function DraftMonitor({
+  initialDraftState,
+  initialPlayers,
+  initialParticipants,
+}: DraftMonitorProps) {
+  const { draftState, refreshDraftState, error } = useDraftSync({
+    initialDraftState,
+    initialPlayers,
+    enabled: true,
+  });
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showStartModal, setShowStartModal] = useState(false);
 
-  useEffect(() => {
-    fetchDraftData();
-    
-    // Poll for updates every 5 seconds
-    const interval = setInterval(fetchDraftData, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchDraftData = async () => {
-    try {
-      // Fetch draft state - handle all possible failure cases
-      try {
-        const stateResponse = await fetch('/api/draft/state');
-        if (stateResponse.ok) {
-          const stateResult = await stateResponse.json();
-          if (stateResult?.success && stateResult?.data) {
-            setDraftState(stateResult.data);
-          } else {
-            setDraftState(null);
-          }
-        } else {
-          setDraftState(null);
-        }
-      } catch (stateErr) {
-        console.error('Failed to fetch draft state:', stateErr);
-        setDraftState(null);
-      }
-
-      // Fetch participants - handle all possible failure cases
-      try {
-        const participantsResponse = await fetch('/api/participants');
-        if (participantsResponse.ok) {
-          const participantsResult = await participantsResponse.json();
-          
-          // Ensure we have a valid array
-          const participantsData = 
-            participantsResult?.success && 
-            Array.isArray(participantsResult?.data) && 
-            participantsResult.data.length > 0
-              ? participantsResult.data 
-              : [];
-          
-          if (participantsData.length === 0) {
-            setParticipants([]);
-          } else {
-            // Fetch roster for each participant with full error handling
-            const participantsWithRosters = await Promise.all(
-              participantsData.map(async (p: any) => {
-                // Ensure participant has required fields
-                if (!p || !p.id) {
-                  return null;
-                }
-                
-                try {
-                  const rosterResponse = await fetch(`/api/participants/${p.id}/roster`);
-                  if (rosterResponse.ok) {
-                    const rosterResult = await rosterResponse.json();
-                    if (rosterResult?.success && rosterResult?.data) {
-                      // Merge participant data with roster data
-                      return {
-                        id: p.id,
-                        name: p.name || rosterResult.data.name || 'Unknown',
-                        email: p.email || rosterResult.data.email || undefined,
-                        roster: Array.isArray(rosterResult.data.roster) ? rosterResult.data.roster : [],
-                        teamCount: rosterResult.data.teamCount || {},
-                        roleCount: rosterResult.data.roleCount || {},
-                      };
-                    }
-                  }
-                } catch (err) {
-                  console.error(`Failed to fetch roster for ${p.id}:`, err);
-                }
-                
-                // Return safe default with participant data
-                return {
-                  id: p.id,
-                  name: p.name || 'Unknown',
-                  email: p.email || undefined,
-                  roster: [],
-                  teamCount: {},
-                  roleCount: {},
-                };
-              })
-            );
-            
-            // Filter out any null values and set participants
-            setParticipants(participantsWithRosters.filter((p): p is ParticipantWithRoster => p !== null));
-          }
-        } else {
-          setParticipants([]);
-        }
-      } catch (participantsErr) {
-        console.error('Failed to fetch participants:', participantsErr);
-        setParticipants([]);
-      }
-
-      setError(null);
-    } catch (err) {
-      console.error('Unexpected error in fetchDraftData:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load draft data');
-      // Ensure we have safe defaults even on error
-      setDraftState(null);
-      setParticipants([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const participants = useMemo(
+    () => buildParticipantRosters(initialParticipants, draftState, initialPlayers),
+    [initialParticipants, draftState, initialPlayers]
+  );
 
   const handlePauseDraft = async () => {
     if (!draftState?.id) return;
@@ -146,7 +46,7 @@ export function DraftMonitor() {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to pause draft');
       }
-      await fetchDraftData();
+      await refreshDraftState();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to pause draft');
     } finally {
@@ -167,7 +67,7 @@ export function DraftMonitor() {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to resume draft');
       }
-      await fetchDraftData();
+      await refreshDraftState();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to resume draft');
     } finally {
@@ -194,7 +94,7 @@ export function DraftMonitor() {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to reset draft');
       }
-      await fetchDraftData();
+      await refreshDraftState();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to reset draft');
     } finally {
@@ -222,9 +122,7 @@ export function DraftMonitor() {
       }
       
       setShowStartModal(false);
-      await fetchDraftData();
-      
-      // Redirect to draft page
+      await refreshDraftState();
       window.location.href = '/draft';
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to start draft');
@@ -232,29 +130,6 @@ export function DraftMonitor() {
       setActionLoading(null);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <Skeleton className="h-8 w-48 mb-2" />
-          <Skeleton className="h-4 w-96" />
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Skeleton className="h-40 rounded-md" />
-          <Skeleton className="h-40 rounded-md" />
-        </div>
-        <div className="card-padded stack-lg">
-          <Skeleton className="h-6 w-40" />
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="h-24 rounded-md" />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // Safe checks for draft state
   const isDraftActive = Boolean(

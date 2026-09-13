@@ -157,6 +157,43 @@ export async function getActiveDraftState(): Promise<DraftState | null> {
 }
 
 /**
+ * Get the most recent draft of any status (including completed / not_started).
+ */
+export async function getLatestDraftState(): Promise<DraftState | null> {
+  const draftState = await prisma.draftState.findFirst({
+    orderBy: {
+      startedAt: 'desc',
+    },
+    include: {
+      draftConfig: true,
+      draftOrders: {
+        include: {
+          participant: true,
+        },
+        orderBy: {
+          position: 'asc',
+        },
+      },
+      picks: {
+        include: {
+          player: true,
+          participant: true,
+        },
+        orderBy: {
+          pickNumber: 'asc',
+        },
+      },
+    },
+  });
+
+  if (!draftState) {
+    return null;
+  }
+
+  return transformToDraftState(draftState);
+}
+
+/**
  * Add a pick to the draft state
  * 
  * @param draftStateId - The ID of the draft state

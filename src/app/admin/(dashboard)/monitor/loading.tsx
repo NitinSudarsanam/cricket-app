@@ -1,9 +1,7 @@
-import { AdminLayout } from '@/components/admin';
 import { Skeleton } from '@/components/Skeleton';
 
 export default function MonitorLoading() {
   return (
-    <AdminLayout>
       <div className="space-y-6">
         <div>
           <Skeleton className="h-8 w-48 mb-2" />
@@ -24,6 +22,5 @@ export default function MonitorLoading() {
           </div>
         </div>
       </div>
-    </AdminLayout>
   );
 }
