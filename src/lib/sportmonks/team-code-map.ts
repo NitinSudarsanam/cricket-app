@@ -58,15 +58,22 @@ export function resolveTeamCode(
   if (code && IPL_SET.has(code)) return code;
   const nameNorm = (name ?? '').trim().toUpperCase().replace(/\s+/g, ' ');
   if (nameNorm && SHORT_CODE_TO_IPL[nameNorm]) return SHORT_CODE_TO_IPL[nameNorm];
-  if (code) return code.slice(0, 8);
+  if (code) return normalizeDraftTeamCode(code);
   if (nameNorm) {
-    const initials = nameNorm
-      .split(' ')
-      .filter(Boolean)
-      .map((part) => part[0])
-      .join('')
-      .slice(0, 8);
-    return initials || nameNorm.slice(0, 8);
+    const words = nameNorm.split(' ').filter(Boolean);
+    if (words.length === 1) {
+      return normalizeDraftTeamCode(words[0].slice(0, 3));
+    }
+    const initials = words.map((part) => part[0]).join('');
+    return normalizeDraftTeamCode(initials);
   }
   return null;
+}
+
+/** Shared 2-8 character draft team code used by sync and validation. */
+export function normalizeDraftTeamCode(value: string): string {
+  const normalized = value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (normalized.length >= 2) return normalized.slice(0, 8);
+  if (normalized.length === 1) return `${normalized}${normalized}`;
+  return 'UNK';
 }

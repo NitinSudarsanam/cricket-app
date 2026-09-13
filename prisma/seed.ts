@@ -407,11 +407,14 @@ async function main() {
   const { DEFAULT_FANTASY_RULES } = await import('@/services/scoring/fantasy-scoring-engine');
   const { updatePlayerScoresFromMatchStats } = await import('@/services/ingestion/player-match-stats');
   for (const [statKey, points] of Object.entries(DEFAULT_FANTASY_RULES)) {
-    await prisma.fantasyScoringRule.create({
-      data: {
+    await prisma.fantasyScoringRule.upsert({
+      where: { statKey_seasonId: { statKey, seasonId: '' } },
+      update: { points, name: statKey.replace(/_/g, ' ') },
+      create: {
         statKey,
         points,
         name: statKey.replace(/_/g, ' '),
+        seasonId: '',
       },
     });
   }

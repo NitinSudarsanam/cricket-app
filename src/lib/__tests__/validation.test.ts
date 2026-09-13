@@ -36,7 +36,7 @@ describe('validatePlayer', () => {
   });
 
   it('should reject player with invalid team', () => {
-    const player = createPlayer({ team: 'INVALID' as any });
+    const player = createPlayer({ team: 'TOOLONGCODE' as any });
     const result = validatePlayer(player);
     expect(result.valid).toBe(false);
     expect(result.errors).toBeDefined();
@@ -115,7 +115,7 @@ describe('validateCreatePlayerRequest', () => {
   it('should reject request with invalid team', () => {
     const request = {
       name: 'Test Player',
-      team: 'INVALID',
+      team: 'TOOLONGCODE',
       role: 'Bat',
       isForeign: false,
     };
@@ -174,7 +174,7 @@ describe('validateUpdatePlayerRequest', () => {
 
   it('should reject update with invalid team', () => {
     const request = {
-      team: 'INVALID',
+      team: 'TOOLONGCODE',
     };
     const result = validateUpdatePlayerRequest(request);
     expect(result.valid).toBe(false);

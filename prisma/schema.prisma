@@ -323,6 +323,7 @@ model Pick {
   player        Player      @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@unique([draftStateId, playerId]) // Each player can only be picked once per draft
+  @@unique([draftStateId, pickNumber])
   @@index([draftStateId])
   @@index([participantId])
   @@index([round])

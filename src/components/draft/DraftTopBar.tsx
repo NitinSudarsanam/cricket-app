@@ -63,8 +63,12 @@ export function DraftTopBar({
         expiredForTurnRef.current = null;
         return;
       }
-      if (expiredForTurnRef.current === turnKey) return;
-      expiredForTurnRef.current = turnKey;
+      const lastAttempt = expiredForTurnRef.current;
+      const lastAt = lastAttempt?.startsWith(`${turnKey}:`)
+        ? Number(lastAttempt.slice(turnKey.length + 1))
+        : 0;
+      if (lastAt && Date.now() - lastAt < 4000) return;
+      expiredForTurnRef.current = `${turnKey}:${Date.now()}`;
       onTimerExpire?.();
     };
 

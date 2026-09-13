@@ -63,7 +63,7 @@ const validPlayer: Player = {
 };
 
 console.assert(isPlayer(validPlayer) === true, 'Valid player should pass type guard');
-console.assert(isPlayer({ ...validPlayer, team: 'INVALID' }) === false, 'Invalid team should fail');
+console.assert(isPlayer({ ...validPlayer, team: 'TOOLONGCODE' }) === false, 'Invalid team should fail');
 console.assert(isPlayer({ ...validPlayer, role: 'INVALID' }) === false, 'Invalid role should fail');
 console.assert(isPlayer({ ...validPlayer, isForeign: 'yes' }) === false, 'Invalid isForeign should fail');
 
@@ -94,7 +94,7 @@ const validRequest = {
 const validationResult3 = validateCreatePlayerRequest(validRequest);
 console.assert(validationResult3.valid === true, 'Valid request should pass validation');
 
-const invalidRequest = { ...validRequest, team: 'INVALID' };
+const invalidRequest = { ...validRequest, team: 'TOOLONGCODE' };
 const validationResult4 = validateCreatePlayerRequest(invalidRequest);
 console.assert(validationResult4.valid === false, 'Invalid team should fail validation');
 

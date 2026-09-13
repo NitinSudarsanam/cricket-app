@@ -13,4 +13,9 @@ describe('resolveTeamCode', () => {
     expect(resolveTeamCode(undefined, 'Birmingham Phoenix')).toBe('BP');
     expect(sportmonksTeamCodeToIPL('AUS')).toBeNull();
   });
+
+  it('abbreviates a single-word team name to 2-8 characters', () => {
+    expect(resolveTeamCode(undefined, 'India')).toBe('IND');
+    expect(resolveTeamCode('X')).toBe('XX');
+  });
 });

@@ -188,7 +188,6 @@ export function useDraftSync(options: UseDraftSyncOptions = {}) {
   // Poll while Pusher is down so other clients still see picks and auto-picks
   useEffect(() => {
     if (!enabled) return;
-    if (state.connectionState === 'connected') return;
     const inProgress = draftStatusRef.current === 'in_progress' || draftStatusRef.current === 'paused';
     if (!inProgress && draftStatusRef.current) return;
     const interval = window.setInterval(async () => {

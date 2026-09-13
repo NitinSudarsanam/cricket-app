@@ -77,4 +77,25 @@ describe('extractPlayerStatsFromFixture', () => {
     expect(stats.find((s) => s.externalPlayerId === '50')?.catches).toBe(0);
     expect(stats.find((s) => s.externalPlayerId === '60')?.runOuts).toBe(1);
   });
+
+  it('does not infer a dismissal from bowling_player_id alone', () => {
+    const fixture = {
+      id: 3,
+      starting_at: '2024-03-24T14:00:00.000Z',
+      batting: [
+        {
+          player_id: 70,
+          score: 0,
+          ball: 4,
+          bowling_player_id: 80,
+        },
+      ],
+    } as SportmonksFixture;
+
+    const stats = extractPlayerStatsFromFixture(fixture);
+    expect(stats.find((s) => s.externalPlayerId === '70')).toMatchObject({
+      dismissed: false,
+      didBat: true,
+    });
+  });
 });

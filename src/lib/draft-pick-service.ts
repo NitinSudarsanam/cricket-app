@@ -45,7 +45,8 @@ export async function commitPick(options: {
 }): Promise<CommitPickResult> {
   const { draftState, draftConfig, participantId, player } = options;
   const autoPick = Boolean(options.autoPick);
-  const pickNumber = calculatePickNumber(
+  let committedRound = draftState.currentRound;
+  let committedPickNumber = calculatePickNumber(
     draftState.currentRound,
     draftState.currentPickIndex,
     draftState.participantOrder.length
@@ -83,13 +84,19 @@ export async function commitPick(options: {
     if (alreadyPicked) {
       throw new Error('CONFLICT: Player already drafted');
     }
+    committedRound = locked.currentRound;
+    committedPickNumber = calculatePickNumber(
+      locked.currentRound,
+      locked.currentPickIndex,
+      participantOrder.length
+    );
     await tx.pick.create({
       data: {
         draftStateId: draftState.id,
         participantId,
         playerId: player.id,
-        round: draftState.currentRound,
-        pickNumber,
+        round: committedRound,
+        pickNumber: committedPickNumber,
         timestamp: new Date(),
       },
     });
@@ -128,8 +135,8 @@ export async function commitPick(options: {
     playerName: player.name,
     playerTeam: player.team,
     playerRole: player.role,
-    round: draftState.currentRound,
-    pickNumber,
+    round: committedRound,
+    pickNumber: committedPickNumber,
     timestamp: new Date(),
     autoPick,
   };
@@ -182,23 +189,26 @@ export async function chooseAutoPickPlayer(
   draftConfig: DraftConfig,
   participantId: string
 ): Promise<Player | null> {
-  const latestSeason = await prisma.season.findFirst({
-    orderBy: [{ startDate: 'desc' }, { createdAt: 'desc' }],
-    select: { id: true },
+  const scoredSeason = await prisma.playerScore.groupBy({
+    by: ['seasonId'],
+    where: { source: 'fantasy' },
+    _count: { id: true },
+    orderBy: { _count: { id: 'desc' } },
+    take: 1,
   });
+  const seasonId = scoredSeason[0]?.seasonId;
   const [allPlayers, participantPicks, scores] = await Promise.all([
     prisma.player.findMany(),
     prisma.pick.findMany({
       where: { draftStateId: draftState.id, participantId },
       include: { player: true },
     }),
-    prisma.playerScore.findMany({
-      where: {
-        source: 'fantasy',
-        ...(latestSeason ? { seasonId: latestSeason.id } : { seasonId: '__none__' }),
-      },
-      select: { playerId: true, points: true },
-    }),
+    seasonId
+      ? prisma.playerScore.findMany({
+          where: { source: 'fantasy', seasonId },
+          select: { playerId: true, points: true },
+        })
+      : Promise.resolve([]),
   ]);
 
   const draftedPlayerIds = draftState.picks.map((pick) => pick.playerId);

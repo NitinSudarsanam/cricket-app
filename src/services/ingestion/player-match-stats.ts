@@ -32,9 +32,7 @@ function playerExternalId(line: { player_id?: number; player?: { id?: number } }
 function isDismissed(line: SportmonksBattingLine): boolean {
   if (line.is_notout === true) return false;
   if (line.dismissal) return true;
-  const score = asNumber(line.score);
-  const balls = asNumber(line.ball);
-  return score >= 0 && balls > 0 && line.is_notout !== true && Boolean(line.bowling_player_id || line.catch_stump_player_id);
+  return line.is_notout === false;
 }
 
 export interface ExtractedPlayerStat {
@@ -127,7 +125,7 @@ export function extractPlayerStatsFromFixture(fixture: SportmonksFixture): Extra
 export async function loadFantasyRules(seasonId?: string | null): Promise<FantasyRuleMap> {
   const rows = await prisma.fantasyScoringRule.findMany({
     where: {
-      OR: [{ seasonId: seasonId ?? undefined }, { seasonId: null }],
+      OR: [{ seasonId: seasonId ?? undefined }, { seasonId: null }, { seasonId: '' }],
     },
     orderBy: { createdAt: 'asc' },
   });

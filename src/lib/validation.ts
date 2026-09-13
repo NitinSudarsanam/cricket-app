@@ -48,7 +48,7 @@ export function validatePlayer(player: unknown): ValidationResult {
   }
 
   if (!isTeamCode(p.team)) {
-    errors.push('Player team must be a 2-6 character team code');
+    errors.push('Player team must be a 2-8 character team code');
   }
 
   if (!isPlayerRole(p.role)) {
@@ -86,7 +86,7 @@ export function validateCreatePlayerRequest(request: unknown): ValidationResult 
   }
 
   if (!isTeamCode(req.team)) {
-    errors.push('Team must be a 2-6 character team code');
+    errors.push('Team must be a 2-8 character team code');
   }
 
   if (!isPlayerRole(req.role)) {
@@ -124,7 +124,7 @@ export function validateUpdatePlayerRequest(request: unknown): ValidationResult 
   }
 
   if (req.team !== undefined && !isTeamCode(req.team)) {
-    errors.push('Team must be a 2-6 character team code');
+    errors.push('Team must be a 2-8 character team code');
   }
 
   if (req.role !== undefined && !isPlayerRole(req.role)) {

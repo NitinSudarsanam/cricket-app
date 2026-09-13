@@ -102,7 +102,7 @@ describe('isPlayer', () => {
   });
 
   it('should return false for player with invalid team', () => {
-    const player = createPlayer({ team: 'INVALID' as any });
+    const player = createPlayer({ team: 'TOOLONGCODE' as any });
     expect(isPlayer(player)).toBe(false);
   });
 
