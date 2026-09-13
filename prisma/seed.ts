@@ -230,9 +230,10 @@ async function main() {
     
     const result = await prisma.player.upsert({
       where: { id: playerId },
-      update: {},
+      update: { externalId: `seed:${playerId}` },
       create: {
         id: playerId,
+        externalId: `seed:${playerId}`,
         ...player,
       },
     });

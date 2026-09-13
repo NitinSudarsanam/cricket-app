@@ -18,4 +18,9 @@ describe('resolveTeamCode', () => {
     expect(resolveTeamCode(undefined, 'India')).toBe('IND');
     expect(resolveTeamCode('X')).toBe('XX');
   });
+
+  it('aliases INDIA to IND', () => {
+    expect(resolveTeamCode('INDIA')).toBe('IND');
+    expect(resolveTeamCode(undefined, 'INDIA')).toBe('IND');
+  });
 });

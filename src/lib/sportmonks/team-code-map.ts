@@ -32,6 +32,10 @@ const SHORT_CODE_TO_IPL: Record<string, IPLTeam> = {
   DELHI: 'DC',
 };
 
+const NATIONAL_CODE_ALIASES: Record<string, string> = {
+  INDIA: 'IND',
+};
+
 /**
  * Resolve Sportmonks team short_code (and optionally name) to an IPLTeam when known.
  * Returns null only when no identifier can be mapped to the IPL set.
@@ -56,8 +60,10 @@ export function resolveTeamCode(
   const code = (shortCode ?? '').trim().toUpperCase();
   if (code && SHORT_CODE_TO_IPL[code]) return SHORT_CODE_TO_IPL[code];
   if (code && IPL_SET.has(code)) return code;
+  if (code && NATIONAL_CODE_ALIASES[code]) return NATIONAL_CODE_ALIASES[code];
   const nameNorm = (name ?? '').trim().toUpperCase().replace(/\s+/g, ' ');
   if (nameNorm && SHORT_CODE_TO_IPL[nameNorm]) return SHORT_CODE_TO_IPL[nameNorm];
+  if (nameNorm && NATIONAL_CODE_ALIASES[nameNorm]) return NATIONAL_CODE_ALIASES[nameNorm];
   if (code) return normalizeDraftTeamCode(code);
   if (nameNorm) {
     const words = nameNorm.split(' ').filter(Boolean);

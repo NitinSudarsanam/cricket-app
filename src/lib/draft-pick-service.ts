@@ -14,9 +14,17 @@ import {
 } from '@/lib/draft-state-manager';
 import { broadcastEvent, EVENTS } from '@/lib/pusher-server';
 import type { DraftConfig, DraftState, Player } from '@/types';
-import { DEFAULT_PICK_TIMEOUT_SECONDS, isTurnExpired } from '@/lib/draft-clock';
+import {
+  DEFAULT_PICK_TIMEOUT_SECONDS,
+  isTurnExpired,
+  isUniqueConstraintError,
+} from '@/lib/draft-clock';
 
-export { DEFAULT_PICK_TIMEOUT_SECONDS, isTurnExpired, secondsRemainingOnClock } from '@/lib/draft-clock';
+export {
+  DEFAULT_PICK_TIMEOUT_SECONDS,
+  isTurnExpired,
+  secondsRemainingOnClock,
+} from '@/lib/draft-clock';
 
 export interface CommitPickResult {
   draftState: DraftState;
@@ -67,7 +75,7 @@ export async function commitPick(options: {
     }
     if (autoPick && !options.skipClockCheck) {
       const timeout = draftConfig.pickTimeoutSeconds ?? DEFAULT_PICK_TIMEOUT_SECONDS;
-      if (!isTurnExpired(locked.turnStartedAt, timeout)) {
+      if (!isTurnExpired(locked.turnStartedAt, timeout, new Date(), locked.startedAt)) {
         throw new Error('CONFLICT: Pick clock has not expired');
       }
     }
@@ -90,16 +98,23 @@ export async function commitPick(options: {
       locked.currentPickIndex,
       participantOrder.length
     );
-    await tx.pick.create({
-      data: {
-        draftStateId: draftState.id,
-        participantId,
-        playerId: player.id,
-        round: committedRound,
-        pickNumber: committedPickNumber,
-        timestamp: new Date(),
-      },
-    });
+    try {
+      await tx.pick.create({
+        data: {
+          draftStateId: draftState.id,
+          participantId,
+          playerId: player.id,
+          round: committedRound,
+          pickNumber: committedPickNumber,
+          timestamp: new Date(),
+        },
+      });
+    } catch (error) {
+      if (isUniqueConstraintError(error)) {
+        throw new Error('CONFLICT: Pick already recorded');
+      }
+      throw error;
+    }
     let nextRound = locked.currentRound;
     let nextIndex = locked.currentPickIndex + 1;
     if (nextIndex >= participantOrder.length) {
@@ -184,19 +199,50 @@ async function loadDraftConfig(draftConfigId: string): Promise<DraftConfig | nul
   return row ? prismaDraftConfigToDraftConfig(row) : null;
 }
 
+export async function resolveLatestFantasySeasonId(): Promise<string | undefined> {
+  const latestStat = await prisma.playerMatchStat.findFirst({
+    where: { seasonId: { not: '' } },
+    orderBy: { updatedAt: 'desc' },
+    select: { seasonId: true },
+  });
+  return latestStat?.seasonId ?? undefined;
+}
+
+export function rankAutoPickCandidates(
+  available: Player[],
+  eligibleIds: Set<string>,
+  scoreByPlayer: Map<string, number>
+): Player[] {
+  const byScoreThenName = (a: Player, b: Player) => {
+    const scoreDiff = (scoreByPlayer.get(b.id) ?? 0) - (scoreByPlayer.get(a.id) ?? 0);
+    if (scoreDiff !== 0) return scoreDiff;
+    return a.name.localeCompare(b.name);
+  };
+
+  const eligible = available.filter((player) => eligibleIds.has(player.id)).sort(byScoreThenName);
+  if (eligible.length > 0) return eligible;
+
+  // If constraints leave nobody eligible, still advance the clock with leftovers.
+  return [...available].sort(byScoreThenName);
+}
+
 export async function chooseAutoPickPlayer(
   draftState: DraftState,
   draftConfig: DraftConfig,
-  participantId: string
+  participantId: string,
+  options?: { draftedPlayerIds?: string[] }
 ): Promise<Player | null> {
-  const scoredSeason = await prisma.playerScore.groupBy({
-    by: ['seasonId'],
-    where: { source: 'fantasy' },
-    _count: { id: true },
-    orderBy: { _count: { id: 'desc' } },
-    take: 1,
-  });
-  const seasonId = scoredSeason[0]?.seasonId;
+  const candidates = await listAutoPickCandidates(draftState, draftConfig, participantId, options);
+  return candidates[0] ?? null;
+}
+
+export async function listAutoPickCandidates(
+  draftState: DraftState,
+  draftConfig: DraftConfig,
+  participantId: string,
+  options?: { draftedPlayerIds?: string[] }
+): Promise<Player[]> {
+  const seasonId = await resolveLatestFantasySeasonId();
   const [allPlayers, participantPicks, scores] = await Promise.all([
     prisma.player.findMany(),
     prisma.pick.findMany({
@@ -211,7 +257,7 @@ export async function chooseAutoPickPlayer(
       : Promise.resolve([]),
   ]);
 
-  const draftedPlayerIds = draftState.picks.map((pick) => pick.playerId);
+  const draftedPlayerIds = options?.draftedPlayerIds ?? draftState.picks.map((pick) => pick.playerId);
   const roster = participantPicks.map((pick) => prismaPlayerToPlayer(pick.player));
   const available = allPlayers
     .filter((player) => !draftedPlayerIds.includes(player.id))
@@ -229,25 +275,14 @@ export async function chooseAutoPickPlayer(
     scoreByPlayer.set(score.playerId, Math.max(scoreByPlayer.get(score.playerId) ?? 0, score.points));
   }
 
-  const byScoreThenName = (a: Player, b: Player) => {
-    const scoreDiff = (scoreByPlayer.get(b.id) ?? 0) - (scoreByPlayer.get(a.id) ?? 0);
-    if (scoreDiff !== 0) return scoreDiff;
-    return a.name.localeCompare(b.name);
-  };
-
-  const eligible = available.filter((player) => eligibleIds.has(player.id)).sort(byScoreThenName);
-  if (eligible[0]) return eligible[0];
-
-  // If constraints leave nobody eligible, still advance the clock with the best leftover player.
-  const leftovers = [...available].sort(byScoreThenName);
-  return leftovers[0] ?? null;
+  return rankAutoPickCandidates(available, eligibleIds, scoreByPlayer);
 }
 
 export async function applyExpiredAutoPick(options?: {
   draftStateId?: string;
   force?: boolean;
 }): Promise<CommitPickResult | null> {
-  const draftState = options?.draftStateId
+  let draftState = options?.draftStateId
     ? await getDraftState(options.draftStateId)
     : await getActiveDraftState();
 
@@ -259,23 +294,58 @@ export async function applyExpiredAutoPick(options?: {
   if (!draftConfig) return null;
 
   const timeout = draftConfig.pickTimeoutSeconds ?? DEFAULT_PICK_TIMEOUT_SECONDS;
-  if (!options?.force && !isTurnExpired(draftState.turnStartedAt, timeout)) {
+  if (
+    !options?.force &&
+    !isTurnExpired(draftState.turnStartedAt, timeout, new Date(), draftState.startedAt)
+  ) {
     return null;
   }
 
   const orderType: DraftOrderType = draftState.draftOrderType === 'linear' ? 'linear' : 'snake';
-  const participantId = getCurrentParticipantId(draftState, orderType);
-  if (!participantId) return null;
+  const excludePlayerIds = new Set<string>();
 
-  const player = await chooseAutoPickPlayer(draftState, draftConfig, participantId);
-  if (!player) return null;
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const freshState = await getDraftState(draftState.id);
+    if (!freshState || freshState.status !== 'in_progress') return null;
+    draftState = freshState;
 
-  return commitPick({
-    draftState,
-    draftConfig,
-    participantId,
-    player,
-    autoPick: true,
-    skipClockCheck: Boolean(options?.force),
-  });
+    if (
+      !options?.force &&
+      !isTurnExpired(draftState.turnStartedAt, timeout, new Date(), draftState.startedAt)
+    ) {
+      return null;
+    }
+
+    const participantId = getCurrentParticipantId(draftState, orderType);
+    if (!participantId) return null;
+
+    const draftedPlayerIds = [
+      ...draftState.picks.map((pick) => pick.playerId),
+      ...excludePlayerIds,
+    ];
+    const player = await chooseAutoPickPlayer(draftState, draftConfig, participantId, {
+      draftedPlayerIds,
+    });
+    if (!player) return null;
+
+    try {
+      return await commitPick({
+        draftState,
+        draftConfig,
+        participantId,
+        player,
+        autoPick: true,
+        skipClockCheck: Boolean(options?.force),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      if (message === 'CONFLICT: Player already drafted' || message === 'CONFLICT: Pick already recorded') {
+        excludePlayerIds.add(player.id);
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  return null;
 }

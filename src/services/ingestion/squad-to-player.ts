@@ -74,22 +74,41 @@ export async function syncSquadToPlayers(
         const foreign = isForeign(apiPlayer.country_id);
         const externalId = String(apiPlayer.id);
 
-        await prisma.player.upsert({
+        const existingByExternal = await prisma.player.findUnique({
           where: { externalId },
-          create: {
-            externalId,
-            name,
-            team: teamCode,
-            role,
-            isForeign: foreign,
-          },
-          update: {
-            name,
-            team: teamCode,
-            role,
-            isForeign: foreign,
-          },
         });
+        const existingByNameTeam =
+          existingByExternal ??
+          (await prisma.player.findFirst({
+            where: {
+              name,
+              team: teamCode,
+              OR: [{ externalId: null }, { externalId: { startsWith: 'seed:' } }],
+            },
+          }));
+
+        if (existingByNameTeam) {
+          await prisma.player.update({
+            where: { id: existingByNameTeam.id },
+            data: {
+              externalId,
+              name,
+              team: teamCode,
+              role,
+              isForeign: foreign,
+            },
+          });
+        } else {
+          await prisma.player.create({
+            data: {
+              externalId,
+              name,
+              team: teamCode,
+              role,
+              isForeign: foreign,
+            },
+          });
+        }
         playersUpserted++;
       } catch (e) {
         errors.push(`Player ${apiPlayer.id} (${team.name}): ${e instanceof Error ? e.message : String(e)}`);

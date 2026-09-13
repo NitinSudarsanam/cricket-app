@@ -1,14 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handleDatabaseError } from '@/lib/db';
 import { applyExpiredAutoPick } from '@/lib/draft-pick-service';
+import { getParticipantSession } from '@/lib/session';
+import { getAdminSession } from '@/lib/admin-session';
 
 /**
  * POST /api/draft/auto-pick
  * Apply a server-side pick when the current turn clock has expired.
- * Anyone may trigger it; the server only acts if the clock is actually expired.
+ * Requires a participant or admin session; the server only acts if the clock expired.
  */
 export async function POST(request: NextRequest) {
   try {
+    const participant = await getParticipantSession();
+    let admin = null;
+    try {
+      admin = await getAdminSession();
+    } catch {
+      admin = null;
+    }
+    if (!participant && !admin) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     let draftStateId: string | undefined;
     try {
       const body = await request.json();
@@ -38,9 +54,14 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : '';
-    if (message.startsWith('CONFLICT:')) {
+    if (message.startsWith('CONFLICT:') || message.includes('P2002')) {
       return NextResponse.json(
-        { success: false, error: message.replace('CONFLICT: ', '') },
+        {
+          success: false,
+          error: message.startsWith('CONFLICT:')
+            ? message.replace('CONFLICT: ', '')
+            : 'Pick already recorded',
+        },
         { status: 409 }
       );
     }

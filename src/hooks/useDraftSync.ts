@@ -185,7 +185,10 @@ export function useDraftSync(options: UseDraftSyncOptions = {}) {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [enabled, refreshDraftState]);
 
-  // Poll while Pusher is down so other clients still see picks and auto-picks
+  // Drive the server clock and, when Pusher is down, poll GET /state.
+  // A stale GET can overwrite a newer Pusher pick, so skip GET while connected.
+  const connectionStateRef = useRef(state.connectionState);
+  connectionStateRef.current = state.connectionState;
   useEffect(() => {
     if (!enabled) return;
     const inProgress = draftStatusRef.current === 'in_progress' || draftStatusRef.current === 'paused';
@@ -202,15 +205,16 @@ export function useDraftSync(options: UseDraftSyncOptions = {}) {
             }),
           });
         } catch {
-          // Keep polling state even if auto-pick is a no-op or fails.
+          // Keep polling even if auto-pick is a no-op or fails.
         }
       }
-      if (status === 'in_progress' || status === 'paused' || !status) {
+      const pusherConnected = connectionStateRef.current === 'connected';
+      if (!pusherConnected && (status === 'in_progress' || status === 'paused' || !status)) {
         refreshDraftState();
       }
     }, 5000);
     return () => window.clearInterval(interval);
-  }, [enabled, state.connectionState, refreshDraftState, state.draftState?.id, initialDraftState?.id]);
+  }, [enabled, refreshDraftState, state.draftState?.id, initialDraftState?.id]);
 
   // Update presence when participant connects/disconnects
   useEffect(() => {

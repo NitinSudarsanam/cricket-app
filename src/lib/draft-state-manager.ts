@@ -235,7 +235,8 @@ export async function advanceToNextPick(
       currentRound: isComplete ? totalRounds : currentRound,
       currentPickIndex: isComplete ? participantCount - 1 : currentPickIndex,
       status,
-      completedAt
+      completedAt,
+      turnStartedAt: isComplete ? null : new Date(),
     }
   });
 

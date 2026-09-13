@@ -93,6 +93,7 @@ export function extractPlayerStatsFromFixture(fixture: SportmonksFixture): Extra
 
     const catcherId = line.catch_stump_player_id != null ? String(line.catch_stump_player_id) : null;
     const dismissal = (line.dismissal ?? '').toLowerCase();
+    const isRunOut = dismissal.includes('run out') || dismissal.includes('runout');
     if (catcherId) {
       const fielder = ensure(catcherId);
       if (dismissal.includes('stump')) {
@@ -105,6 +106,8 @@ export function extractPlayerStatsFromFixture(fixture: SportmonksFixture): Extra
     const runOutId = line.runout_by_id != null ? String(line.runout_by_id) : null;
     if (runOutId) {
       ensure(runOutId).runOuts += 1;
+    } else if (isRunOut && catcherId) {
+      ensure(catcherId).runOuts += 1;
     }
   }
 
@@ -155,10 +158,12 @@ export async function upsertPlayerMatchStatsForMatch(
   });
   const playerByExternal = new Map(players.map((p) => [p.externalId, p.id]));
 
+  const keptPlayerIds: string[] = [];
   let upserted = 0;
   for (const stat of stats) {
     const playerId = playerByExternal.get(stat.externalPlayerId);
     if (!playerId) continue;
+    keptPlayerIds.push(playerId);
     await prisma.playerMatchStat.upsert({
       where: { playerId_matchId: { playerId, matchId: match.id } },
       create: {
@@ -198,6 +203,14 @@ export async function upsertPlayerMatchStatsForMatch(
       },
     });
     upserted++;
+  }
+
+  if (stats.length === 0) {
+    await prisma.playerMatchStat.deleteMany({ where: { matchId: match.id } });
+  } else if (keptPlayerIds.length > 0) {
+    await prisma.playerMatchStat.deleteMany({
+      where: { matchId: match.id, playerId: { notIn: keptPlayerIds } },
+    });
   }
   return upserted;
 }
@@ -247,6 +260,21 @@ export async function updatePlayerScoresFromMatchStats(seasonId: string): Promis
         breakdown,
       },
       update: { points, breakdown },
+    });
+    updated++;
+  }
+
+  const existingFantasy = await prisma.playerScore.findMany({
+    where: { seasonId, source: 'fantasy' },
+    select: { playerId: true },
+  });
+  for (const row of existingFantasy) {
+    if (byPlayer.has(row.playerId)) continue;
+    await prisma.playerScore.update({
+      where: {
+        playerId_seasonId_source: { playerId: row.playerId, seasonId, source: 'fantasy' },
+      },
+      data: { points: 0, breakdown: {} },
     });
     updated++;
   }

@@ -51,6 +51,8 @@ const RATE_LIMIT_CONFIGS: Array<{ pattern: RegExp; config: RateLimitConfig }> = 
   { pattern: /^\/api\/players\/import$/, config: { maxRequests: 5, windowMs: 60 * 1000 } },
   // Draft pick - moderate limit
   { pattern: /^\/api\/draft\/pick$/, config: { maxRequests: 30, windowMs: 60 * 1000 } },
+  // Auto-pick is polled by every client; tighter than generic reads
+  { pattern: /^\/api\/draft\/auto-pick$/, config: { maxRequests: 24, windowMs: 60 * 1000 } },
   // Admin mutation endpoints
   { pattern: /^\/api\/(players|participants|draft\/(start|pause|reset)|draft-config|sync)/, config: { maxRequests: 20, windowMs: 60 * 1000 } },
   // Read-only endpoints - generous limit

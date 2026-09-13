@@ -201,9 +201,14 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : '';
-    if (message.startsWith('CONFLICT:')) {
+    if (message.startsWith('CONFLICT:') || message.includes('P2002')) {
       return NextResponse.json(
-        { success: false, error: message.replace('CONFLICT: ', '') },
+        {
+          success: false,
+          error: message.startsWith('CONFLICT:')
+            ? message.replace('CONFLICT: ', '')
+            : 'Pick already recorded',
+        },
         { status: 409 }
       );
     }

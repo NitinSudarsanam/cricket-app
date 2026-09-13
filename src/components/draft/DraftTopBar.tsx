@@ -28,7 +28,12 @@ export function DraftTopBar({
 }: DraftTopBarProps) {
   const timeoutSeconds = draftState.pickTimeoutSeconds ?? timerSeconds;
   const [timeRemaining, setTimeRemaining] = useState(() =>
-    secondsRemainingOnClock(draftState.turnStartedAt, timeoutSeconds)
+    secondsRemainingOnClock(
+      draftState.turnStartedAt,
+      timeoutSeconds,
+      new Date(),
+      draftState.startedAt
+    )
   );
   const expiredForTurnRef = useRef<string | null>(null);
 
@@ -52,7 +57,12 @@ export function DraftTopBar({
     }
 
     const syncFromServer = () => {
-      const remaining = secondsRemainingOnClock(draftState.turnStartedAt, timeoutSeconds);
+      const remaining = secondsRemainingOnClock(
+        draftState.turnStartedAt,
+        timeoutSeconds,
+        new Date(),
+        draftState.startedAt
+      );
       setTimeRemaining(remaining);
       return remaining;
     };
@@ -83,6 +93,7 @@ export function DraftTopBar({
     showTimer,
     timeoutSeconds,
     draftState.turnStartedAt,
+    draftState.startedAt,
     draftState.picks.length,
     draftState.status,
     onTimerExpire,
