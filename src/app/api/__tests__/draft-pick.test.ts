@@ -174,6 +174,38 @@ describe('POST /api/draft/pick', () => {
     expect(data.error).toContain('paused');
   });
 
+  it('should return 409 when the pick clock has expired', async () => {
+    vi.mocked(getParticipantSession).mockResolvedValue({
+      participantId: 'participant-1',
+      participantName: 'Test Participant',
+    });
+    const startedAt = new Date('2026-09-13T20:00:00.000Z');
+    const draftState = createDraftState({
+      status: 'in_progress',
+      participantOrder: ['participant-1'],
+      startedAt,
+      turnStartedAt: startedAt,
+    });
+    vi.mocked(getActiveDraftState).mockResolvedValue(draftState);
+    const draftConfig = createDraftConfig({ pickTimeoutSeconds: 60 });
+    vi.mocked(prismaDraftConfigToDraftConfig).mockReturnValue(draftConfig);
+    vi.mocked(prisma.draftConfig.findUnique).mockResolvedValue({
+      id: draftConfig.id,
+      pickTimeoutSeconds: 60,
+    } as any);
+
+    const request = createMockJsonRequest('http://localhost:3000/api/draft/pick', {
+      participantId: 'participant-1',
+      playerId: 'player-1',
+    });
+
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(data.error).toContain('expired');
+  });
+
   it('should return 403 when not participant turn', async () => {
     vi.mocked(getParticipantSession).mockResolvedValue({
       participantId: 'participant-1',

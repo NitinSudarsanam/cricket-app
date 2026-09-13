@@ -211,6 +211,10 @@ export async function upsertPlayerMatchStatsForMatch(
     await prisma.playerMatchStat.deleteMany({
       where: { matchId: match.id, playerId: { notIn: keptPlayerIds } },
     });
+  } else {
+    console.warn(
+      `Scorecard for match ${match.id} had ${stats.length} lines but no mapped players; leaving existing stats unchanged.`
+    );
   }
   return upserted;
 }
@@ -287,7 +291,7 @@ export async function syncScorecardForMatch(matchId: string): Promise<{
 }> {
   const match = await prisma.match.findUnique({
     where: { id: matchId },
-    select: { id: true, externalId: true },
+    select: { id: true, externalId: true, seasonId: true },
   });
   if (!match) return { statsUpserted: 0, error: `Match not found: ${matchId}` };
 
@@ -301,6 +305,7 @@ export async function syncScorecardForMatch(matchId: string): Promise<{
     if (!fixture) return { statsUpserted: 0, error: `Fixture not found: ${fixtureId}` };
     const extracted = extractPlayerStatsFromFixture(fixture);
     const statsUpserted = await upsertPlayerMatchStatsForMatch(match.id, extracted);
+    await updatePlayerScoresFromMatchStats(match.seasonId);
     return { statsUpserted };
   } catch (error) {
     return {

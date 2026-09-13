@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handleDatabaseError } from '@/lib/db';
 import { applyExpiredAutoPick } from '@/lib/draft-pick-service';
+import { getActiveDraftState, getDraftState } from '@/lib/draft-state-manager';
 import { getParticipantSession } from '@/lib/session';
 import { getAdminSession } from '@/lib/admin-session';
 
@@ -33,6 +34,18 @@ export async function POST(request: NextRequest) {
       }
     } catch {
       draftStateId = undefined;
+    }
+
+    if (participant && !admin) {
+      const draft = draftStateId
+        ? await getDraftState(draftStateId)
+        : await getActiveDraftState();
+      if (draft && !draft.participantOrder.includes(participant.participantId)) {
+        return NextResponse.json(
+          { success: false, error: 'Forbidden' },
+          { status: 403 }
+        );
+      }
     }
 
     const result = await applyExpiredAutoPick({ draftStateId });

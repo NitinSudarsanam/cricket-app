@@ -119,7 +119,7 @@ describe('checkRateLimit', () => {
     const identifier = 'test-ip-auto-pick';
     const pathname = '/api/draft/auto-pick';
 
-    for (let i = 0; i < 24; i++) {
+    for (let i = 0; i < 120; i++) {
       const result = checkRateLimit(identifier, pathname);
       expect(result.allowed).toBe(true);
     }

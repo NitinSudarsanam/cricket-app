@@ -180,7 +180,9 @@ export async function GET(request: NextRequest) {
       pickTimeoutSeconds: draftState.draftConfig.pickTimeoutSeconds ?? DEFAULT_PICK_TIMEOUT_SECONDS,
       secondsRemaining: secondsRemainingOnClock(
         draftState.turnStartedAt,
-        draftState.draftConfig.pickTimeoutSeconds ?? DEFAULT_PICK_TIMEOUT_SECONDS
+        draftState.draftConfig.pickTimeoutSeconds ?? DEFAULT_PICK_TIMEOUT_SECONDS,
+        new Date(),
+        draftState.startedAt
       ),
       totalRounds: draftState.draftConfig.totalRounds,
       totalParticipants: participantOrder.length

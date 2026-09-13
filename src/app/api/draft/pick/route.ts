@@ -9,6 +9,7 @@ import {
   DraftOrderType
 } from '@/lib/draft-state-manager';
 import { commitPick } from '@/lib/draft-pick-service';
+import { DEFAULT_PICK_TIMEOUT_SECONDS, isTurnExpired } from '@/lib/draft-clock';
 import { getParticipantSession } from '@/lib/session';
 
 /**
@@ -104,6 +105,16 @@ export async function POST(request: NextRequest) {
     }
 
     const draftConfig = prismaDraftConfigToDraftConfig(prismaDraftConfig);
+    const timeout = draftConfig.pickTimeoutSeconds ?? DEFAULT_PICK_TIMEOUT_SECONDS;
+    if (isTurnExpired(draftState.turnStartedAt, timeout, new Date(), draftState.startedAt)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Pick clock has expired. The server will auto-pick for this turn.',
+        },
+        { status: 409 }
+      );
+    }
 
     // Use persisted draft order type from when draft was started
     const draftOrder: DraftOrderType = (draftState.draftOrderType === 'linear' ? 'linear' : 'snake');

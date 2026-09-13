@@ -343,6 +343,12 @@ export async function applyExpiredAutoPick(options?: {
         excludePlayerIds.add(player.id);
         continue;
       }
+      if (
+        message.startsWith('CONFLICT: It is not your turn') ||
+        message === 'CONFLICT: Pick clock has not expired'
+      ) {
+        continue;
+      }
       throw error;
     }
   }

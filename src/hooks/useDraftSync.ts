@@ -57,14 +57,25 @@ export function useDraftSync(options: UseDraftSyncOptions = {}) {
     error: null,
   });
 
-  // Update draft state
+  // Update draft state. Ignore stale snapshots that rewind pick count
+  // (except a reset back to not_started).
   const updateDraftState = useCallback((newState: DraftState) => {
-    setState(prev => ({
-      ...prev,
-      draftState: newState,
-      lastUpdate: new Date(),
-      error: null,
-    }));
+    setState(prev => {
+      const previous = prev.draftState;
+      if (
+        previous &&
+        newState.status !== 'not_started' &&
+        newState.picks.length < previous.picks.length
+      ) {
+        return prev;
+      }
+      return {
+        ...prev,
+        draftState: newState,
+        lastUpdate: new Date(),
+        error: null,
+      };
+    });
   }, []);
 
   // Update available players (remove drafted players)
@@ -163,19 +174,23 @@ export function useDraftSync(options: UseDraftSyncOptions = {}) {
     }
   }, [updateDraftState, updateAvailablePlayers, initialPlayers, setError]);
 
+  const draftStatusRef = useRef(state.draftState?.status);
+  draftStatusRef.current = state.draftState?.status;
+  const connectionStateRef = useRef(state.connectionState);
+  connectionStateRef.current = state.connectionState;
+
   // Refetch draft state on mount so clients that missed Pusher events get latest state
   useEffect(() => {
     if (!enabled) return;
     refreshDraftState();
   }, [enabled, refreshDraftState]);
 
-  // Refetch when tab becomes visible and draft is in progress (recover from missed real-time events)
-  const draftStatusRef = useRef(state.draftState?.status);
-  draftStatusRef.current = state.draftState?.status;
+  // Refetch when tab becomes visible only if Pusher is down (avoid stale GET overwrite)
   useEffect(() => {
     if (!enabled) return;
     const handleVisibilityChange = () => {
       if (document.visibilityState !== 'visible') return;
+      if (connectionStateRef.current === 'connected') return;
       const inProgress = draftStatusRef.current === 'in_progress' || draftStatusRef.current === 'paused';
       if (inProgress) {
         refreshDraftState();
@@ -187,8 +202,6 @@ export function useDraftSync(options: UseDraftSyncOptions = {}) {
 
   // Drive the server clock and, when Pusher is down, poll GET /state.
   // A stale GET can overwrite a newer Pusher pick, so skip GET while connected.
-  const connectionStateRef = useRef(state.connectionState);
-  connectionStateRef.current = state.connectionState;
   useEffect(() => {
     if (!enabled) return;
     const inProgress = draftStatusRef.current === 'in_progress' || draftStatusRef.current === 'paused';
