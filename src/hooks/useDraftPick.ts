@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DraftState, Player } from '@/types';
 import { makePick } from '@/lib/draft-api-client';
 import { useToast } from '@/hooks/useToast';
@@ -28,14 +28,27 @@ export function useDraftPick({
 }: UseDraftPickOptions) {
   const [isPickingPlayer, setIsPickingPlayer] = useState(false);
   const [pickError, setPickError] = useState<string | null>(null);
+  const isPickingPlayerRef = useRef(false);
+  const lastPickCountRef = useRef(draftState?.picks.length ?? 0);
   const toast = useToast();
+
+  const clearPickError = useCallback(() => setPickError(null), []);
+
+  useEffect(() => {
+    const next = draftState?.picks.length ?? 0;
+    if (next > lastPickCountRef.current) {
+      setPickError(null);
+    }
+    lastPickCountRef.current = next;
+  }, [draftState?.picks.length]);
 
   const handlePlayerSelect = useCallback(
     async (player: Player) => {
-      if (!draftState || !isMyTurn || !isDraftActive || isPickingPlayer) {
+      if (!draftState || !isMyTurn || !isDraftActive || isPickingPlayerRef.current) {
         return;
       }
 
+      isPickingPlayerRef.current = true;
       setIsPickingPlayer(true);
       setPickError(null);
 
@@ -70,6 +83,7 @@ export function useDraftPick({
           onRetry: () => handlePlayerSelect(player),
         });
       } finally {
+        isPickingPlayerRef.current = false;
         setIsPickingPlayer(false);
       }
     },
@@ -77,12 +91,12 @@ export function useDraftPick({
       draftState,
       isMyTurn,
       isDraftActive,
-      isPickingPlayer,
       currentParticipantId,
       updateDraftState,
       updateAvailablePlayers,
       allPlayers,
-      toast,
+      toast.error,
+      toast.success,
     ]
   );
 
@@ -104,6 +118,7 @@ export function useDraftPick({
       });
       const result = await response.json();
       if (result.success && result.data?.applied && result.data.draftState) {
+        setPickError(null);
         updateDraftState(result.data.draftState);
         updateAvailablePlayers(result.data.draftState, allPlayers);
         toast.info(`Auto-picked ${result.data.pick?.playerName ?? 'a player'}`, { duration: 3000 });
@@ -114,7 +129,14 @@ export function useDraftPick({
       console.error('Auto-pick failed:', error);
       await refreshDraftState();
     }
-  }, [draftState, updateDraftState, updateAvailablePlayers, allPlayers, refreshDraftState, toast]);
+  }, [
+    draftState,
+    updateDraftState,
+    updateAvailablePlayers,
+    allPlayers,
+    refreshDraftState,
+    toast.info,
+  ]);
 
   useEffect(() => {
     if (!pickError) return;
@@ -125,7 +147,7 @@ export function useDraftPick({
   return {
     isPickingPlayer,
     pickError,
-    clearPickError: () => setPickError(null),
+    clearPickError,
     handlePlayerSelect,
     handlePlayerDrop,
     handleTimerExpire,

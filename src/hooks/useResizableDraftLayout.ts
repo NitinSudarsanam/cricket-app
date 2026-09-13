@@ -20,9 +20,15 @@ function persistLayout(partial: { sidebarWidth?: number; historyHeight?: number 
   }
 }
 
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
 export function useResizableDraftLayout() {
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
   const [historyHeight, setHistoryHeight] = useState(DEFAULT_HISTORY_HEIGHT);
+  const sidebarWidthRef = useRef(DEFAULT_SIDEBAR_WIDTH);
+  const historyHeightRef = useRef(DEFAULT_HISTORY_HEIGHT);
   const resizeSidebarStart = useRef<{ x: number; w: number } | null>(null);
   const resizeHistoryStart = useRef<{ y: number; h: number } | null>(null);
 
@@ -36,6 +42,7 @@ export function useResizableDraftLayout() {
         parsed.sidebarWidth >= MIN_SIDEBAR_WIDTH &&
         parsed.sidebarWidth <= MAX_SIDEBAR_WIDTH
       ) {
+        sidebarWidthRef.current = parsed.sidebarWidth;
         setSidebarWidth(parsed.sidebarWidth);
       }
       if (
@@ -43,6 +50,7 @@ export function useResizableDraftLayout() {
         parsed.historyHeight >= MIN_HISTORY_HEIGHT &&
         parsed.historyHeight <= MAX_HISTORY_HEIGHT
       ) {
+        historyHeightRef.current = parsed.historyHeight;
         setHistoryHeight(parsed.historyHeight);
       }
     } catch {
@@ -53,52 +61,78 @@ export function useResizableDraftLayout() {
   const handleSidebarResizeMove = useCallback((e: PointerEvent) => {
     const start = resizeSidebarStart.current;
     if (!start) return;
-    const next = Math.min(MAX_SIDEBAR_WIDTH, Math.max(MIN_SIDEBAR_WIDTH, start.w + (start.x - e.clientX)));
+    const next = clamp(start.w + (start.x - e.clientX), MIN_SIDEBAR_WIDTH, MAX_SIDEBAR_WIDTH);
+    sidebarWidthRef.current = next;
     setSidebarWidth(next);
-    persistLayout({ sidebarWidth: next });
   }, []);
 
   const handleSidebarResizeEnd = useCallback(() => {
+    if (resizeSidebarStart.current) {
+      persistLayout({ sidebarWidth: sidebarWidthRef.current });
+    }
     resizeSidebarStart.current = null;
     document.removeEventListener('pointermove', handleSidebarResizeMove);
     document.removeEventListener('pointerup', handleSidebarResizeEnd);
+    document.removeEventListener('pointercancel', handleSidebarResizeEnd);
   }, [handleSidebarResizeMove]);
 
   const handleSidebarResizeStart = useCallback(
     (e: React.PointerEvent) => {
       e.preventDefault();
-      resizeSidebarStart.current = { x: e.clientX, w: sidebarWidth };
+      resizeSidebarStart.current = { x: e.clientX, w: sidebarWidthRef.current };
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
       document.addEventListener('pointermove', handleSidebarResizeMove);
       document.addEventListener('pointerup', handleSidebarResizeEnd);
+      document.addEventListener('pointercancel', handleSidebarResizeEnd);
     },
-    [sidebarWidth, handleSidebarResizeMove, handleSidebarResizeEnd]
+    [handleSidebarResizeMove, handleSidebarResizeEnd]
   );
 
   const handleHistoryResizeMove = useCallback((e: PointerEvent) => {
     const start = resizeHistoryStart.current;
     if (!start) return;
-    const next = Math.min(MAX_HISTORY_HEIGHT, Math.max(MIN_HISTORY_HEIGHT, start.h + (start.y - e.clientY)));
+    const next = clamp(start.h + (start.y - e.clientY), MIN_HISTORY_HEIGHT, MAX_HISTORY_HEIGHT);
+    historyHeightRef.current = next;
     setHistoryHeight(next);
-    persistLayout({ historyHeight: next });
   }, []);
 
   const handleHistoryResizeEnd = useCallback(() => {
+    if (resizeHistoryStart.current) {
+      persistLayout({ historyHeight: historyHeightRef.current });
+    }
     resizeHistoryStart.current = null;
     document.removeEventListener('pointermove', handleHistoryResizeMove);
     document.removeEventListener('pointerup', handleHistoryResizeEnd);
+    document.removeEventListener('pointercancel', handleHistoryResizeEnd);
   }, [handleHistoryResizeMove]);
 
   const handleHistoryResizeStart = useCallback(
     (e: React.PointerEvent) => {
       e.preventDefault();
-      resizeHistoryStart.current = { y: e.clientY, h: historyHeight };
+      resizeHistoryStart.current = { y: e.clientY, h: historyHeightRef.current };
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
       document.addEventListener('pointermove', handleHistoryResizeMove);
       document.addEventListener('pointerup', handleHistoryResizeEnd);
+      document.addEventListener('pointercancel', handleHistoryResizeEnd);
     },
-    [historyHeight, handleHistoryResizeMove, handleHistoryResizeEnd]
+    [handleHistoryResizeMove, handleHistoryResizeEnd]
   );
+
+  useEffect(() => {
+    return () => {
+      document.removeEventListener('pointermove', handleSidebarResizeMove);
+      document.removeEventListener('pointerup', handleSidebarResizeEnd);
+      document.removeEventListener('pointercancel', handleSidebarResizeEnd);
+      document.removeEventListener('pointermove', handleHistoryResizeMove);
+      document.removeEventListener('pointerup', handleHistoryResizeEnd);
+      document.removeEventListener('pointercancel', handleHistoryResizeEnd);
+    };
+  }, [
+    handleSidebarResizeMove,
+    handleSidebarResizeEnd,
+    handleHistoryResizeMove,
+    handleHistoryResizeEnd,
+  ]);
 
   return {
     sidebarWidth,

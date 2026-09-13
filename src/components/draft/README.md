@@ -35,7 +35,8 @@ Displays all available players organized by IPL team in a color-coded grid layou
 - `availablePlayers`: List of players that haven't been drafted
 - `onPlayerSelect`: Callback when a player is clicked
 - `disabled`: Whether player selection is disabled
-- `currentParticipantId`: ID of current participant (optional)
+- `eligiblePlayerIds`: Optional set of player IDs allowed for the current pick
+- `allowDrag`: Whether chips can be dragged onto the roster
 
 ### DraftTopBar
 Shows the current draft status and progress at the top of the screen.

@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import type { DraftConfig, Player } from '@/types';
 import { Button } from '@/components/ui';
 import { RosterSidebar } from './RosterSidebar';
@@ -23,11 +24,23 @@ export function DraftMobileRoster({
   onClose,
   onPlayerDrop,
 }: DraftMobileRosterProps) {
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [open, onClose]);
+
   return (
     <>
       <Button
+        type="button"
         onClick={onToggle}
         variant="success"
+        aria-expanded={open}
+        aria-controls="draft-mobile-roster"
         className="lg:hidden fixed bottom-20 right-4 z-30 rounded-full shadow-lg flex items-center gap-2 touch-manipulation active:scale-95 transition-transform"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,12 +52,21 @@ export function DraftMobileRoster({
       {open && (
         <div className="lg:hidden fixed inset-0 z-50 flex items-end">
           <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose} />
-          <div className="relative w-full bg-white rounded-t-2xl shadow-xl max-h-[80vh] flex flex-col animate-slide-up">
+          <div
+            id="draft-mobile-roster"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="draft-mobile-roster-title"
+            className="relative w-full bg-white rounded-t-2xl shadow-xl max-h-[80vh] flex flex-col animate-slide-up"
+          >
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-slate-900">My Roster</h3>
+              <h3 id="draft-mobile-roster-title" className="text-lg font-semibold text-slate-900">
+                My Roster
+              </h3>
               <button
                 type="button"
                 onClick={onClose}
+                aria-label="Close roster"
                 className="p-2 rounded-full hover:bg-gray-100 touch-manipulation"
               >
                 <svg className="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

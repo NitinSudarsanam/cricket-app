@@ -1,0 +1,104 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { renderHook, waitFor } from '@testing-library/react';
+import { useDraftCompletion } from '@/hooks/useDraftCompletion';
+import { createDraftConfig, createDraftState } from '@/__tests__/helpers/mock-factories';
+
+describe('useDraftCompletion', () => {
+  const snapshot = {
+    draftState: {
+      id: 'draft-1',
+      status: 'completed',
+      startedAt: null,
+      completedAt: null,
+      totalRounds: 8,
+    },
+    draftConfig: createDraftConfig(),
+    participantRosters: [],
+    allParticipantsMeetRequirements: true,
+    totalPicks: 8,
+  };
+
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn());
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('does not fetch results while the draft is still in progress', () => {
+    renderHook(() => useDraftCompletion(createDraftState({ status: 'in_progress' })));
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('loads results and opens the completion modal when the draft completes', async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      json: async () => ({ success: true, data: snapshot }),
+    } as Response);
+
+    const { result } = renderHook(() =>
+      useDraftCompletion(createDraftState({ id: 'draft-1', status: 'completed' }))
+    );
+
+    await waitFor(() => {
+      expect(result.current.showCompletionModal).toBe(true);
+    });
+
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/draft/results?draftStateId=draft-1',
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
+    expect(result.current.draftResults).toEqual(snapshot);
+  });
+
+  it('does not retry when the results request fails', async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      json: async () => ({ success: false, error: 'boom' }),
+    } as Response);
+
+    const { result } = renderHook(() =>
+      useDraftCompletion(createDraftState({ id: 'draft-1', status: 'completed' }))
+    );
+
+    await waitFor(() => {
+      expect(result.current.fetchFailed).toBe(true);
+    });
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(result.current.showCompletionModal).toBe(false);
+    expect(result.current.draftResults).toBeNull();
+  });
+
+  it('does not retry after a thrown results fetch', async () => {
+    vi.mocked(fetch).mockRejectedValue(new Error('network down'));
+
+    const { result } = renderHook(() =>
+      useDraftCompletion(createDraftState({ id: 'draft-1', status: 'completed' }))
+    );
+
+    await waitFor(() => {
+      expect(result.current.fetchFailed).toBe(true);
+    });
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('aborts an in-flight results request on unmount', async () => {
+    let abortSignal: AbortSignal | undefined;
+    vi.mocked(fetch).mockImplementation((_url, init) => {
+      abortSignal = init?.signal;
+      return new Promise(() => undefined);
+    });
+
+    const { unmount } = renderHook(() =>
+      useDraftCompletion(createDraftState({ id: 'draft-1', status: 'completed' }))
+    );
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalled();
+    });
+
+    unmount();
+    expect(abortSignal?.aborted).toBe(true);
+  });
+});

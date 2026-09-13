@@ -53,6 +53,7 @@ export function DraftInterface({
     updateDraftState,
     updateAvailablePlayers,
     refreshDraftState,
+    clearError,
   } = useDraftSync({
     initialDraftState,
     initialPlayers,
@@ -201,7 +202,11 @@ export function DraftInterface({
             <div className="relative">
               <ValidationError error={pickError || syncError} className="shadow-lg" />
               <button
-                onClick={clearPickError}
+                type="button"
+                onClick={() => {
+                  clearPickError();
+                  clearError();
+                }}
                 className="absolute top-2 right-2 text-red-400 hover:text-red-600 p-1"
                 aria-label="Dismiss error"
               >

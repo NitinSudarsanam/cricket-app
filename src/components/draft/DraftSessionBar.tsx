@@ -28,6 +28,7 @@ export function DraftSessionBar({
           return (
             <Button
               key={p.id}
+              type="button"
               onClick={async () => {
                 const res = await fetch('/api/auth/participant', {
                   method: 'POST',
