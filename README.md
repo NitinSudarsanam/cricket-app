@@ -319,10 +319,10 @@ cricket-app/
 │   │   ├── api/              # REST endpoints (draft, auth, leaderboard, sync, ...)
 │   │   └── draft/            # Participant-facing draft UI
 │   ├── components/           # UI + feature components (admin/, draft/, ui/)
-│   ├── hooks/                # React hooks (draft realtime, toast, store sync)
+│   ├── hooks/                # React hooks (draft realtime, toast)
 │   ├── lib/                  # Core libs: rule engine, state manager, auth, rate limit, sportmonks client
 │   ├── services/             # Domain services: ingestion, scoring, ranking, leaderboard
-│   ├── stores/               # Zustand stores (draft, toast, UI)
+│   ├── stores/               # Zustand stores (toast)
 │   ├── styles/               # Tailwind entry + component CSS
 │   └── middleware.ts         # Route protection
 ├── prisma/

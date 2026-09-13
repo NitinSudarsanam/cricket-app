@@ -10,9 +10,9 @@
 
 | Category | Tests | Passed | Failed | Files |
 |---|---|---|---|---|
-| Unit / Integration | 331 | 331 | 0 | 28 |
+| Unit / Integration | 321 | 321 | 0 | 27 |
 | End-to-End | 20 | 20 | 0 | 5 |
-| **Total** | **351** | **351** | **0** | **33** |
+| **Total** | **341** | **341** | **0** | **32** |
 
 ---
 
@@ -35,11 +35,10 @@ Coverage is measured on files exercised by unit/integration tests. Untested UI p
 | `src/components/ui/*` | 100% | 100% | 100% | 100% |
 | `src/components/draft/DraftBoard.tsx` | 89.0% | 90.5% | 60.0% | 89.0% |
 | `src/components/draft/DraftTopBar.tsx` | 87.2% | 76.9% | 100% | 87.2% |
-| `src/stores/useDraftStore.ts` | 65.0% | 81.5% | 61.5% | 65.0% |
 
 ---
 
-## Unit & Integration Tests (331 tests, 28 files)
+## Unit & Integration Tests (321 tests, 27 files)
 
 ### Rule Engine (46 tests)
 
@@ -222,12 +221,6 @@ Coverage is measured on files exercised by unit/integration tests. Untested UI p
 | **NavLink** (7 tests) — render, nav-link class, active state, icon, className, truncate | ALL PASS |
 | **Alert** (4 tests) — variants, className, ref | ALL PASS |
 | **Card** (4 tests) — default padding, padded prop, className, ref | ALL PASS |
-
-### Store Tests (10 tests)
-
-| Test | Status |
-|---|---|
-| **useDraftStore** — setDraftState, setAvailablePlayers, getCurrentParticipant (null/odd/even), isMyTurn (null/true), addPickToState, removePlayerFromAvailable, reset | ALL PASS |
 
 ---
 

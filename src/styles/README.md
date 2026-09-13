@@ -14,10 +14,13 @@ src/styles/
 │   ├── animations.css          # Keyframe animations (toasts, slides, pulse)
 │   ├── helpers.css             # Scrollbar, touch, mobile optimizations
 │   └── team-colors.css         # IPL team color utility classes
-└── components/                  # Component-specific CSS modules
-    ├── FormInput.module.css
-    ├── LoadingSpinner.module.css
-    └── PlayerChip.module.css
+└── components/                  # Component-specific CSS
+    ├── AdminLayout.css
+    ├── DraftBoard.css
+    ├── DraftMonitor.css
+    ├── Forms.css
+    ├── LoadingSpinner.css
+    └── PlayerChip.css
 ```
 
 ## File Organization
@@ -126,9 +129,9 @@ import "@/styles/index.css";
 ### Component CSS Modules
 
 Component-specific styles using CSS Modules for scoped styling:
-- **`PlayerChip.module.css`** - Player card component styles
-- **`LoadingSpinner.module.css`** - Loading spinner animations
-- **`FormInput.module.css`** - Form input field styles
+- **`PlayerChip.css`** - Player card component styles
+- **`LoadingSpinner.css`** - Loading spinner animations
+- **`Forms.css`** - Shared form field styles
 
 Import CSS modules in components like this:
 ```typescript
