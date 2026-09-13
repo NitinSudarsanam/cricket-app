@@ -10,9 +10,9 @@
 
 | Category | Tests | Passed | Failed | Files |
 |---|---|---|---|---|
-| Unit / Integration | 325 | 325 | 0 | 29 |
+| Unit / Integration | 326 | 326 | 0 | 29 |
 | End-to-End | 20 | 20 | 0 | 5 |
-| **Total** | **345** | **345** | **0** | **34** |
+| **Total** | **346** | **346** | **0** | **34** |
 
 ---
 
@@ -38,7 +38,7 @@ Coverage is measured on files exercised by unit/integration tests. Untested UI p
 
 ---
 
-## Unit & Integration Tests (325 tests, 29 files)
+## Unit & Integration Tests (326 tests, 29 files)
 
 ### Rule Engine (46 tests)
 
