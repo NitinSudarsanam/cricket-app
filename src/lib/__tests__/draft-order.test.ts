@@ -14,13 +14,24 @@ describe('getCurrentParticipantId', () => {
     expect(getCurrentParticipantId(linearEvenRound)).toBe('p1');
   });
 
-  it('defaults to snake when no order type is provided', () => {
-    const evenRound = createDraftState({
+  it('defaults to snake when draftOrderType is omitted from the state', () => {
+    const evenRound = {
       currentRound: 2,
       currentPickIndex: 0,
       participantOrder: ['p1', 'p2'],
-    });
+    };
 
     expect(getCurrentParticipantId(evenRound)).toBe('p2');
+  });
+
+  it('lets an explicit order type override the state', () => {
+    const state = createDraftState({
+      currentRound: 2,
+      currentPickIndex: 0,
+      participantOrder: ['p1', 'p2'],
+      draftOrderType: 'snake',
+    });
+
+    expect(getCurrentParticipantId(state, 'linear')).toBe('p1');
   });
 });
