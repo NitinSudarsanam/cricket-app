@@ -8,7 +8,13 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useDraftRealtime } from './useDraftRealtime';
+import {
+  useDraftRealtime,
+  type PickMadeEvent,
+  type RoundCompleteEvent,
+  type DraftCompleteEvent,
+  type StateUpdateEvent,
+} from './useDraftRealtime';
 import { DraftState, Player } from '@/types';
 
 export interface DraftSyncState {
@@ -25,7 +31,7 @@ export interface UseDraftSyncOptions {
   participantId?: string;
   participantName?: string;
   enabled?: boolean;
-  onPickMade?: (pick: any) => void;
+  onPickMade?: (pick: PickMadeEvent['pick']) => void;
   onRoundComplete?: (round: number) => void;
   onDraftComplete?: () => void;
 }
@@ -107,7 +113,7 @@ export function useDraftSync(options: UseDraftSyncOptions = {}) {
 
   // Real-time event handlers
   const realtimeCallbacks = {
-    onPickMade: useCallback((event: any) => {
+    onPickMade: useCallback((event: PickMadeEvent) => {
       updateDraftState(event.draftState);
       
       if (initialPlayers.length > 0) {
@@ -117,17 +123,17 @@ export function useDraftSync(options: UseDraftSyncOptions = {}) {
       onPickMade?.(event.pick);
     }, [updateDraftState, updateAvailablePlayers, initialPlayers, onPickMade]),
 
-    onRoundComplete: useCallback((event: any) => {
+    onRoundComplete: useCallback((event: RoundCompleteEvent) => {
       updateDraftState(event.draftState);
       onRoundComplete?.(event.completedRound);
     }, [updateDraftState, onRoundComplete]),
 
-    onDraftComplete: useCallback((event: any) => {
+    onDraftComplete: useCallback((event: DraftCompleteEvent) => {
       updateDraftState(event.draftState);
       onDraftComplete?.();
     }, [updateDraftState, onDraftComplete]),
 
-    onStateUpdate: useCallback((event: any) => {
+    onStateUpdate: useCallback((event: StateUpdateEvent) => {
       updateDraftState(event.draftState);
       
       if (initialPlayers.length > 0) {

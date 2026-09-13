@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { Player, DraftConfig, DraftState } from '@/types';
 import { getEligiblePlayers } from '@/lib/rule-engine';
+import { getCurrentParticipantId } from '@/lib/draft-order';
 import { DraftBoard } from './DraftBoard';
 import { DraftTopBar } from './DraftTopBar';
 import { RosterSidebar } from './RosterSidebar';
@@ -12,6 +13,7 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { ValidationError } from '@/components/ValidationError';
 import { useDraftSync } from '@/hooks/useDraftSync';
 import { makePick } from '@/lib/draft-api-client';
+import type { DraftResultsSnapshot } from '@/lib/draft-results-export';
 import { useToast } from '@/hooks/useToast';
 import { Button, Alert } from '@/components/ui';
 
@@ -48,7 +50,7 @@ export function DraftInterface({
   const [pickError, setPickError] = useState<string | null>(null);
   const [allPlayers] = useState(initialPlayers);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
-  const [draftResults, setDraftResults] = useState<any>(null);
+  const [draftResults, setDraftResults] = useState<DraftResultsSnapshot | null>(null);
   const [loadingResults, setLoadingResults] = useState(false);
   const [showMobileRoster, setShowMobileRoster] = useState(false);
   const toast = useToast();
@@ -170,16 +172,8 @@ export function DraftInterface({
       )
     : [];
 
-  // Current participant on the clock (respects snake vs linear draft order)
   const currentParticipantIdOnClock = draftState
-    ? (() => {
-        const { currentRound, currentPickIndex, participantOrder, draftOrderType } = draftState;
-        const orderType = draftOrderType ?? 'snake';
-        const isSnakeRound = orderType === 'snake' && currentRound % 2 === 0;
-        return isSnakeRound
-          ? participantOrder[participantOrder.length - 1 - currentPickIndex]
-          : participantOrder[currentPickIndex];
-      })()
+    ? getCurrentParticipantId(draftState)
     : null;
 
   // Check if it's current participant's turn

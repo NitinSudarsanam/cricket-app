@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { DraftState } from '@/types';
+import { getCurrentParticipantId } from '@/lib/draft-order';
 import { Badge, Alert } from '@/components/ui';
 import { secondsRemainingOnClock } from '@/lib/draft-clock';
 
@@ -37,11 +38,7 @@ export function DraftTopBar({
   );
   const expiredForTurnRef = useRef<string | null>(null);
 
-  const orderType = draftState.draftOrderType ?? 'snake';
-  const isSnakeRound = orderType === 'snake' && draftState.currentRound % 2 === 0;
-  const currentParticipantId = isSnakeRound
-    ? draftState.participantOrder[draftState.participantOrder.length - 1 - draftState.currentPickIndex]
-    : draftState.participantOrder[draftState.currentPickIndex];
+  const currentParticipantId = getCurrentParticipantId(draftState);
   const currentParticipant = participants.find(p => p.id === currentParticipantId);
 
   const totalPicks =

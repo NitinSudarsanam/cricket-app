@@ -2,56 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Player, DraftConfig } from '@/types';
 import { ErrorState } from '@/components/ErrorState';
 import { Skeleton } from '@/components/Skeleton';
 import { PlayerChip } from '@/components/PlayerChip';
 import { Button, Card, Badge, StatDisplay } from '@/components/ui';
-
-interface ParticipantRoster {
-  participantId: string;
-  participantName: string;
-  participantEmail?: string | null;
-  position: number;
-  roster: Player[];
-  teamCount: Record<string, number>;
-  roleCount: {
-    Bat: number;
-    Bowl: number;
-    AR: number;
-    WK: number;
-  };
-  mandatoryRoles: {
-    Bat: number;
-    Bowl: number;
-    AR: number;
-    WK: number;
-  };
-  roleValidation: {
-    Bat: boolean;
-    Bowl: boolean;
-    AR: boolean;
-    WK: boolean;
-  };
-  allRolesMet: boolean;
-}
-
-interface DraftResults {
-  draftState: {
-    id: string;
-    status: string;
-    startedAt: Date | null;
-    completedAt: Date | null;
-    totalRounds: number;
-  };
-  draftConfig: DraftConfig;
-  participantRosters: ParticipantRoster[];
-  allParticipantsMeetRequirements: boolean;
-  totalPicks: number;
-}
+import {
+  downloadDraftResults,
+  type DraftResultsSnapshot,
+} from '@/lib/draft-results-export';
 
 export function DraftResultsView() {
-  const [results, setResults] = useState<DraftResults | null>(null);
+  const [results, setResults] = useState<DraftResultsSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedParticipant, setSelectedParticipant] = useState<string | null>(null);
@@ -90,74 +51,9 @@ export function DraftResultsView() {
     }
   };
 
-  const exportAsJSON = () => {
-    if (!results) return;
-
-    const data = {
-      draftState: results.draftState,
-      draftConfig: results.draftConfig,
-      participantRosters: results.participantRosters.map(pr => ({
-        ...pr,
-        roster: pr.roster.map(p => ({
-          id: p.id,
-          name: p.name,
-          team: p.team,
-          role: p.role,
-          isForeign: p.isForeign
-        }))
-      }))
-    };
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: 'application/json'
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `draft-results-${results.draftState.id}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  const exportAsCSV = () => {
-    if (!results) return;
-
-    const headers = ['Participant', 'Position', 'Player Name', 'Team', 'Role', 'Is Foreign'];
-    const rows = results.participantRosters.flatMap(pr =>
-      pr.roster.map(player => [
-        pr.participantName,
-        (pr.position + 1).toString(),
-        player.name,
-        player.team,
-        player.role,
-        player.isForeign ? 'Yes' : 'No'
-      ])
-    );
-
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `draft-results-${results.draftState.id}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
   const handleExport = () => {
-    if (exportFormat === 'json') {
-      exportAsJSON();
-    } else {
-      exportAsCSV();
-    }
+    if (!results) return;
+    downloadDraftResults(results, exportFormat);
   };
 
   if (loading) {
