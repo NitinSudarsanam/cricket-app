@@ -66,6 +66,7 @@ async function seedE2E() {
       earlyMinBat: 2,
       earlyMinBowl: 2,
       isLocked: true,
+      pickTimeoutSeconds: 3600,
     },
   });
 
