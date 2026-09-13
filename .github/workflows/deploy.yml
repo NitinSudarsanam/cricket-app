@@ -16,6 +16,8 @@ env:
   NODE_VERSION: '22'
   DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/cricket_ci
   DIRECT_URL: postgresql://postgres:postgres@127.0.0.1:5432/cricket_ci
+  DATABASE_SSL: 'false'
+  E2E_SEED_CONFIRM: '1'
   ADMIN_SECRET: ci-admin-secret-must-be-at-least-32-ch
   SESSION_SECRET: ci-session-secret-must-be-32-chars-x
   NEXT_PUBLIC_APP_URL: http://localhost:3000
@@ -151,6 +153,9 @@ jobs:
       - name: Seed E2E test data
         run: npx tsx e2e/seed.ts
 
+      - name: Build application for E2E
+        run: npm run build
+
       - name: Run E2E tests
         run: npm run test:e2e
 
@@ -166,15 +171,31 @@ jobs:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
     needs: [build, e2e-tests]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && secrets.VERCEL_TOKEN != ''
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     permissions:
       contents: write
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
     steps:
+      - name: Check Vercel credentials
+        id: vercel
+        run: |
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "Vercel secrets are not set. Import the repo in the Vercel dashboard to deploy, or add VERCEL_TOKEN, VERCEL_ORG_ID, and VERCEL_PROJECT_ID."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout code
+        if: steps.vercel.outputs.configured == 'true'
         uses: actions/checkout@v4
 
       - name: Deploy to Vercel
+        if: steps.vercel.outputs.configured == 'true'
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -183,7 +204,7 @@ jobs:
           vercel-args: '--prod'
 
       - name: Comment deployment URL
-        if: success()
+        if: success() && steps.vercel.outputs.configured == 'true'
         uses: actions/github-script@v7
         with:
           script: |

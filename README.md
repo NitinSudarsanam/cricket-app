@@ -128,7 +128,7 @@ cp .env.example .env
 
 ```bash
 npx prisma db push   # apply schema
-npx prisma db seed   # seed default scoring rules and sample data
+npm run db:seed      # seed default scoring rules and sample data
 ```
 
 Helper script for a local Postgres bootstrap: `./setup-db.ps1` (Windows) or `setup-db.bat`.
@@ -307,9 +307,10 @@ Targets Vercel. The GitHub Actions workflows run from the **repository root** (t
    - `DATABASE_URL`, `DIRECT_URL`
    - `ADMIN_SECRET`, `SESSION_SECRET` (each ≥ 32 chars, different values)
    - `NEXT_PUBLIC_APP_URL` (your `https://….vercel.app` or custom domain)
-3. Deploy. `vercel.json` runs `prisma generate && next build`. The `postinstall` hook also generates the Prisma client.
-4. `vercel.json` wires a daily cron to `POST /api/sync/cricket-data`. Protect that route with `CRON_SECRET` (falls back to `ADMIN_SECRET`).
-5. Optional: add GitHub Actions secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` if you want the "Deploy to Vercel" job to push production from `main`. Importing the repo in Vercel already auto-deploys on push.
+3. Apply the schema to that database before the first deploy (`npm run db:push` or `npx prisma migrate deploy` against `DIRECT_URL`). Vercel only runs `prisma generate` (via `postinstall`) and `next build` — it does not migrate for you.
+4. Deploy. The `postinstall` hook generates the Prisma client.
+5. `vercel.json` wires a daily cron to `POST /api/sync/cricket-data`. Protect that route with `CRON_SECRET` (falls back to `ADMIN_SECRET`).
+6. Optional: add GitHub Actions secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` if you want the "Deploy to Vercel" job to push production from `main`. Importing the repo in Vercel already auto-deploys on push.
 
 ### Local readiness
 

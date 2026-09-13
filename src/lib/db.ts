@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
+import { getPoolSslOption } from '@/lib/db-ssl';
 
 // PrismaClient is attached to the `global` object in development to prevent
 // exhausting your database connection limit.
@@ -13,19 +14,20 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 // The pg driver adapter is the recommended Prisma 7 approach for serverless —
 // it avoids the native binary engine, reducing cold starts.
 const connectionString = process.env.DATABASE_URL;
+const ssl = connectionString
+  ? getPoolSslOption({
+      connectionString,
+      caCert: process.env.DATABASE_CA_CERT,
+      sslFlag: process.env.DATABASE_SSL,
+    })
+  : false;
 const pool = connectionString
   ? new Pool({
       connectionString,
       connectionTimeoutMillis: 30000,
       idleTimeoutMillis: 30000,
       max: 1, // Limit connections for serverless
-      // SSL configuration: Supabase requires SSL but doesn't provide CA cert
-      // In production, if Supabase provides a CA certificate, use:
-      // ssl: { rejectUnauthorized: true, ca: process.env.DATABASE_CA_CERT }
-      // For now, we accept any certificate (known Supabase limitation)
-      ssl: process.env.NODE_ENV === 'production' && process.env.DATABASE_CA_CERT
-        ? { rejectUnauthorized: true, ca: process.env.DATABASE_CA_CERT }
-        : { rejectUnauthorized: false },
+      ...(ssl ? { ssl } : {}),
     })
   : undefined;
 const adapter = pool ? new PrismaPg(pool) : undefined;

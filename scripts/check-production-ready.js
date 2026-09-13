@@ -137,7 +137,7 @@ try {
   // Check for security vulnerabilities
   checkInfo('Running security audit...');
   try {
-    execSync('npm audit --audit-level=high', { stdio: 'pipe' });
+    execSync('npm audit --omit=dev --audit-level=high', { stdio: 'pipe' });
     checkPassed('No high-severity vulnerabilities found');
   } catch (error) {
     checkWarning('Security vulnerabilities detected - run "npm audit" for details');

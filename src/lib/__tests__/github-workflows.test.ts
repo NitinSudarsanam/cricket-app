@@ -16,6 +16,7 @@ describe('GitHub Actions workflows', () => {
     expect(contents).not.toMatch(/working-directory:\s*cricket-app/);
     expect(contents).not.toMatch(/cricket-app\/package-lock\.json/);
     expect(contents).toMatch(/cache-dependency-path:\s*package-lock\.json/);
+    expect(contents).not.toMatch(/if:.*secrets\./);
   });
 
   it('commits package-lock.json so npm ci works', () => {

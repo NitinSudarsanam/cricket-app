@@ -12,10 +12,31 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import 'dotenv/config';
+import { getPoolSslOption } from '../src/lib/db-ssl';
 
+const connectionString = process.env.DATABASE_URL || '';
+const isDisposableTarget =
+  process.env.E2E_SEED_CONFIRM === '1' ||
+  /localhost|127\.0\.0\.1|cricket_ci/.test(connectionString);
+
+if (!connectionString) {
+  throw new Error('DATABASE_URL must be set to seed E2E data');
+}
+
+if (!isDisposableTarget) {
+  throw new Error(
+    'Refusing to wipe data: DATABASE_URL does not look like a local/CI test database. Set E2E_SEED_CONFIRM=1 to override.',
+  );
+}
+
+const ssl = getPoolSslOption({
+  connectionString,
+  caCert: process.env.DATABASE_CA_CERT,
+  sslFlag: process.env.DATABASE_SSL,
+});
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  connectionString,
+  ...(ssl ? { ssl } : {}),
 });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
