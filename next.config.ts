@@ -69,8 +69,8 @@ const nextConfig: NextConfig = {
       '@prisma/client',
     ],
     
-    // Enable optimized CSS loading
-    optimizeCss: true,
+    // optimizeCss needs the optional `critters` package and breaks
+    // Vercel/CI builds when it is missing. Leave CSS optimization to Next.
   },
 
   // ============================================================================

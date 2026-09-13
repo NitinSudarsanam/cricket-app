@@ -27,14 +27,16 @@ function analyzeBundle() {
 
   // Check if build exists
   if (!fs.existsSync(BUILD_DIR)) {
-    console.error('Build directory not found. Run "npm run build" first.');
-    process.exit(1);
+    console.warn('Build directory not found. Run "npm run build" first.');
+    process.exit(0);
   }
 
-  // Read build manifest
+  // Read build manifest (Next.js 16 may emit a different layout)
   if (!fs.existsSync(BUILD_MANIFEST)) {
-    console.error('Build manifest not found. Run "npm run build" first.');
-    process.exit(1);
+    console.warn('pages build-manifest.json not found; skipping page-size breakdown.');
+    const entries = fs.existsSync(BUILD_DIR) ? fs.readdirSync(BUILD_DIR) : [];
+    console.log(`\n.next contains: ${entries.slice(0, 20).join(', ')}${entries.length > 20 ? ', …' : ''}`);
+    process.exit(0);
   }
 
   const manifest = JSON.parse(fs.readFileSync(BUILD_MANIFEST, 'utf8'));

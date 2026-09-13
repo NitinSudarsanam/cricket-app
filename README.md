@@ -128,7 +128,7 @@ cp .env.example .env
 
 ```bash
 npx prisma db push   # apply schema
-npx prisma db seed   # seed default scoring rules and sample data
+npm run db:seed      # seed default scoring rules and sample data
 ```
 
 Helper script for a local Postgres bootstrap: `./setup-db.ps1` (Windows) or `setup-db.bat`.
@@ -298,21 +298,41 @@ npm run test:all         # both
 
 ## Deployment
 
-Targets Vercel.
+Targets Vercel. The GitHub Actions workflows run from the **repository root** (this is not a nested `cricket-app/` folder).
 
-1. Import the repo in Vercel.
-2. Set env vars in project settings (see above).
-3. Point `DATABASE_URL` at the pooled connection (Supabase port 6543) and `DIRECT_URL` at the direct one (5432) so migrations work.
-4. Deploy. The `postinstall` hook runs `prisma generate`.
-5. `vercel.json` wires up the `/api/sync/cricket-data` cron (every 15 minutes).
-6. Run `npm run check:prod` locally before shipping to catch missing env vars, weak secrets, or dev defaults.
+### Vercel
+
+1. Import [this GitHub repo](https://github.com/NitinSudarsanam/cricket-app) in the Vercel dashboard. Leave the Root Directory empty.
+2. Set env vars in Project Settings → Environment Variables (copy from `.env.example`). Minimum for a working deploy:
+   - `DATABASE_URL`, `DIRECT_URL`
+   - `ADMIN_SECRET`, `SESSION_SECRET` (each ≥ 32 chars, different values)
+   - `NEXT_PUBLIC_APP_URL` (your `https://….vercel.app` or custom domain)
+3. Apply the schema to that database before the first deploy (`npm run db:push` or `npx prisma migrate deploy` against `DIRECT_URL`). Vercel only runs `prisma generate` (via `postinstall`) and `next build` — it does not migrate for you.
+4. Deploy. The `postinstall` hook generates the Prisma client.
+5. `vercel.json` wires a daily cron to `POST /api/sync/cricket-data`. Protect that route with `CRON_SECRET` (falls back to `ADMIN_SECRET`).
+6. Optional: add GitHub Actions secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` if you want the "Deploy to Vercel" job to push production from `main`. Importing the repo in Vercel already auto-deploys on push.
+
+### Local readiness
+
+Run `npm run check:prod` before shipping to catch missing files, weak secrets, or a broken production build.
+
+### CI
+
+On every push and pull request, GitHub Actions:
+
+- installs with `npm ci` (requires the committed `package-lock.json`)
+- typechecks, runs Vitest, and enforces coverage thresholds
+- builds the Next.js app
+- runs Playwright against an ephemeral Postgres service
+
+No GitHub `DATABASE_URL` secret is required for those checks.
 
 ---
 
 ## Project structure
 
 ```
-cricket-app/
+.
 ├── src/
 │   ├── app/                  # Next.js App Router pages and API routes
 │   │   ├── admin/            # Admin dashboard (config, players, participants, sync, monitor, leaderboard)

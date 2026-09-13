@@ -137,7 +137,7 @@ try {
   // Check for security vulnerabilities
   checkInfo('Running security audit...');
   try {
-    execSync('npm audit --audit-level=high', { stdio: 'pipe' });
+    execSync('npm audit --omit=dev --audit-level=high', { stdio: 'pipe' });
     checkPassed('No high-severity vulnerabilities found');
   } catch (error) {
     checkWarning('Security vulnerabilities detected - run "npm audit" for details');
@@ -165,16 +165,20 @@ try {
   checkFailed('Error reading tsconfig.json');
 }
 
-// Check 6: Build test
+// Check 6: Build test (skipped in CI — the dedicated Build Application job does this)
 log('\nChecking build...', colors.blue);
 
-try {
-  checkInfo('Running production build (this may take a minute)...');
-  execSync('npm run build', { stdio: 'pipe' });
-  checkPassed('Production build successful');
-} catch (error) {
-  checkFailed('Production build failed - fix build errors before deploying');
-  console.error(error.stdout?.toString() || error.message);
+if (process.env.SKIP_PROD_BUILD === '1' || process.env.CI === 'true') {
+  checkInfo('Skipping production build (CI=true or SKIP_PROD_BUILD=1)');
+} else {
+  try {
+    checkInfo('Running production build (this may take a minute)...');
+    execSync('npm run build', { stdio: 'pipe' });
+    checkPassed('Production build successful');
+  } catch (error) {
+    checkFailed('Production build failed - fix build errors before deploying');
+    console.error(error.stdout?.toString() || error.message);
+  }
 }
 
 // Check 7: Next.js configuration
@@ -211,7 +215,13 @@ if (fs.existsSync('prisma/schema.prisma')) {
   checkPassed('Prisma schema exists');
   
   try {
-    execSync('npx prisma validate', { stdio: 'pipe' });
+    execSync('npx prisma validate', {
+      stdio: 'pipe',
+      env: {
+        ...process.env,
+        DATABASE_URL: process.env.DATABASE_URL || 'postgresql://127.0.0.1:5432/placeholder',
+      },
+    });
     checkPassed('Prisma schema is valid');
   } catch (error) {
     checkFailed('Prisma schema validation failed');

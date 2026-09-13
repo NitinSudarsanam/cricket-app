@@ -30,8 +30,8 @@ coverage/
 .git/
 .gitignore
 
-# Database development files
-prisma/migrations/
+# Local sqlite leftovers only. Keep prisma/migrations in the
+# deploy artifact so `prisma migrate deploy` can run later if needed.
 *.db
 *.db-journal
 
